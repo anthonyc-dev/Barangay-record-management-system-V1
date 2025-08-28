@@ -14,6 +14,12 @@ import UserLogin from "@/pages/userSide/userAuth/UserLogin";
 import Home from "@/pages/userSide/Home";
 import Announcement from "@/pages/userSide/pages/Announcement";
 import Settings from "@/pages/userSide/pages/Settings";
+import { PopulationAnalytics } from "@/components/analytics/PopulationAnalytics";
+import { IncidentAnalytics } from "@/components/analytics/IncidentAnalytics";
+import { FinancialAnalytics } from "@/components/analytics/FinancialAnalytics";
+import { GeographicalAnalytics } from "@/components/analytics/GeographicalAnalytics";
+import { OverviewSection } from "@/components/analytics/OverviewSection";
+import { DocumentAnalytics } from "@/components/analytics/DocumentAnalytics";
 
 export default function AppRoutes() {
   return (
@@ -24,6 +30,16 @@ export default function AppRoutes() {
         <Route path="residents" element={<Residents />} />
         <Route path="addResident" element={<AddResident />} />
         <Route path="documents" element={<Documents />} />
+        {/* analytics */}
+        <Route path="analytics" element={<OverviewSection />} />
+        <Route path="analytics/population" element={<PopulationAnalytics />} />
+        <Route path="analytics/documents" element={<DocumentAnalytics />} />
+        <Route path="analytics/incidents" element={<IncidentAnalytics />} />
+        <Route path="analytics/financial" element={<FinancialAnalytics />} />
+        <Route
+          path="analytics/geographical"
+          element={<GeographicalAnalytics />}
+        />
       </Route>
       {/* user side */}
       <Route path="/resident" element={<ResidentLayout />}>
@@ -31,6 +47,7 @@ export default function AppRoutes() {
         <Route path="announcement" element={<Announcement />} />
         <Route path="settings" element={<Settings />} />
       </Route>
+
       {/* general */}
       <Route path="/" element={<UserLogin />} />
       <Route path="preRegister" element={<PreRegister />} />
