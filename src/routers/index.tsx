@@ -20,6 +20,7 @@ import { FinancialAnalytics } from "@/components/analytics/FinancialAnalytics";
 import { GeographicalAnalytics } from "@/components/analytics/GeographicalAnalytics";
 import { OverviewSection } from "@/components/analytics/OverviewSection";
 import { DocumentAnalytics } from "@/components/analytics/DocumentAnalytics";
+import FileStorage from "@/pages/adminPage/FIle-storage.admin";
 
 export default function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ export default function AppRoutes() {
           path="analytics/geographical"
           element={<GeographicalAnalytics />}
         />
+        <Route path="file-storage" element={<FileStorage />} />
       </Route>
       {/* user side */}
       <Route path="/resident" element={<ResidentLayout />}>

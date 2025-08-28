@@ -48,6 +48,7 @@ const navigation = [
   { name: "Financial", href: "/financial", icon: DollarSign },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Announcements", href: "/announcements", icon: Megaphone },
+  { name: "File Storage", href: "/admin/file-storage", icon: FileText },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
