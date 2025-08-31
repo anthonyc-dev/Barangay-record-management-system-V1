@@ -20,7 +20,7 @@ import { FinancialAnalytics } from "@/components/analytics/FinancialAnalytics";
 import { GeographicalAnalytics } from "@/components/analytics/GeographicalAnalytics";
 import { OverviewSection } from "@/components/analytics/OverviewSection";
 import { DocumentAnalytics } from "@/components/analytics/DocumentAnalytics";
-import FileStorage from "@/pages/adminPage/FIle-storage.admin";
+import FolderStorage from "@/pages/adminPage/Folder-storage.admin";
 import AnnouncementAdmin from "@/pages/adminPage/Announcement.admin";
 import SettingsAdmin from "@/pages/adminPage/Settings.admin";
 import DocumentsUser from "@/pages/userSide/pages/Documents";
@@ -46,7 +46,7 @@ export default function AppRoutes() {
           element={<GeographicalAnalytics />}
         />
         <Route path="announcement" element={<AnnouncementAdmin />} />
-        <Route path="file-storage" element={<FileStorage />} />
+        <Route path="folder-storage" element={<FolderStorage />} />
         <Route path="settings" element={<SettingsAdmin />} />
       </Route>
       {/* user side */}

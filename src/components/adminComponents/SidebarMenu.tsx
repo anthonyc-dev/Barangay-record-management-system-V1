@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Shield,
   Map,
+  Folder,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -48,7 +49,7 @@ const navigation = [
   // { name: "Financial", href: "/financial", icon: DollarSign },
   // { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
-  { name: "File Storage", href: "/admin/file-storage", icon: FileText },
+  { name: "Folder Storage", href: "/admin/folder-storage", icon: Folder },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
