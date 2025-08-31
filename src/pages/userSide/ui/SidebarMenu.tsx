@@ -1,5 +1,12 @@
 import { cn } from "@/lib/utils";
-import { Home, FileText, Megaphone, Settings, ChevronLeft } from "lucide-react";
+import {
+  Home,
+  FileText,
+  Megaphone,
+  Settings,
+  ChevronLeft,
+  AlertTriangle,
+} from "lucide-react";
 
 interface SidebarProps {
   className?: string;
@@ -8,7 +15,8 @@ interface SidebarProps {
 
 const navigation = [
   { name: "Dashboard", href: "/resident", icon: Home },
-  { name: "Documents", href: "", icon: FileText },
+  { name: "Documents", href: "/resident/documents", icon: FileText },
+  { name: "Complainant", href: "/resident/complainant", icon: AlertTriangle },
   { name: "Announcements", href: "/resident/announcement", icon: Megaphone },
   { name: "Settings", href: "/resident/settings", icon: Settings },
 ];

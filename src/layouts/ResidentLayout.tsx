@@ -15,7 +15,7 @@ const ResidentLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex h-screen bg-gray-100">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar />
@@ -45,7 +45,7 @@ const ResidentLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         <Navbar onMenuClick={handleMenuClick} />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

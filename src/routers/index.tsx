@@ -23,6 +23,8 @@ import { DocumentAnalytics } from "@/components/analytics/DocumentAnalytics";
 import FileStorage from "@/pages/adminPage/FIle-storage.admin";
 import AnnouncementAdmin from "@/pages/adminPage/Announcement.admin";
 import SettingsAdmin from "@/pages/adminPage/Settings.admin";
+import DocumentsUser from "@/pages/userSide/pages/Documents";
+import Complainant from "@/pages/userSide/pages/Complainant";
 
 export default function AppRoutes() {
   return (
@@ -50,6 +52,8 @@ export default function AppRoutes() {
       {/* user side */}
       <Route path="/resident" element={<ResidentLayout />}>
         <Route index element={<Home />} />
+        <Route path="documents" element={<DocumentsUser />} />
+        <Route path="complainant" element={<Complainant />} />
         <Route path="announcement" element={<Announcement />} />
         <Route path="settings" element={<Settings />} />
       </Route>
