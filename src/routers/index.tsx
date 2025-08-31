@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 import AdminLayout from "../layouts/adminLayout";
-import HomePage from "@/pages/adminPage/Home.admin";
 import Residents from "@/pages/adminPage/Resident.admin";
 import Documents from "@/pages/adminPage/Documents.admin";
 import ResidentLayout from "@/layouts/ResidentLayout";
@@ -25,13 +24,16 @@ import AnnouncementAdmin from "@/pages/adminPage/Announcement.admin";
 import SettingsAdmin from "@/pages/adminPage/Settings.admin";
 import DocumentsUser from "@/pages/userSide/pages/Documents";
 import Complainant from "@/pages/userSide/pages/Complainant";
+import LoginAdmin from "@/pages/adminPage/auth.admin/Login";
+import HomeAdmin from "@/pages/adminPage/Home.admin";
 
 export default function AppRoutes() {
   return (
     <Routes>
       {/* admin side */}
       <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<LoginAdmin />} />
+        <Route path="home" element={<HomeAdmin />} />
         <Route path="residents" element={<Residents />} />
         <Route path="addResident" element={<AddResident />} />
         <Route path="documents" element={<Documents />} />
@@ -48,6 +50,8 @@ export default function AppRoutes() {
         <Route path="announcement" element={<AnnouncementAdmin />} />
         <Route path="folder-storage" element={<FolderStorage />} />
         <Route path="settings" element={<SettingsAdmin />} />
+
+        <Route path="admin-login" element={<LoginAdmin />} />
       </Route>
       {/* user side */}
       <Route path="/resident" element={<ResidentLayout />}>

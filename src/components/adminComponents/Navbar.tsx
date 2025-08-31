@@ -1,14 +1,18 @@
 import { Bell, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  className?: string;
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, className }: HeaderProps) {
   return (
-    <header className="h-16 border-b border-border bg-background">
+    <header
+      className={cn("h-16 border-b border-border bg-background", className)}
+    >
       <div className="flex h-full items-center justify-between px-6">
         {/* Left side */}
         <div className="flex items-center space-x-4">

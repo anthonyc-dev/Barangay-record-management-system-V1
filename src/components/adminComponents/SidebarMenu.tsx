@@ -22,7 +22,7 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/admin", icon: Home },
+  { name: "Dashboard", href: "/admin/home", icon: Home },
   {
     name: "Analytics",
     href: "/admin/analytics",

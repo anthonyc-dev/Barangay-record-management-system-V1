@@ -1,15 +1,19 @@
 import { Header } from "@/components/adminComponents/Navbar";
 import { Sidebar } from "@/components/adminComponents/SidebarMenu";
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 const SidebarLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const location = useLocation();
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="hidden lg:block">
+      <div
+        className={`${location.pathname === "/admin" ? "hidden" : "lg:block"}`}
+      >
         <Sidebar />
       </div>
 
@@ -42,8 +46,11 @@ const SidebarLayout: React.FC = () => {
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-        <div className="p-6">
+        <Header
+          onMenuClick={() => setSidebarOpen(true)}
+          className={`${location.pathname === "/admin" ? "hidden" : ""}`}
+        />
+        <div className={`${location.pathname === "/admin" ? "p-0" : "p-6"}`}>
           <Outlet />
         </div>
       </main>
