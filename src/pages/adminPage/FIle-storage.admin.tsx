@@ -9,7 +9,6 @@ import {
   Download,
   FileText,
   File,
-  FolderPlus,
   Trash2,
   Grid,
   List,
@@ -226,11 +225,11 @@ const FileStorage = () => {
     <div className="p-6 space-y-8">
       {/* Enhanced Header */}
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-bold  bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
             File Storage Management
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground mt-2">
             Securely upload, organize, and manage your administrative documents
           </p>
         </div>
@@ -386,41 +385,42 @@ const FileStorage = () => {
       </Card>
 
       {/* Enhanced Search and Actions */}
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex items-center space-x-3 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search files and folders..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-11 border-2 focus:border-primary"
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="default"
-            className="border-2 hover:border-primary"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-          {selectedFolder && (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between space-x-4">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search files and folders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-11 border-2 focus:border-primary"
+                />
+              </div>
+
+              {selectedFolder && (
+                <Button
+                  variant="outline"
+                  onClick={clearSelection}
+                  className="border-2"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Selection
+                </Button>
+              )}
+            </div>
             <Button
               variant="outline"
-              onClick={clearSelection}
-              className="border-2"
+              size="default"
+              className="border-2 hover:border-primary"
             >
-              <X className="h-4 w-4 mr-2" />
-              Clear Selection
+              <Filter className="h-4 w-4 mr-2" />
+              Filter
             </Button>
-          )}
-        </div>
-        <Button className="shadow-lg hover:shadow-xl transition-shadow">
-          <FolderPlus className="h-4 w-4 mr-2" />
-          New Folder
-        </Button>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Enhanced Files Section */}
       <div className="space-y-4">

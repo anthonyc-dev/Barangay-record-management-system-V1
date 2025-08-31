@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Settings as SettingsIcon,
   User,
   Shield,
   Bell,
@@ -426,7 +425,6 @@ const Settings = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <SettingsIcon className="h-8 w-8" />
             Admin Settings
           </h1>
           <p className="text-muted-foreground mt-2">
