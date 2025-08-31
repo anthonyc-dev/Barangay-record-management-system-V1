@@ -45,11 +45,11 @@ const navigation = [
   },
   { name: "Residents", href: "/admin/residents", icon: Users },
   { name: "Documents", href: "/admin/documents", icon: FileText },
-  { name: "Financial", href: "/financial", icon: DollarSign },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Announcements", href: "/announcements", icon: Megaphone },
+  // { name: "Financial", href: "/financial", icon: DollarSign },
+  // { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
   { name: "File Storage", href: "/admin/file-storage", icon: FileText },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export function Sidebar({ className, onClose }: SidebarProps) {

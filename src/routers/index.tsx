@@ -21,6 +21,8 @@ import { GeographicalAnalytics } from "@/components/analytics/GeographicalAnalyt
 import { OverviewSection } from "@/components/analytics/OverviewSection";
 import { DocumentAnalytics } from "@/components/analytics/DocumentAnalytics";
 import FileStorage from "@/pages/adminPage/FIle-storage.admin";
+import AnnouncementAdmin from "@/pages/adminPage/Announcement.admin";
+import SettingsAdmin from "@/pages/adminPage/Settings.admin";
 
 export default function AppRoutes() {
   return (
@@ -41,7 +43,9 @@ export default function AppRoutes() {
           path="analytics/geographical"
           element={<GeographicalAnalytics />}
         />
+        <Route path="announcement" element={<AnnouncementAdmin />} />
         <Route path="file-storage" element={<FileStorage />} />
+        <Route path="settings" element={<SettingsAdmin />} />
       </Route>
       {/* user side */}
       <Route path="/resident" element={<ResidentLayout />}>
