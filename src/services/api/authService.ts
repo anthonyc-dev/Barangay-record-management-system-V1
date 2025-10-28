@@ -127,6 +127,9 @@ export const authService = {
   userLogout: async (): Promise<void> => {
     try {
       await apiClient.post('/logout');
+    } catch {
+      // Ignore errors during logout - we're clearing the session anyway
+      console.log('Logout request failed, clearing local session');
     } finally {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_info');
@@ -161,6 +164,9 @@ export const authService = {
   adminLogout: async (): Promise<void> => {
     try {
       await apiClient.post('/admin-logout');
+    } catch {
+      // Ignore errors during logout - we're clearing the session anyway
+      console.log('Logout request failed, clearing local session');
     } finally {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('admin_info');

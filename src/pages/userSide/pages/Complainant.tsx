@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,21 @@ import {
   FileText,
   User,
   MapPin,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
+import complainantService, {
+  type CreateComplaintRequest,
+  type Complaint,
+  type UrgencyLevel,
+} from "@/services/api/complainantService";
+import { authService } from "@/services/api";
 
 const Complainant = () => {
   const [activeTab, setActiveTab] = useState("report");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
+  const [userReports, setUserReports] = useState<Complaint[]>([]);
   const [formData, setFormData] = useState({
     reportType: "",
     title: "",
@@ -38,6 +49,8 @@ const Complainant = () => {
     witnesses: "",
     additionalInfo: "",
   });
+
+  console.log("from complaiant", userReports);
 
   const reportTypes = [
     "Noise Complaint",
@@ -59,54 +72,193 @@ const Complainant = () => {
     { value: "emergency", label: "Emergency", color: "text-red-600" },
   ];
 
-  const mockReports = [
-    {
-      id: 1,
-      title: "Noise Complaint - Loud Music",
-      reportType: "Noise Complaint",
-      status: "pending",
-      dateReported: "2024-01-15",
-      urgencyLevel: "medium",
-      location: "Purok 1, Main Street",
-    },
-    {
-      id: 2,
-      title: "Traffic Accident - Minor Collision",
-      reportType: "Traffic Accident",
-      status: "under_investigation",
-      dateReported: "2024-01-12",
-      urgencyLevel: "high",
-      location: "Corner of Rizal and Bonifacio St.",
-    },
-    {
-      id: 3,
-      title: "Pothole on Main Road",
-      reportType: "Infrastructure Problem",
-      status: "resolved",
-      dateReported: "2024-01-08",
-      urgencyLevel: "low",
-      location: "Main Road, near Elementary School",
-    },
-  ];
+  // Fetch user's complaints when the history tab is active
+  useEffect(() => {
+    if (activeTab === "history") {
+      fetchUserReports();
+    }
+  }, [activeTab]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchUserReports = async () => {
+    setIsLoadingReports(true);
+    try {
+      const userInfo = authService.getStoredUserInfo();
+      if (!userInfo?.id) {
+        toast.error("User not authenticated. Please log in again.");
+        return;
+      }
+
+      console.log(userInfo?.id);
+      const response = await complainantService.getComplaintById(userInfo.id);
+      // Ensure we always set an array, even if response.data is undefined
+
+      if (response.data) {
+        const dataArray = Array.isArray(response.data)
+          ? response.data
+          : [response.data];
+        setUserReports(dataArray);
+      }
+
+      // setUserReports(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      // Set empty array on error to prevent undefined issues
+      setUserReports([]);
+
+      // Handle API error format from our interceptor
+      if (error && typeof error === "object" && "message" in error) {
+        toast.error((error as { message: string }).message);
+      } else {
+        toast.error("Failed to load your reports. Please try again.");
+      }
+    } finally {
+      setIsLoadingReports(false);
+    }
+  };
+
+  const validateForm = (): string | null => {
+    // Validate required fields
+    if (!formData.reportType.trim()) {
+      return "Please select a report type";
+    }
+    if (!formData.title.trim()) {
+      return "Please enter a report title";
+    }
+    if (!formData.description.trim()) {
+      return "Please provide a detailed description";
+    }
+
+    if (!formData.location.trim()) {
+      return "Please enter the location";
+    }
+    if (!formData.dateTime) {
+      return "Please select the date and time";
+    }
+    if (!formData.urgencyLevel) {
+      return "Please select an urgency level";
+    }
+
+    // Validate complainant info if not anonymous
+    if (!formData.isAnonymous) {
+      if (!formData.complainantName.trim()) {
+        return "Please enter your full name";
+      }
+      if (!formData.contactNumber.trim()) {
+        return "Please enter your contact number";
+      }
+      // Basic phone number validation (Philippine format)
+      const phoneRegex = /^(09|\+639)\d{9}$/;
+      if (!phoneRegex.test(formData.contactNumber.replace(/\s|-/g, ""))) {
+        return "Please enter a valid Philippine mobile number (e.g., 09123456789)";
+      }
+      // Email validation if provided
+      if (
+        formData.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
+        return "Please enter a valid email address";
+      }
+    }
+
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Report submitted:", formData);
-    // Reset form
-    setFormData({
-      reportType: "",
-      title: "",
-      description: "",
-      location: "",
-      dateTime: "",
-      complainantName: "",
-      contactNumber: "",
-      email: "",
-      isAnonymous: false,
-      urgencyLevel: "",
-      witnesses: "",
-      additionalInfo: "",
-    });
+
+    // Validate form
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const userInfo = authService.getStoredUserInfo();
+      if (!userInfo?.id) {
+        toast.error("User not authenticated. Please log in again.");
+        return;
+      }
+
+      // Convert datetime-local format to MySQL datetime format
+      const dateTimeFormatted = formData.dateTime.replace("T", " ") + ":00";
+
+      // Prepare complaint data matching API schema
+      const complaintData: CreateComplaintRequest = {
+        userId: userInfo.id,
+        report_type: formData.reportType,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        date_time: dateTimeFormatted,
+        complainant_name: formData.isAnonymous
+          ? null
+          : formData.complainantName,
+        contact_number: formData.isAnonymous ? null : formData.contactNumber,
+        email: formData.isAnonymous || !formData.email ? null : formData.email,
+        is_anonymous: formData.isAnonymous,
+        urgency_level: formData.urgencyLevel as UrgencyLevel,
+        witnesses: formData.witnesses.trim() || null,
+        additional_info: formData.additionalInfo.trim() || null,
+      };
+
+      // Submit to API
+      const response = await complainantService.createComplaint(complaintData);
+
+      // Show success message
+      toast.success(
+        response.message || "Your report has been submitted successfully!"
+      );
+
+      // Reset form
+      setFormData({
+        reportType: "",
+        title: "",
+        description: "",
+        location: "",
+        dateTime: "",
+        complainantName: "",
+        contactNumber: "",
+        email: "",
+        isAnonymous: false,
+        urgencyLevel: "",
+        witnesses: "",
+        additionalInfo: "",
+      });
+
+      // Optionally switch to history tab to show the new report
+      setTimeout(() => {
+        setActiveTab("history");
+      }, 1500);
+    } catch (error) {
+      console.error("Error submitting report:", error);
+
+      // Handle API error format from our interceptor
+      if (error && typeof error === "object") {
+        const apiError = error as {
+          message?: string;
+          errors?: Record<string, string[]>;
+        };
+
+        // Handle validation errors from backend
+        if (apiError.errors) {
+          const errorMessages = Object.values(apiError.errors)
+            .flat()
+            .join(", ");
+          toast.error(errorMessages);
+        } else if (apiError.message) {
+          toast.error(apiError.message);
+        } else {
+          toast.error("Failed to submit your report. Please try again.");
+        }
+      } else {
+        toast.error("Failed to submit your report. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -395,8 +547,15 @@ const Complainant = () => {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full">
-            Submit Report
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Report"
+            )}
           </Button>
         </form>
       )}
@@ -404,7 +563,14 @@ const Complainant = () => {
       {/* Report History Tab */}
       {activeTab === "history" && (
         <div className="space-y-4">
-          {mockReports.length === 0 ? (
+          {isLoadingReports ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-gray-500">Loading your reports...</p>
+              </CardContent>
+            </Card>
+          ) : !userReports || userReports.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <FileText className="h-12 w-12 text-gray-400 mb-4" />
@@ -417,7 +583,7 @@ const Complainant = () => {
               </CardContent>
             </Card>
           ) : (
-            mockReports.map((report) => (
+            userReports.map((report) => (
               <Card key={report.id}>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -440,7 +606,7 @@ const Complainant = () => {
                       <div className="space-y-1 text-sm text-gray-600">
                         <div className="flex items-center space-x-2">
                           <FileText className="h-4 w-4" />
-                          <span>Type: {report.reportType}</span>
+                          <span>Type: {report.report_type}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <MapPin className="h-4 w-4" />
@@ -448,19 +614,32 @@ const Complainant = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4" />
-                          <span>Reported: {report.dateReported}</span>
+                          <span>
+                            Reported:{" "}
+                            {new Date(report.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>
+                            Incident Date:{" "}
+                            {new Date(report.date_time).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-col items-end space-y-2">
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(
-                          report.urgencyLevel
+                          report.urgency_level
                         )}`}
                       >
-                        {report.urgencyLevel === "emergency"
+                        {report.urgency_level === "emergency"
                           ? "Emergency"
-                          : `${report.urgencyLevel} Priority`}
+                          : `${
+                              report.urgency_level.charAt(0).toUpperCase() +
+                              report.urgency_level.slice(1)
+                            } Priority`}
                       </span>
                       <span className="text-xs text-gray-500">
                         ID: #{report.id.toString().padStart(4, "0")}
