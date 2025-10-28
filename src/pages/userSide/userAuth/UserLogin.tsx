@@ -15,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/services/api";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -37,7 +38,6 @@ const UserLogin = () => {
     },
   });
 
-  // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated && userType === "user") {
       navigate("/resident", { replace: true });
@@ -49,32 +49,34 @@ const UserLogin = () => {
     setLoginError(null);
 
     try {
-      // Use authService for login
       const result = await authService.userLogin({
         email: data.email,
         password: data.password,
       });
 
       console.log("Login successful:", result);
-
-      // Update auth context with user info
+      toast.success("Login successful");
       login(result.user_info, "user");
 
-      // Navigate to resident dashboard
       navigate("/resident", { replace: true });
     } catch (error: unknown) {
       console.error("Login error:", error);
 
-      // Handle error response with more detailed information
       let errorMessage = "Login failed. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as { response?: { data?: Record<string, unknown> } };
+        const axiosError = error as {
+          response?: { data?: Record<string, unknown> };
+        };
         if (axiosError.response?.data) {
           const result = axiosError.response.data;
           if (result.message && typeof result.message === "string") {
             errorMessage = result.message;
-          } else if (result.errors && typeof result.errors === "object" && result.errors !== null) {
+          } else if (
+            result.errors &&
+            typeof result.errors === "object" &&
+            result.errors !== null
+          ) {
             // Handle validation errors
             const errors = result.errors as Record<string, string[]>;
             const errorKeys = Object.keys(errors);
@@ -88,7 +90,8 @@ const UserLogin = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       } else {
-        errorMessage = "Unable to connect to server. Please check your internet connection.";
+        errorMessage =
+          "Unable to connect to server. Please check your internet connection.";
       }
 
       setLoginError(errorMessage);

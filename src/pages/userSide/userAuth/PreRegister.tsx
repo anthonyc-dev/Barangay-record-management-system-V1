@@ -38,7 +38,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 // Combined Registration Schema
 const registrationSchema = z
@@ -107,7 +107,6 @@ const registrationSchema = z
 
 type RegistrationFormData = z.infer<typeof registrationSchema>;
 
-// Interface for uploaded file with metadata
 interface UploadedFileData {
   file: File;
   uploadId: string;
@@ -117,7 +116,6 @@ interface UploadedFileData {
 }
 
 const PreRegister = () => {
-  // State management
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -128,7 +126,6 @@ const PreRegister = () => {
   const [uploadError, setUploadError] = useState<string>("");
 
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Registration Form
   const form = useForm<RegistrationFormData>({
@@ -250,11 +247,9 @@ const PreRegister = () => {
           registrationResult.message === "Successfully registered" ||
           registrationResult.id
         ) {
-          toast({
-            title: "Registration Completed!",
-            description:
-              "Your account has been created successfully. You can now login.",
-          });
+          toast.success(
+            "Your account has been created successfully. You can now login."
+          );
 
           // Redirect to login page after 2 seconds
           setTimeout(() => {
@@ -292,10 +287,7 @@ const PreRegister = () => {
           ? String(error.message)
           : "Failed to complete registration. Please try again.";
 
-      toast({
-        title: "Registration Failed",
-        description: errorMessage,
-      });
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

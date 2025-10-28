@@ -12,6 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
   Calendar,
   Clock,
   CheckCircle,
@@ -317,28 +325,39 @@ const Complainant = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab("report")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "report"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          File Report
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "history"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          My Reports
-        </button>
-      </div>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            {activeTab === "report" ? (
+              <BreadcrumbPage className="text-blue-600 font-semibold">
+                New Report
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveTab("report")}
+                className="cursor-pointer"
+              >
+                New Report
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            {activeTab === "history" ? (
+              <BreadcrumbPage className="text-blue-600 font-semibold">
+                File History
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveTab("history")}
+                className="cursor-pointer"
+              >
+                Report History
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* File Report Tab */}
       {activeTab === "report" && (

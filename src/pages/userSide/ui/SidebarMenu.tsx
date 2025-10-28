@@ -6,13 +6,10 @@ import {
   Settings,
   ChevronLeft,
   AlertTriangle,
-  LogOut,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+
 import { useState, useEffect } from "react";
 import { userService, type UserDetails } from "@/services/api/userService";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   className?: string;
@@ -28,28 +25,28 @@ const navigation = [
 ];
 
 export function Sidebar({ className, onClose }: SidebarProps) {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
+  // const navigate = useNavigate();
+  // const { logout } = useAuth();
   const isCollapsed: boolean = false;
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      // Use auth context logout which handles API call and localStorage cleanup
-      await logout();
+  // const handleLogout = async () => {
+  //   try {
+  //     // Use auth context logout which handles API call and localStorage cleanup
+  //     await logout();
 
-      // Clear user details cache
-      localStorage.removeItem("user_details_cache");
+  //     // Clear user details cache
+  //     localStorage.removeItem("user_details_cache");
 
-      // Redirect to login page
-      navigate("/", { replace: true });
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Even if logout API fails, still redirect to login
-      navigate("/", { replace: true });
-    }
-  };
+  //     // Redirect to login page
+  //     navigate("/", { replace: true });
+  //   } catch (error) {
+  //     console.error("Logout error:", error);
+  //     // Even if logout API fails, still redirect to login
+  //     navigate("/", { replace: true });
+  //   }
+  // };
 
   // Load user details from cache or fetch if needed
   useEffect(() => {
@@ -205,7 +202,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         </div>
 
         {/* Logout Button */}
-        <Button
+        {/* <Button
           onClick={handleLogout}
           variant="ghost"
           className={cn(
@@ -215,7 +212,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         >
           <LogOut className="h-4 w-4 flex-shrink-0" />
           {!isCollapsed && <span className="ml-3">Logout</span>}
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

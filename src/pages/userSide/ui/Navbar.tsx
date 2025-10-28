@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { userService, type UserDetails } from "@/services/api/userService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -22,15 +24,21 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const [loading, setLoading] = useState(false);
 
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Clear all authentication data
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_info");
-    localStorage.removeItem("user_type");
-    localStorage.removeItem("user_details_cache");
+  const handleLogout = async () => {
+    try {
+      await logout();
 
-    logout();
+      // Clear user details cache
+      localStorage.removeItem("user_details_cache");
+      toast.success("Logout successful");
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      navigate("/", { replace: true });
+    }
   };
 
   // Load user details from cache or fetch if needed
@@ -134,25 +142,40 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                     `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
                   }
                   alt="User Profile"
-                  className="h-8 w-8 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover  border-2 border-blue-500"
                 />
-                <div className="hidden text-sm md:block text-left">
-                  <p className="font-medium">
-                    {loading
-                      ? "Loading..."
-                      : userDetails?.first_name || fallbackUser?.name || "User"}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {loading
-                      ? "Loading..."
-                      : userDetails?.email ||
-                        fallbackUser?.email ||
-                        "user@email.com"}
-                  </p>
-                </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={
+                      userDetails?.valid_id_url ||
+                      `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
+                    }
+                    alt="User Profile"
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <div className="hidden text-sm md:block text-left">
+                    <p className="font-medium">
+                      {loading
+                        ? "Loading..."
+                        : userDetails?.first_name ||
+                          fallbackUser?.name ||
+                          "User"}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {loading
+                        ? "Loading..."
+                        : userDetails?.email ||
+                          fallbackUser?.email ||
+                          "user@email.com"}
+                    </p>
+                  </div>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem className="flex items-center space-x-2">
                 <User className="h-4 w-4" />
                 <span>Profile</span>
@@ -162,7 +185,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 className="flex items-center space-x-2 text-red-600 focus:text-red-600"
                 onClick={handleLogout}
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4 text-red-600 focus:text-red-600" />
                 <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -11,6 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Plus, Clock, CheckCircle, XCircle, User, Loader2 } from "lucide-react";
 import {
   documentService,
@@ -200,29 +208,40 @@ const Documents = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab("request")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "request"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          New Request
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "history"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Request History
-        </button>
-      </div>
+      {/* Navigation Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            {activeTab === "request" ? (
+              <BreadcrumbPage className="text-blue-600 font-semibold">
+                New Request
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveTab("request")}
+                className="cursor-pointer"
+              >
+                New Request
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            {activeTab === "history" ? (
+              <BreadcrumbPage className="text-blue-600 font-semibold">
+                Request History
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveTab("history")}
+                className="cursor-pointer"
+              >
+                Request History
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* New Request Tab */}
       {activeTab === "request" && (
