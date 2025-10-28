@@ -26,6 +26,7 @@ import DocumentsUser from "@/pages/userSide/pages/Documents";
 import Complainant from "@/pages/userSide/pages/Complainant";
 import LoginAdmin from "@/pages/adminPage/auth.admin/Login";
 import HomeAdmin from "@/pages/adminPage/Home.admin";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function AppRoutes() {
   return (
@@ -53,8 +54,15 @@ export default function AppRoutes() {
 
         <Route path="admin-login" element={<LoginAdmin />} />
       </Route>
-      {/* user side */}
-      <Route path="/resident" element={<ResidentLayout />}>
+      {/* user side - Protected routes for authenticated users */}
+      <Route
+        path="/resident"
+        element={
+          <ProtectedRoute requiredType="user">
+            <ResidentLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Home />} />
         <Route path="documents" element={<DocumentsUser />} />
         <Route path="complainant" element={<Complainant />} />

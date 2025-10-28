@@ -1,7 +1,7 @@
 import { Bell, Search, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+
 import { useState, useEffect } from "react";
 import {
   DropdownMenu,
@@ -11,15 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { userService, type UserDetails } from "@/services/api/userService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
   onMenuClick?: () => void;
 }
 
 export function Navbar({ onMenuClick }: NavbarProps) {
-  const navigate = useNavigate();
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const { logout } = useAuth();
 
   const handleLogout = () => {
     // Clear all authentication data
@@ -28,8 +30,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
     localStorage.removeItem("user_type");
     localStorage.removeItem("user_details_cache");
 
-    // Redirect to login page
-    navigate("/");
+    logout();
   };
 
   // Load user details from cache or fetch if needed

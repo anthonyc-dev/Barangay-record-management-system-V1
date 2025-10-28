@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { userService, type UserDetails } from "@/services/api/userService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   className?: string;
@@ -28,19 +29,26 @@ const navigation = [
 
 export function Sidebar({ className, onClose }: SidebarProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const isCollapsed: boolean = false;
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogout = () => {
-    // Clear all authentication data
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_info");
-    localStorage.removeItem("user_type");
-    localStorage.removeItem("user_details_cache");
+  const handleLogout = async () => {
+    try {
+      // Use auth context logout which handles API call and localStorage cleanup
+      await logout();
 
-    // Redirect to login page
-    navigate("/");
+      // Clear user details cache
+      localStorage.removeItem("user_details_cache");
+
+      // Redirect to login page
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout API fails, still redirect to login
+      navigate("/", { replace: true });
+    }
   };
 
   // Load user details from cache or fetch if needed
@@ -79,7 +87,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
             first_name: user.name || "User",
             last_name: "",
             email: user.email || "user@email.com",
-            valid_id_path: "",
+            valid_id_path: user.valid_id_path,
             valid_id_url: user.valid_id_url,
           };
           setUserDetails(fallbackDetails);

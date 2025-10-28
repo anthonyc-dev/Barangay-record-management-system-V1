@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { authService } from "@/services/api";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -25,6 +27,7 @@ const UserLogin = () => {
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAuthenticated, userType, login } = useAuth();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -34,65 +37,61 @@ const UserLogin = () => {
     },
   });
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && userType === "user") {
+      navigate("/resident", { replace: true });
+    }
+  }, [isAuthenticated, userType, navigate]);
+
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     setLoginError(null);
 
     try {
-      const requestData = {
+      // Use authService for login
+      const result = await authService.userLogin({
         email: data.email,
         password: data.password,
-      };
-
-      console.log("Sending login request:", requestData);
-
-      const response = await fetch("http://localhost:8000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
       });
 
-      const result = await response.json();
-      console.log("Server response:", result);
+      console.log("Login successful:", result);
 
-      if (response.ok) {
-        // Store authentication data if provided
-        if (result.token) {
-          localStorage.setItem("auth_token", result.token);
-        }
-        if (result.user_info) {
-          localStorage.setItem("user_info", JSON.stringify(result.user_info));
-        }
+      // Update auth context with user info
+      login(result.user_info, "user");
 
-        // Navigate to resident dashboard
-        navigate("/resident");
-      } else {
-        // Handle error response with more detailed information
-        let errorMessage = "Login failed. Please try again.";
-
-        if (result.message) {
-          errorMessage = result.message;
-        } else if (result.errors) {
-          // Handle validation errors
-          const errorKeys = Object.keys(result.errors);
-          if (errorKeys.length > 0) {
-            errorMessage = result.errors[errorKeys[0]][0] || errorMessage;
-          }
-        } else if (result.error) {
-          errorMessage = result.error;
-        }
-
-        setLoginError(errorMessage);
-      }
+      // Navigate to resident dashboard
+      navigate("/resident", { replace: true });
     } catch (error: unknown) {
       console.error("Login error:", error);
 
-      // Handle network errors
-      setLoginError(
-        "Unable to connect to server. Please check your internet connection."
-      );
+      // Handle error response with more detailed information
+      let errorMessage = "Login failed. Please try again.";
+
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { data?: Record<string, unknown> } };
+        if (axiosError.response?.data) {
+          const result = axiosError.response.data;
+          if (result.message && typeof result.message === "string") {
+            errorMessage = result.message;
+          } else if (result.errors && typeof result.errors === "object" && result.errors !== null) {
+            // Handle validation errors
+            const errors = result.errors as Record<string, string[]>;
+            const errorKeys = Object.keys(errors);
+            if (errorKeys.length > 0 && errors[errorKeys[0]][0]) {
+              errorMessage = errors[errorKeys[0]][0];
+            }
+          } else if (result.error && typeof result.error === "string") {
+            errorMessage = result.error;
+          }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = "Unable to connect to server. Please check your internet connection.";
+      }
+
+      setLoginError(errorMessage);
     } finally {
       setLoading(false);
     }
