@@ -62,8 +62,8 @@ const UserLogin = () => {
         if (result.token) {
           localStorage.setItem("auth_token", result.token);
         }
-        if (result.user) {
-          localStorage.setItem("user_info", JSON.stringify(result.user));
+        if (result.user_info) {
+          localStorage.setItem("user_info", JSON.stringify(result.user_info));
         }
 
         // Navigate to resident dashboard
