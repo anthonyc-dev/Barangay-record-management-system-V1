@@ -244,19 +244,36 @@ const PreRegister = () => {
 
       console.log("Registration response:", registrationResult);
 
-      if (residentResponse.ok && registrationResult.id) {
-        toast({
-          title: "Registration Completed!",
-          description:
-            "Your account has been created successfully. You can now login.",
-        });
+      if (residentResponse.ok) {
+        // Check if registration was successful
+        if (
+          registrationResult.message === "Successfully registered" ||
+          registrationResult.id
+        ) {
+          toast({
+            title: "Registration Completed!",
+            description:
+              "Your account has been created successfully. You can now login.",
+          });
 
-        // Redirect to login page after 2 seconds
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
+          // Redirect to login page after 2 seconds
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+        } else {
+          // Handle validation errors
+          if (registrationResult.errors) {
+            const errorMessages = Object.values(registrationResult.errors)
+              .flat()
+              .join(", ");
+            throw new Error(errorMessages);
+          }
+          throw new Error(
+            registrationResult.message || "Failed to complete registration"
+          );
+        }
       } else {
-        // Handle validation errors
+        // Handle HTTP errors
         if (registrationResult.errors) {
           const errorMessages = Object.values(registrationResult.errors)
             .flat()

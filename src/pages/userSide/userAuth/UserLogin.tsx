@@ -38,15 +38,64 @@ const UserLogin = () => {
     setLoading(true);
     setLoginError(null);
 
-    // Simulate authentication (replace with real API call)
-    setTimeout(() => {
-      setLoading(false);
-      if (data.email === "admin@gmail.com" && data.password === "admin123") {
+    try {
+      const requestData = {
+        email: data.email,
+        password: data.password,
+      };
+
+      console.log("Sending login request:", requestData);
+
+      const response = await fetch("http://localhost:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+
+      if (response.ok) {
+        // Store authentication data if provided
+        if (result.token) {
+          localStorage.setItem("auth_token", result.token);
+        }
+        if (result.user) {
+          localStorage.setItem("user_info", JSON.stringify(result.user));
+        }
+
+        // Navigate to resident dashboard
         navigate("/resident");
       } else {
-        setLoginError("Invalid email or password. Please try again.");
+        // Handle error response with more detailed information
+        let errorMessage = "Login failed. Please try again.";
+
+        if (result.message) {
+          errorMessage = result.message;
+        } else if (result.errors) {
+          // Handle validation errors
+          const errorKeys = Object.keys(result.errors);
+          if (errorKeys.length > 0) {
+            errorMessage = result.errors[errorKeys[0]][0] || errorMessage;
+          }
+        } else if (result.error) {
+          errorMessage = result.error;
+        }
+
+        setLoginError(errorMessage);
       }
-    }, 1200);
+    } catch (error: unknown) {
+      console.error("Login error:", error);
+
+      // Handle network errors
+      setLoginError(
+        "Unable to connect to server. Please check your internet connection."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegister = () => {
