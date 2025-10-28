@@ -23,61 +23,89 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Upload, FileImage, X, Check, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  FileImage,
+  X,
+  Check,
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-const preRegisterSchema = z.object({
-  // Personal Information
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  middleName: z.string().min(1, "Middle name is required"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  suffix: z.string().optional(),
-  birthDate: z.string().min(1, "Birthdate is required"),
-  gender: z.enum(["Male", "Female"], "Gender is required"),
-  placeOfBirth: z.string().min(2, "Place of birth is required"),
-  civilStatus: z.enum(
-    ["Single", "Married", "Widowed", "Divorced", "Separated"],
-    "Civil status is required"
-  ),
+// Combined Registration Schema
+const registrationSchema = z
+  .object({
+    // Account Information
+    fullName: z.string().min(3, "Full name must be at least 3 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(8, "Please confirm your password"),
 
-  // Address Information
-  houseNumber: z.string().min(1, "House number is required"),
-  street: z.string().min(1, "Street is required"),
-  zone: z.string().min(1, "Zone/Purok is required"),
-  city: z.string().min(1, "City is required"),
-  province: z.string().min(1, "Province is required"),
+    // Personal Information
+    firstName: z.string().min(2, "First name must be at least 2 characters"),
+    middleName: z.string().min(1, "Middle name is required"),
+    lastName: z.string().min(2, "Last name must be at least 2 characters"),
+    suffix: z.string().optional(),
+    birthDate: z.string().min(1, "Birthdate is required"),
+    gender: z.enum(["Male", "Female"], { message: "Please select gender" }),
+    placeOfBirth: z.string().min(2, "Place of birth is required"),
+    civilStatus: z.enum(
+      ["Single", "Married", "Widowed", "Divorced", "Separated"],
+      { message: "Please select civil status" }
+    ),
 
-  // Contact Information
-  contactNumber: z
-    .string()
-    .min(11, "Contact number must be at least 11 digits"),
-  email: z.string().email("Invalid email address"),
+    // Address Information
+    houseNumber: z.string().min(1, "House number is required"),
+    street: z.string().min(1, "Street is required"),
+    zone: z.string().min(1, "Zone/Purok is required"),
+    city: z.string().min(1, "City is required"),
+    province: z.string().min(1, "Province is required"),
 
-  // Personal Details
-  nationality: z.string().min(1, "Nationality is required"),
-  religion: z.string().optional(),
-  occupation: z.string().min(1, "Occupation is required"),
+    // Contact Information
+    contactNumber: z
+      .string()
+      .min(11, "Contact number must be at least 11 digits")
+      .regex(
+        /^09\d{9}$/,
+        "Must be a valid Philippine mobile number (09xxxxxxxxx)"
+      ),
 
-  // Parents Information
-  fatherFirstName: z.string().min(1, "Father's first name is required"),
-  fatherMiddleName: z.string().optional(),
-  fatherLastName: z.string().min(1, "Father's last name is required"),
-  motherFirstName: z.string().min(1, "Mother's first name is required"),
-  motherMiddleName: z.string().optional(),
-  motherMaidenName: z.string().min(1, "Mother's maiden name is required"),
+    // Personal Details
+    nationality: z.string().min(1, "Nationality is required"),
+    religion: z.string().min(1, "Religion is required"),
+    occupation: z.string().min(1, "Occupation is required"),
 
-  // Valid ID Upload
-  validId: z
-    .any()
-    .refine((file) => file instanceof File, "Valid ID image is required"),
-});
+    // Parents Information
+    fatherFirstName: z.string().min(1, "Father's first name is required"),
+    fatherMiddleName: z.string().optional(),
+    fatherLastName: z.string().min(1, "Father's last name is required"),
+    motherFirstName: z.string().min(1, "Mother's first name is required"),
+    motherMiddleName: z.string().optional(),
+    motherMaidenName: z.string().min(1, "Mother's maiden name is required"),
 
-type PreRegisterFormData = z.infer<typeof preRegisterSchema>;
+    // Valid ID Upload
+    validId: z
+      .any()
+      .refine((file) => file instanceof File, "Valid ID image is required")
+      .refine(
+        (file) => file instanceof File && file.size <= 10 * 1024 * 1024,
+        "File size must be less than 10MB"
+      ),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type RegistrationFormData = z.infer<typeof registrationSchema>;
 
 // Interface for uploaded file with metadata
 interface UploadedFileData {
@@ -89,30 +117,43 @@ interface UploadedFileData {
 }
 
 const PreRegister = () => {
+  // State management
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<UploadedFileData | null>(
     null
   );
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [uploadError, setUploadError] = useState<string>("");
 
-  const form = useForm<PreRegisterFormData>({
-    resolver: zodResolver(preRegisterSchema),
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Registration Form
+  const form = useForm<RegistrationFormData>({
+    resolver: zodResolver(registrationSchema),
     defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
       firstName: "",
       middleName: "",
       lastName: "",
       suffix: "",
       birthDate: "",
       placeOfBirth: "",
+      gender: undefined,
+      civilStatus: undefined,
       houseNumber: "",
       street: "",
       zone: "",
       city: "",
       province: "",
       contactNumber: "",
-      email: "",
       nationality: "Filipino",
-      religion: "",
+      religion: "Roman Catholic",
       occupation: "",
       fatherFirstName: "",
       fatherMiddleName: "",
@@ -123,8 +164,6 @@ const PreRegister = () => {
       validId: undefined,
     },
   });
-
-  const navigate = useNavigate();
 
   // Cleanup preview URL on component unmount
   useEffect(() => {
@@ -140,26 +179,109 @@ const PreRegister = () => {
     return `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const onSubmit = (data: PreRegisterFormData) => {
-    // Include upload metadata in submission
-    const submissionData = {
-      ...data,
-      uploadInfo: uploadedFile
-        ? {
-            uploadId: uploadedFile.uploadId,
-            fileName: uploadedFile.file.name,
-            fileSize: uploadedFile.file.size,
-            uploadDate: uploadedFile.uploadDate,
-            status: uploadedFile.status,
-          }
-        : null,
-    };
+  // Submit Handler - Create User Account and Resident Record in one step
+  const handleSubmit = async (data: RegistrationFormData) => {
+    setIsSubmitting(true);
 
-    console.log("Registration submitted with upload info:", submissionData);
-    alert(
-      "Registration submitted successfully!\nUpload ID: " +
-        (uploadedFile?.uploadId || "No file uploaded")
-    );
+    try {
+      // Prepare resident data with file upload
+      const formData = new FormData();
+
+      // Add user account information
+      formData.append("name", data.fullName);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      // Add all resident fields - ensure all required fields are included
+      formData.append("first_name", data.firstName);
+      formData.append("middle_name", data.middleName);
+      formData.append("last_name", data.lastName);
+      if (data.suffix) formData.append("suffix", data.suffix);
+      formData.append("birth_date", data.birthDate);
+      formData.append("gender", data.gender);
+      formData.append("place_of_birth", data.placeOfBirth);
+      formData.append("civil_status", data.civilStatus);
+      formData.append("house_number", data.houseNumber);
+      formData.append("street", data.street);
+      formData.append("zone", data.zone);
+      formData.append("city", data.city);
+      formData.append("province", data.province);
+      formData.append("contact_number", data.contactNumber);
+      formData.append("email", data.email);
+      formData.append("nationality", data.nationality);
+      formData.append("religion", data.religion);
+      formData.append("occupation", data.occupation);
+      formData.append("father_first_name", data.fatherFirstName);
+      if (data.fatherMiddleName)
+        formData.append("father_middle_name", data.fatherMiddleName);
+      formData.append("father_last_name", data.fatherLastName);
+      formData.append("mother_first_name", data.motherFirstName);
+      if (data.motherMiddleName)
+        formData.append("mother_middle_name", data.motherMiddleName);
+      formData.append("mother_maiden_name", data.motherMaidenName);
+
+      // Add valid ID file
+      if (data.validId instanceof File) {
+        formData.append("valid_id_path", data.validId);
+      }
+
+      // Debug: Log the form data being sent
+      console.log("Form data being sent:");
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      // Submit to residents endpoint
+      const residentResponse = await fetch(
+        "http://localhost:8000/api/register",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const registrationResult = await residentResponse.json();
+
+      console.log("Registration response:", registrationResult);
+
+      if (residentResponse.ok && registrationResult.id) {
+        toast({
+          title: "Registration Completed!",
+          description:
+            "Your account has been created successfully. You can now login.",
+        });
+
+        // Redirect to login page after 2 seconds
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } else {
+        // Handle validation errors
+        if (registrationResult.errors) {
+          const errorMessages = Object.values(registrationResult.errors)
+            .flat()
+            .join(", ");
+          throw new Error(errorMessages);
+        }
+        throw new Error(
+          registrationResult.message || "Failed to complete registration"
+        );
+      }
+    } catch (error: unknown) {
+      console.error("Registration error:", error);
+
+      const errorMessage =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Failed to complete registration. Please try again.";
+
+      toast({
+        title: "Registration Failed",
+        description: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBack = () => {
@@ -271,39 +393,175 @@ const PreRegister = () => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 w-full max-w-6xl">
         <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+          <div className="bg-gradient-to-r  text-white rounded-t-lg">
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
                 type="button"
                 onClick={handleBack}
-                className="text-white hover:bg-white/20 p-2 rounded-full"
+                className="text-black hover:bg-white/20 pl-8 rounded-full"
+                disabled={isSubmitting}
               >
                 ← Back
               </Button>
               <div className="text-center flex-1">
-                <CardTitle className="text-3xl font-bold mb-2">
+                <CardTitle className="text-3xl font-bold mb-2 text-black">
                   Resident Registration
                 </CardTitle>
-                <CardDescription className="text-blue-100">
+                <CardDescription className="text-blue-400">
                   Please fill out all required information accurately
                 </CardDescription>
               </div>
               <div className="w-20" />
             </div>
-          </CardHeader>
+          </div>
 
           <CardContent className="p-8">
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={form.handleSubmit(handleSubmit)}
                 className="space-y-10"
               >
+                {/* Account Information Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 font-semibold">1</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      Account Information
+                    </h3>
+                    <Badge variant="secondary" className="ml-auto">
+                      Required
+                    </Badge>
+                  </div>
+                  <Separator />
+
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Full Name *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Juan Dela Cruz"
+                              {...field}
+                              className="h-11 border-2 focus:border-blue-500"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Email Address *
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="juan.delacruz@email.com"
+                              {...field}
+                              className="h-11 border-2 focus:border-blue-500"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Password *
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Enter your password"
+                                {...field}
+                                className="h-11 border-2 focus:border-blue-500 pr-10"
+                                disabled={isSubmitting}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="w-5 h-5" />
+                                ) : (
+                                  <Eye className="w-5 h-5" />
+                                )}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Confirm Password *
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="Confirm your password"
+                                {...field}
+                                className="h-11 border-2 focus:border-blue-500 pr-10"
+                                disabled={isSubmitting}
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowConfirmPassword(!showConfirmPassword)
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                              >
+                                {showConfirmPassword ? (
+                                  <EyeOff className="w-5 h-5" />
+                                ) : (
+                                  <Eye className="w-5 h-5" />
+                                )}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
                 {/* Valid ID Upload Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-semibold">1</span>
+                      <span className="text-orange-600 font-semibold">2</span>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Valid ID Upload
@@ -324,7 +582,6 @@ const PreRegister = () => {
                         </FormLabel>
                         <FormControl>
                           <div className="space-y-4">
-                            {/* Error Message */}
                             {uploadError && (
                               <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                                 <AlertCircle className="w-5 h-5 text-red-500" />
@@ -376,7 +633,6 @@ const PreRegister = () => {
                                 }`}
                               >
                                 <div className="space-y-3">
-                                  {/* File Info Header */}
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
                                       <div
@@ -428,7 +684,6 @@ const PreRegister = () => {
                                     </Button>
                                   </div>
 
-                                  {/* Upload Progress */}
                                   {uploadedFile.status === "uploading" && (
                                     <div className="space-y-2">
                                       <div className="flex justify-between text-sm">
@@ -450,40 +705,6 @@ const PreRegister = () => {
                                     </div>
                                   )}
 
-                                  {/* Upload Info */}
-                                  {uploadedFile.status === "completed" && (
-                                    <div className="bg-white/50 rounded-lg p-3 space-y-1">
-                                      <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">
-                                          Upload ID:
-                                        </span>
-                                        <span className="font-mono text-gray-800 text-xs bg-gray-100 px-2 py-1 rounded">
-                                          {uploadedFile.uploadId}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">
-                                          Upload Date:
-                                        </span>
-                                        <span className="text-gray-800">
-                                          {uploadedFile.uploadDate.toLocaleString()}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">
-                                          Status:
-                                        </span>
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-green-100 text-green-800"
-                                        >
-                                          Completed
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Preview */}
                                   {previewUrl &&
                                     uploadedFile.file.type.startsWith(
                                       "image/"
@@ -497,12 +718,11 @@ const PreRegister = () => {
                                       </div>
                                     )}
 
-                                  {/* PDF Info */}
                                   {uploadedFile.file.type ===
                                     "application/pdf" && (
                                     <div className="mt-4 p-3 bg-white/50 rounded-lg border">
                                       <p className="text-sm text-gray-600 text-center">
-                                        📄 PDF file uploaded successfully
+                                        PDF file uploaded successfully
                                       </p>
                                     </div>
                                   )}
@@ -521,7 +741,7 @@ const PreRegister = () => {
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">2</span>
+                      <span className="text-blue-600 font-semibold">3</span>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Personal Information
@@ -547,6 +767,7 @@ const PreRegister = () => {
                               placeholder="Juan"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -566,6 +787,7 @@ const PreRegister = () => {
                               placeholder="Santos"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -585,6 +807,7 @@ const PreRegister = () => {
                               placeholder="Dela Cruz"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -603,13 +826,14 @@ const PreRegister = () => {
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
+                              disabled={isSubmitting}
                             >
                               <SelectTrigger className="w-full h-11 border-2 focus:border-blue-500">
                                 <SelectValue placeholder="Select suffix" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Jr.">Jr.</SelectItem>
-                                <SelectItem value="Sr.">Sr.</SelectItem>
+                                <SelectItem value="Jr">Jr.</SelectItem>
+                                <SelectItem value="Sr">Sr.</SelectItem>
                                 <SelectItem value="II">II</SelectItem>
                                 <SelectItem value="III">III</SelectItem>
                                 <SelectItem value="IV">IV</SelectItem>
@@ -637,6 +861,7 @@ const PreRegister = () => {
                               type="date"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -655,6 +880,7 @@ const PreRegister = () => {
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
+                              disabled={isSubmitting}
                             >
                               <SelectTrigger className="w-full h-11 border-2 focus:border-blue-500">
                                 <SelectValue placeholder="Select gender" />
@@ -681,6 +907,7 @@ const PreRegister = () => {
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
+                              disabled={isSubmitting}
                             >
                               <SelectTrigger className="w-full h-11 border-2 focus:border-blue-500">
                                 <SelectValue placeholder="Select status" />
@@ -715,6 +942,7 @@ const PreRegister = () => {
                               placeholder="Filipino"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -737,6 +965,7 @@ const PreRegister = () => {
                               placeholder="Manila, Philippines"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -749,13 +978,14 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Religion
+                            Religion *
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Roman Catholic"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -775,6 +1005,7 @@ const PreRegister = () => {
                               placeholder="Teacher"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -788,7 +1019,7 @@ const PreRegister = () => {
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 font-semibold">3</span>
+                      <span className="text-green-600 font-semibold">4</span>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Address Information
@@ -813,6 +1044,7 @@ const PreRegister = () => {
                               placeholder="123"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -832,6 +1064,7 @@ const PreRegister = () => {
                               placeholder="Main Street"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -851,6 +1084,7 @@ const PreRegister = () => {
                               placeholder="Zone 1"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -870,6 +1104,7 @@ const PreRegister = () => {
                               placeholder="Quezon City"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -889,6 +1124,7 @@ const PreRegister = () => {
                               placeholder="Metro Manila"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -901,8 +1137,8 @@ const PreRegister = () => {
                 {/* Contact Information Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 font-semibold">4</span>
+                    <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                      <span className="text-teal-600 font-semibold">5</span>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Contact Information
@@ -913,7 +1149,7 @@ const PreRegister = () => {
                   </div>
                   <Separator />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                     <FormField
                       control={form.control}
                       name="contactNumber"
@@ -927,26 +1163,7 @@ const PreRegister = () => {
                               placeholder="09123456789"
                               {...field}
                               className="h-11 border-2 focus:border-blue-500 transition-colors"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-700">
-                            Email Address *
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="juan.delacruz@email.com"
-                              {...field}
-                              className="h-11 border-2 focus:border-blue-500 transition-colors"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -960,7 +1177,7 @@ const PreRegister = () => {
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <span className="text-indigo-600 font-semibold">5</span>
+                      <span className="text-indigo-600 font-semibold">6</span>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Parents Information
@@ -991,6 +1208,7 @@ const PreRegister = () => {
                                 placeholder="Pedro"
                                 {...field}
                                 className="h-11 border-2 focus:border-blue-500 transition-colors"
+                                disabled={isSubmitting}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1010,6 +1228,7 @@ const PreRegister = () => {
                                 placeholder="Garcia"
                                 {...field}
                                 className="h-11 border-2 focus:border-blue-500 transition-colors"
+                                disabled={isSubmitting}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1029,6 +1248,7 @@ const PreRegister = () => {
                                 placeholder="Dela Cruz"
                                 {...field}
                                 className="h-11 border-2 focus:border-blue-500 transition-colors"
+                                disabled={isSubmitting}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1058,6 +1278,7 @@ const PreRegister = () => {
                                 placeholder="Maria"
                                 {...field}
                                 className="h-11 border-2 focus:border-blue-500 transition-colors"
+                                disabled={isSubmitting}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1077,6 +1298,7 @@ const PreRegister = () => {
                                 placeholder="Santos"
                                 {...field}
                                 className="h-11 border-2 focus:border-blue-500 transition-colors"
+                                disabled={isSubmitting}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1096,6 +1318,7 @@ const PreRegister = () => {
                                 placeholder="Reyes"
                                 {...field}
                                 className="h-11 border-2 focus:border-blue-500 transition-colors"
+                                disabled={isSubmitting}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1109,7 +1332,20 @@ const PreRegister = () => {
                 <Separator className="my-8" />
 
                 <div className="flex flex-col space-y-6 pt-6">
-                  <Button type="submit">Submit Registration</Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-11"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting Registration...
+                      </>
+                    ) : (
+                      "Submit Registration"
+                    )}
+                  </Button>
                   <div className="flex justify-center items-center">
                     <span className="text-sm text-gray-600 mr-2">
                       Already have an account?
