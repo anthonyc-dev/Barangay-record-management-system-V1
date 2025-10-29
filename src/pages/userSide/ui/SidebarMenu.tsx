@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { userService, type UserDetails } from "@/services/api/userService";
 
 interface SidebarProps {
@@ -32,26 +33,11 @@ const navigation = [
 export function Sidebar({ className, onClose }: SidebarProps) {
   // const navigate = useNavigate();
   // const { logout } = useAuth();
+  const location = useLocation();
   const isCollapsed: boolean = false;
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState<User | null>(null);
-  // const handleLogout = async () => {
-  //   try {
-  //     // Use auth context logout which handles API call and localStorage cleanup
-  //     await logout();
-
-  //     // Clear user details cache
-  //     localStorage.removeItem("user_details_cache");
-
-  //     // Redirect to login page
-  //     navigate("/", { replace: true });
-  //   } catch (error) {
-  //     console.error("Logout error:", error);
-  //     // Even if logout API fails, still redirect to login
-  //     navigate("/", { replace: true });
-  //   }
-  // };
 
   // Load user details from cache or fetch if needed
   useEffect(() => {
@@ -156,11 +142,11 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       <nav className="flex-1 space-y-1 p-4 mt-5">
         {navigation.map((item) => {
           const Icon = item.icon;
-          const isActive = window.location.pathname === item.href;
+          const isActive = location.pathname === item.href;
           return (
-            <a
+            <Link
               key={item.name}
-              href={item.href}
+              to={item.href}
               className={cn(
                 "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
@@ -171,7 +157,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
             >
               <Icon className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span className="ml-3">{item.name}</span>}
-            </a>
+            </Link>
           );
         })}
       </nav>

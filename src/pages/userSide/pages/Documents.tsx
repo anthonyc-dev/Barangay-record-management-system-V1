@@ -124,7 +124,7 @@ const Documents = () => {
           .toString(36)
           .substring(2, 8)
           .toUpperCase();
-        return `REF-${datePart}-${randomPart}`;
+        return `DOC-${datePart}-${randomPart}`;
       };
 
       const requestData = {

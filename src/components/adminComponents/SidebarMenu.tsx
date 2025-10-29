@@ -15,6 +15,7 @@ import {
   Folder,
 } from "lucide-react";
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 interface SidebarProps {
   className?: string;
@@ -54,6 +55,7 @@ const navigation = [
 ];
 
 export function Sidebar({ className, onClose }: SidebarProps) {
+  const location = useLocation();
   const isCollapsed: boolean = false;
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -112,6 +114,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
           const Icon = item.icon;
           const isExpanded = expandedItems.includes(item.name);
           const hasSubmenu = "submenu" in item;
+          const isActive = location.pathname === item.href;
 
           return (
             <div key={item.name}>
@@ -139,17 +142,19 @@ export function Sidebar({ className, onClose }: SidebarProps) {
                   )}
                 </button>
               ) : (
-                <a
-                  href={item.href}
+                <Link
+                  to={item.href}
                   className={cn(
                     "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    "text-primary-foreground/80 hover:bg-blue-700 hover:text-primary-foreground",
+                    isActive
+                      ? "bg-blue-700 text-primary-foreground"
+                      : "text-primary-foreground/80 hover:bg-blue-700 hover:text-primary-foreground",
                     "focus:bg-primary-light focus:text-primary-foreground focus:outline-none"
                   )}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
                   {!isCollapsed && <span className="ml-3">{item.name}</span>}
-                </a>
+                </Link>
               )}
 
               {/* Submenu */}
@@ -162,19 +167,22 @@ export function Sidebar({ className, onClose }: SidebarProps) {
                 >
                   {item.submenu?.map((subItem) => {
                     const SubIcon = subItem.icon;
+                    const isSubActive = location.pathname === subItem.href;
                     return (
-                      <a
+                      <Link
                         key={subItem.name}
-                        href={subItem.href}
+                        to={subItem.href}
                         className={cn(
                           "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          "text-primary-foreground/60 hover:bg-blue-800 hover:text-primary-foreground/80",
+                          isSubActive
+                            ? "bg-blue-800 text-primary-foreground/90"
+                            : "text-primary-foreground/60 hover:bg-blue-800 hover:text-primary-foreground/80",
                           "focus:bg-primary-light focus:text-primary-foreground focus:outline-none"
                         )}
                       >
                         <SubIcon className="h-4 w-4 flex-shrink-0" />
                         <span className="ml-3">{subItem.name}</span>
-                      </a>
+                      </Link>
                     );
                   })}
                 </div>
