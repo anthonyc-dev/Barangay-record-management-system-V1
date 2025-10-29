@@ -16,6 +16,11 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+interface User {
+  email: string;
+  id: number;
+  name: string;
+}
 const navigation = [
   { name: "Dashboard", href: "/resident", icon: Home },
   { name: "Documents", href: "/resident/documents", icon: FileText },
@@ -30,7 +35,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
   const isCollapsed: boolean = false;
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [userInfo, setUserInfo] = useState<User | null>(null);
   // const handleLogout = async () => {
   //   try {
   //     // Use auth context logout which handles API call and localStorage cleanup
@@ -64,6 +69,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         const userInfo = localStorage.getItem("user_info");
         if (userInfo) {
           const user = JSON.parse(userInfo);
+          setUserInfo(user);
           if (user.id) {
             const response = await userService.getUserDetailsById(user.id);
             const details = response.data;
@@ -102,8 +108,8 @@ export function Sidebar({ className, onClose }: SidebarProps) {
   }, []);
 
   // Get fallback user info from localStorage
-  const userInfo = localStorage.getItem("user_info");
-  const fallbackUser = userInfo ? JSON.parse(userInfo) : null;
+  const userInfos = localStorage.getItem("user_info");
+  const fallbackUser = userInfos ? JSON.parse(userInfos) : null;
 
   return (
     <div
@@ -114,7 +120,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-500 px-4">
+      <div className="flex h-16 items-center justify-between mx-4">
         <div className="flex items-center space-x-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary-foreground">
             <Home className="h-5 w-5 text-primary" />
@@ -147,16 +153,19 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 mt-5">
         {navigation.map((item) => {
           const Icon = item.icon;
+          const isActive = window.location.pathname === item.href;
           return (
             <a
               key={item.name}
               href={item.href}
               className={cn(
                 "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                "text-primary-foreground/80 hover:bg-blue-700 hover:text-primary-foreground",
+                isActive
+                  ? "bg-black/30 text-primary-foreground"
+                  : "text-primary-foreground/80 hover:bg-black/20 hover:text-primary-foreground",
                 "focus:bg-primary-light focus:text-primary-foreground focus:outline-none"
               )}
             >
@@ -168,7 +177,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="border-t border-slate-500 p-4 space-y-3">
+      <div className=" p-4 space-y-3">
         <div
           className={cn(
             "flex items-center rounded-lg px-3 py-2 text-sm",
@@ -188,14 +197,12 @@ export function Sidebar({ className, onClose }: SidebarProps) {
               <p className="text-sm font-medium text-primary-foreground">
                 {loading
                   ? "Loading..."
-                  : userDetails?.first_name || fallbackUser?.name || "User"}
+                  : userInfo?.name || fallbackUser?.name || "User"}
               </p>
               <p className="text-xs text-primary-foreground/70">
                 {loading
                   ? "Loading..."
-                  : userDetails?.email ||
-                    fallbackUser?.email ||
-                    "user@email.com"}
+                  : userInfo?.email || fallbackUser?.email || "user@email.com"}
               </p>
             </div>
           )}

@@ -94,11 +94,11 @@ export const complainantService = {
   },
 
   /**
-   * Get a specific complaint by ID
-   * GET /api/complainant/{id}
+   * Get all complaints for a specific user by user ID
+   * GET /api/complainant-get/{id}
    */
-  getComplaintById: async (id: number): Promise<GetComplaintResponse> => {
-    const response = await apiClient.get<GetComplaintResponse>(
+  getComplaintById: async (id: number): Promise<Complaint[]> => {
+    const response = await apiClient.get<Complaint[]>(
       `/complainant-get/${id}`
     );
     return response.data;

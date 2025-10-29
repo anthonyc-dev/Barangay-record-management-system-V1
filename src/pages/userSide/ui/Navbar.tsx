@@ -19,9 +19,16 @@ interface NavbarProps {
   onMenuClick?: () => void;
 }
 
+interface User {
+  email: string;
+  id: number;
+  name: string;
+}
+
 export function Navbar({ onMenuClick }: NavbarProps) {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState<User | null>(null);
 
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -57,6 +64,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         const userInfo = localStorage.getItem("user_info");
         if (userInfo) {
           const user = JSON.parse(userInfo);
+          setUserInfo(user);
           if (user.id) {
             const response = await userService.getUserDetailsById(user.id);
             const details = response.data;
@@ -94,8 +102,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   }, []);
 
   // Get fallback user info from localStorage
-  const userInfo = localStorage.getItem("user_info");
-  const fallbackUser = userInfo ? JSON.parse(userInfo) : null;
+  const userInfos = localStorage.getItem("user_info");
+  const fallbackUser = userInfos ? JSON.parse(userInfos) : null;
 
   return (
     <header className="h-16 border-b border-border bg-background">
@@ -161,14 +169,12 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                     <p className="font-medium">
                       {loading
                         ? "Loading..."
-                        : userDetails?.first_name ||
-                          fallbackUser?.name ||
-                          "User"}
+                        : userInfo?.name || fallbackUser?.name || "User"}
                     </p>
                     <p className="text-muted-foreground">
                       {loading
                         ? "Loading..."
-                        : userDetails?.email ||
+                        : userInfo?.email ||
                           fallbackUser?.email ||
                           "user@email.com"}
                     </p>

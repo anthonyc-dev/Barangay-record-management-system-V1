@@ -96,18 +96,12 @@ const Complainant = () => {
         return;
       }
 
-      console.log(userInfo?.id);
-      const response = await complainantService.getComplaintById(userInfo.id);
-      // Ensure we always set an array, even if response.data is undefined
+      console.log("Fetching complaints for user ID:", userInfo.id);
+      const complaints = await complainantService.getComplaintById(userInfo.id);
 
-      if (response.data) {
-        const dataArray = Array.isArray(response.data)
-          ? response.data
-          : [response.data];
-        setUserReports(dataArray);
-      }
-
-      // setUserReports(Array.isArray(response.data) ? response.data : []);
+      // The API returns an array directly
+      setUserReports(Array.isArray(complaints) ? complaints : []);
+      console.log("Fetched complaints:", complaints);
     } catch (error) {
       console.error("Error fetching reports:", error);
       // Set empty array on error to prevent undefined issues
@@ -660,9 +654,9 @@ const Complainant = () => {
                               report.urgency_level.slice(1)
                             } Priority`}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      {/* <span className="text-xs text-gray-500">
                         ID: #{report.id.toString().padStart(4, "0")}
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 </CardContent>

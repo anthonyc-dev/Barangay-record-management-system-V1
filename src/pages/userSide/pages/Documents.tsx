@@ -115,6 +115,18 @@ const Documents = () => {
         return;
       }
 
+      const generateReferenceNumber = () => {
+        const datePart = new Date()
+          .toISOString()
+          .slice(0, 10)
+          .replace(/-/g, "");
+        const randomPart = Math.random()
+          .toString(36)
+          .substring(2, 8)
+          .toUpperCase();
+        return `REF-${datePart}-${randomPart}`;
+      };
+
       const requestData = {
         userid: userInfo.id,
         document_type: formData.documentType,
@@ -123,7 +135,7 @@ const Documents = () => {
         contact_number: formData.contactNumber,
         email: formData.email,
         purpose: formData.purpose,
-        reference_number: `REF202`,
+        reference_number: generateReferenceNumber(),
         status: "pending" as const,
       };
 
