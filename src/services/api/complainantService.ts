@@ -113,11 +113,12 @@ export const complainantService = {
     complaintData: Partial<CreateComplaintRequest>
   ): Promise<CreateComplaintResponse> => {
     const response = await apiClient.put<CreateComplaintResponse>(
-      `/complainant/${id}`,
+      `/complainant-update/${id}`,
       complaintData
     );
     return response.data;
   },
+
 
   /**
    * Delete a complaint (if allowed by backend)

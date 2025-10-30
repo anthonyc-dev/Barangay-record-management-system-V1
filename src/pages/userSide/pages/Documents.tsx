@@ -19,7 +19,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Plus, Clock, CheckCircle, XCircle, User, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Clock, CheckCircle, XCircle, User, Loader2, Pencil } from "lucide-react";
 import {
   documentService,
   type DocumentRequest,
@@ -41,6 +48,17 @@ const Documents = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingRequests, setIsFetchingRequests] = useState(false);
   const [referenceCounter, setReferenceCounter] = useState(101);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<DocumentRequest | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    documentType: "",
+    purpose: "",
+    fullName: "",
+    address: "",
+    contactNumber: "",
+    email: "",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   console.log("...", requests, referenceCounter);
 
@@ -203,6 +221,75 @@ const Documents = () => {
         return "text-gray-600 bg-gray-50 border-gray-200";
       default:
         return "text-red-600 bg-red-50 border-red-200";
+    }
+  };
+
+  const handleEditRequest = (request: DocumentRequest) => {
+    setEditingRequest(request);
+    setEditFormData({
+      documentType: request.document_type,
+      purpose: request.purpose,
+      fullName: request.full_name,
+      address: request.address,
+      contactNumber: request.contact_number,
+      email: request.email,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditingRequest(null);
+    setEditFormData({
+      documentType: "",
+      purpose: "",
+      fullName: "",
+      address: "",
+      contactNumber: "",
+      email: "",
+    });
+  };
+
+  const handleUpdateRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingRequest?.id) {
+      toast.error("Invalid document request.");
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const updateData = {
+        document_type: editFormData.documentType,
+        full_name: editFormData.fullName,
+        address: editFormData.address,
+        contact_number: editFormData.contactNumber,
+        email: editFormData.email,
+        purpose: editFormData.purpose,
+      };
+
+      const response = await documentService.updateRequest(
+        editingRequest.id,
+        updateData
+      );
+
+      toast.success(
+        response.message || "Document request updated successfully!"
+      );
+
+      handleCloseEditDialog();
+      fetchDocumentRequests();
+    } catch (error: unknown) {
+      console.error("Error updating document request:", error);
+      toast.error(
+        error && typeof error === "object" && "message" in error
+          ? (error.message as string)
+          : "Failed to update document request. Please try again."
+      );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -469,6 +556,17 @@ const Documents = () => {
                             .toUpperCase() +
                             (request.status || "pending").slice(1)}
                         </span>
+                        {(request.status === "pending" ||
+                          request.status === "processing") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditRequest(request)}
+                          >
+                            <Pencil className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        )}
                         {request.status === "ready" && (
                           <Button size="sm" variant="outline">
                             Claim
@@ -514,6 +612,176 @@ const Documents = () => {
           </Card>
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Document Request</DialogTitle>
+            <DialogDescription>
+              Update your document request information. Only pending and
+              processing requests can be edited.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleUpdateRequest} className="space-y-6">
+            {/* Personal Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Personal Information
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-fullName">Full Name *</Label>
+                  <Input
+                    id="edit-fullName"
+                    placeholder="Enter your full name"
+                    value={editFormData.fullName}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        fullName: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email Address *</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={editFormData.email}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        email: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-contactNumber">Contact Number *</Label>
+                  <Input
+                    id="edit-contactNumber"
+                    placeholder="09XXXXXXXXX"
+                    value={editFormData.contactNumber}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        contactNumber: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="edit-address">Complete Address *</Label>
+                  <Input
+                    id="edit-address"
+                    placeholder="House No., Street, Purok/Sitio, Barangay"
+                    value={editFormData.address}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        address: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Document Details Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Document Details
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-documentType">Document Type *</Label>
+                  <Select
+                    value={editFormData.documentType}
+                    onValueChange={(value) =>
+                      setEditFormData({
+                        ...editFormData,
+                        documentType: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select document type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documentTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-purpose">Purpose *</Label>
+                  <Textarea
+                    id="edit-purpose"
+                    placeholder="e.g., Employment, School Requirements, Government Transaction"
+                    value={editFormData.purpose}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        purpose: e.target.value,
+                      })
+                    }
+                    rows={3}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseEditDialog}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  isUpdating ||
+                  !editFormData.documentType ||
+                  !editFormData.purpose ||
+                  !editFormData.fullName ||
+                  !editFormData.email ||
+                  !editFormData.address ||
+                  !editFormData.contactNumber
+                }
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Request"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

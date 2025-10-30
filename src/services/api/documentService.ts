@@ -84,7 +84,7 @@ export const documentService = {
     documentData: Partial<DocumentRequest>
   ): Promise<UpdateDocumentResponse> => {
     const response = await apiClient.put<UpdateDocumentResponse>(
-      `/request-documents/${id}`,
+      `/update-document/${id}`,
       documentData
     );
     return response.data;

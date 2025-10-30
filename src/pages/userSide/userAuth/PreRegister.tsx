@@ -36,6 +36,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  ChevronLeft,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -411,7 +412,7 @@ const PreRegister = () => {
                 className="text-black hover:bg-white/20 pl-8 rounded-full"
                 disabled={isSubmitting}
               >
-                ← Back
+                <ChevronLeft className="inline-block" /> Back
               </Button>
               <div className="text-center flex-1">
                 <CardTitle className="text-3xl font-bold mb-2 text-black">

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,13 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Calendar,
   Clock,
   CheckCircle,
@@ -29,6 +37,7 @@ import {
   User,
   MapPin,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import complainantService, {
@@ -57,6 +66,23 @@ const Complainant = () => {
     witnesses: "",
     additionalInfo: "",
   });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    reportType: "",
+    title: "",
+    description: "",
+    location: "",
+    dateTime: "",
+    complainantName: "",
+    contactNumber: "",
+    email: "",
+    isAnonymous: false,
+    urgencyLevel: "",
+    witnesses: "",
+    additionalInfo: "",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   console.log("from complaiant", userReports);
 
@@ -304,6 +330,171 @@ const Complainant = () => {
     }
   };
 
+  const handleEditComplaint = (complaint: Complaint) => {
+    setEditingComplaint(complaint);
+
+    // Convert MySQL datetime format (YYYY-MM-DD HH:mm:ss) to datetime-local format (YYYY-MM-DDTHH:mm)
+    const dateTimeValue = complaint.date_time.replace(" ", "T").slice(0, 16);
+
+    setEditFormData({
+      reportType: complaint.report_type,
+      title: complaint.title,
+      description: complaint.description,
+      location: complaint.location,
+      dateTime: dateTimeValue,
+      complainantName: complaint.complainant_name || "",
+      contactNumber: complaint.contact_number || "",
+      email: complaint.email || "",
+      isAnonymous: complaint.is_anonymous,
+      urgencyLevel: complaint.urgency_level,
+      witnesses: complaint.witnesses || "",
+      additionalInfo: complaint.additional_info || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditingComplaint(null);
+    setEditFormData({
+      reportType: "",
+      title: "",
+      description: "",
+      location: "",
+      dateTime: "",
+      complainantName: "",
+      contactNumber: "",
+      email: "",
+      isAnonymous: false,
+      urgencyLevel: "",
+      witnesses: "",
+      additionalInfo: "",
+    });
+  };
+
+  const handleUpdateComplaint = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingComplaint?.id) {
+      toast.error("Invalid complaint.");
+      return;
+    }
+
+    // Validate form
+    const validationError = validateEditForm();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      // Convert datetime-local format to MySQL datetime format
+      const dateTimeFormatted = editFormData.dateTime.replace("T", " ") + ":00";
+
+      const updateData: Partial<CreateComplaintRequest> = {
+        report_type: editFormData.reportType,
+        title: editFormData.title,
+        description: editFormData.description,
+        location: editFormData.location,
+        date_time: dateTimeFormatted,
+        complainant_name: editFormData.isAnonymous
+          ? null
+          : editFormData.complainantName,
+        contact_number: editFormData.isAnonymous
+          ? null
+          : editFormData.contactNumber,
+        email:
+          editFormData.isAnonymous || !editFormData.email
+            ? null
+            : editFormData.email,
+        is_anonymous: editFormData.isAnonymous,
+        urgency_level: editFormData.urgencyLevel as UrgencyLevel,
+        witnesses: editFormData.witnesses.trim() || null,
+        additional_info: editFormData.additionalInfo.trim() || null,
+      };
+
+      const response = await complainantService.updateComplaint(
+        editingComplaint.id,
+        updateData
+      );
+
+      toast.success(
+        response.message || "Complaint updated successfully!"
+      );
+
+      handleCloseEditDialog();
+      fetchUserReports();
+    } catch (error: unknown) {
+      console.error("Error updating complaint:", error);
+
+      if (error && typeof error === "object") {
+        const apiError = error as {
+          message?: string;
+          errors?: Record<string, string[]>;
+        };
+
+        if (apiError.errors) {
+          const errorMessages = Object.values(apiError.errors)
+            .flat()
+            .join(", ");
+          toast.error(errorMessages);
+        } else if (apiError.message) {
+          toast.error(apiError.message);
+        } else {
+          toast.error("Failed to update complaint. Please try again.");
+        }
+      } else {
+        toast.error("Failed to update complaint. Please try again.");
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const validateEditForm = (): string | null => {
+    if (!editFormData.reportType.trim()) {
+      return "Please select a report type";
+    }
+    if (!editFormData.title.trim()) {
+      return "Please enter a report title";
+    }
+    if (!editFormData.description.trim()) {
+      return "Please provide a detailed description";
+    }
+    if (!editFormData.location.trim()) {
+      return "Please enter the location";
+    }
+    if (!editFormData.dateTime) {
+      return "Please select the date and time";
+    }
+    if (!editFormData.urgencyLevel) {
+      return "Please select an urgency level";
+    }
+
+    if (!editFormData.isAnonymous) {
+      if (!editFormData.complainantName.trim()) {
+        return "Please enter your full name";
+      }
+      if (!editFormData.contactNumber.trim()) {
+        return "Please enter your contact number";
+      }
+      const phoneRegex = /^(09|\+639)\d{9}$/;
+      if (!phoneRegex.test(editFormData.contactNumber.replace(/\s|-/g, ""))) {
+        return "Please enter a valid Philippine mobile number (e.g., 09123456789)";
+      }
+      if (
+        editFormData.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)
+      ) {
+        return "Please enter a valid email address";
+      }
+    }
+
+    return null;
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -478,16 +669,27 @@ const Complainant = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+              <div className="flex items-center space-x-2 mb-4">
+                <Checkbox
                   id="anonymous"
                   checked={formData.isAnonymous}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isAnonymous: e.target.checked })
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      isAnonymous: checked === true,
+                      // Clear complainant fields when switching to anonymous
+                      complainantName: checked === true ? "" : formData.complainantName,
+                      contactNumber: checked === true ? "" : formData.contactNumber,
+                      email: checked === true ? "" : formData.email,
+                    })
                   }
                 />
-                <Label htmlFor="anonymous">Submit anonymously</Label>
+                <Label
+                  htmlFor="anonymous"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Submit anonymously
+                </Label>
               </div>
               {!formData.isAnonymous && (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -654,6 +856,17 @@ const Complainant = () => {
                               report.urgency_level.slice(1)
                             } Priority`}
                       </span>
+                      {(report.status === "pending" ||
+                        report.status === "under_investigation") && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditComplaint(report)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                      )}
                       {/* <span className="text-xs text-gray-500">
                         ID: #{report.id.toString().padStart(4, "0")}
                       </span> */}
@@ -665,6 +878,265 @@ const Complainant = () => {
           )}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Complaint/Report</DialogTitle>
+            <DialogDescription>
+              Update your complaint or incident report. Only pending and under
+              investigation reports can be edited.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleUpdateComplaint} className="space-y-6">
+            {/* Report Details */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Report Details
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-reportType">Type of Report *</Label>
+                  <Select
+                    value={editFormData.reportType}
+                    onValueChange={(value) =>
+                      setEditFormData({ ...editFormData, reportType: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select report type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reportTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-urgencyLevel">Urgency Level *</Label>
+                  <Select
+                    value={editFormData.urgencyLevel}
+                    onValueChange={(value) =>
+                      setEditFormData({ ...editFormData, urgencyLevel: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select urgency level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {urgencyLevels.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          <span className={level.color}>{level.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Report Title *</Label>
+                <Input
+                  id="edit-title"
+                  placeholder="Brief description of the incident"
+                  value={editFormData.title}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, title: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-location">Location *</Label>
+                  <Input
+                    id="edit-location"
+                    placeholder="Where did this happen?"
+                    value={editFormData.location}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        location: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-dateTime">Date & Time *</Label>
+                  <Input
+                    id="edit-dateTime"
+                    type="datetime-local"
+                    value={editFormData.dateTime}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        dateTime: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Detailed Description *</Label>
+                <Textarea
+                  id="edit-description"
+                  placeholder="Please provide a detailed description of what happened..."
+                  value={editFormData.description}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={4}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-witnesses">Witnesses (if any)</Label>
+                <Textarea
+                  id="edit-witnesses"
+                  placeholder="List any witnesses with their contact information..."
+                  value={editFormData.witnesses}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      witnesses: e.target.value,
+                    })
+                  }
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            {/* Complainant Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Complainant Information
+              </h3>
+              <div className="flex items-center space-x-2 mb-4">
+                <Checkbox
+                  id="edit-anonymous"
+                  checked={editFormData.isAnonymous}
+                  onCheckedChange={(checked) =>
+                    setEditFormData({
+                      ...editFormData,
+                      isAnonymous: checked === true,
+                      // Clear complainant fields when switching to anonymous
+                      complainantName: checked === true ? "" : editFormData.complainantName,
+                      contactNumber: checked === true ? "" : editFormData.contactNumber,
+                      email: checked === true ? "" : editFormData.email,
+                    })
+                  }
+                />
+                <Label
+                  htmlFor="edit-anonymous"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Submit anonymously
+                </Label>
+              </div>
+              {!editFormData.isAnonymous && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-complainantName">Full Name *</Label>
+                    <Input
+                      id="edit-complainantName"
+                      placeholder="Enter your full name"
+                      value={editFormData.complainantName}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          complainantName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-contactNumber">Contact Number *</Label>
+                    <Input
+                      id="edit-contactNumber"
+                      placeholder="09123456789"
+                      value={editFormData.contactNumber}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          contactNumber: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="edit-email">Email Address</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={editFormData.email}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Additional Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Additional Information
+              </h3>
+              <div className="space-y-2">
+                <Label htmlFor="edit-additionalInfo">Additional Notes</Label>
+                <Textarea
+                  id="edit-additionalInfo"
+                  placeholder="Any additional information that might be helpful..."
+                  value={editFormData.additionalInfo}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      additionalInfo: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseEditDialog}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isUpdating}>
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Report"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
