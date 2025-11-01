@@ -1,6 +1,7 @@
-import { Bell, Search, Menu, LogOut, User } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 import {
   DropdownMenu,
@@ -14,11 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-interface NavbarProps {
-  onMenuClick?: () => void;
-}
-
-export function Navbar({ onMenuClick }: NavbarProps) {
+export function Navbar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -46,22 +43,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       <div className="flex h-full items-center justify-between px-6">
         {/* Left side */}
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onMenuClick}
-            className="lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search residents, documents..."
-              className="pl-10 w-64"
-            />
-          </div>
+          <SidebarTrigger />
         </div>
 
         {/* Right side */}
@@ -91,28 +73,31 @@ export function Navbar({ onMenuClick }: NavbarProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2">
-                  <img
-                    src={
-                      userProfile?.profile_url ||
-                      `https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png`
-                    }
-                    alt="User Profile"
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                  <div className="hidden text-sm md:block text-left">
-                    <p className="font-medium">
-                      {loading ? "Loading..." : userProfile?.name || "User"}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {loading ? "Loading..." : userProfile?.email || "user@email.com"}
-                    </p>
-                  </div>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <img
+                  src={
+                    userProfile?.profile_url ||
+                    `https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png`
+                  }
+                  alt="User Profile"
+                  className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                />
+                <div className="flex flex-col min-w-0 flex-1 text-left text-sm">
+                  <span className="font-semibold truncate">
+                    {loading ? "Loading..." : userProfile?.name || "User"}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {loading
+                      ? "Loading..."
+                      : userProfile?.email || "user@email.com"}
+                  </span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center space-x-2">
+              <DropdownMenuItem
+                className="flex items-center space-x-2"
+                onClick={() => navigate("/resident/settings")}
+              >
                 <User className="h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
