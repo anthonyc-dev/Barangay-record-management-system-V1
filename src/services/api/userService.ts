@@ -11,6 +11,21 @@ export interface UserDetails {
   // Add other fields as needed
 }
 
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  profile_url: string;
+}
+
+export interface UserProfileResponse {
+  response_code: number;
+  status: string;
+  message: string;
+  data?: UserProfile;
+  user_info?: UserProfile;
+}
+
 export interface UserDetailsResponse {
   response_code: number;
   status: string;
@@ -50,6 +65,27 @@ export const userService = {
 
     const user = JSON.parse(userInfo);
     return userService.getUserDetailsById(user.id);
+  },
+
+  // Get user profile by ID from "get-profile" endpoint
+  getUserProfileById: async (id: number): Promise<UserProfileResponse> => {
+    const response = await fetch(
+      `http://localhost:8000/api/get-profile/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
   },
 };
 

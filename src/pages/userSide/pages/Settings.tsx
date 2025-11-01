@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { User, Mail, Save, Camera, Lock, Eye, EyeOff } from "lucide-react";
 import { authService } from "@/services/api/authService";
+import { useUserProfile } from "@/contexts/UserProfileContext";
 import { toast } from "sonner";
 
 // Password change validation schema
@@ -61,21 +62,36 @@ const Settings = () => {
     email: "",
   });
 
-  // Load user data on component mount
+  // Get user profile context for real-time updates
+  const { userProfile, refreshProfile } = useUserProfile();
+
+  // Load user data on component mount and when userProfile changes
   useEffect(() => {
-    const userInfo = authService.getStoredUserInfo();
-    if (userInfo) {
+    if (userProfile) {
       setProfileData({
-        name: userInfo.name || "",
-        email: userInfo.email || "",
+        name: userProfile.name || "",
+        email: userProfile.email || "",
       });
 
       // Load existing profile picture if available
-      if (userInfo.profile_url) {
-        setProfilePicturePreview(userInfo.profile_url);
+      if (userProfile.profile_url) {
+        setProfilePicturePreview(userProfile.profile_url);
+      }
+    } else {
+      // Fallback to localStorage if context hasn't loaded yet
+      const userInfo = authService.getStoredUserInfo();
+      if (userInfo) {
+        setProfileData({
+          name: userInfo.name || "",
+          email: userInfo.email || "",
+        });
+
+        if (userInfo.profile_url) {
+          setProfilePicturePreview(userInfo.profile_url);
+        }
       }
     }
-  }, []);
+  }, [userProfile]);
   // Password change form
   const passwordForm = useForm<PasswordChangeFormValues>({
     resolver: zodResolver(passwordChangeSchema),
@@ -144,6 +160,9 @@ const Settings = () => {
 
       // Clear profile picture file after successful upload
       setProfilePicture(null);
+
+      // Refresh the user profile context to update Navbar and Sidebar in real-time
+      await refreshProfile();
     } catch (error: unknown) {
       console.error("Profile update error:", error);
 
@@ -244,9 +263,7 @@ const Settings = () => {
       <div className="flex items-center space-x-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">
-            Manage your account preferences and privacy settings
-          </p>
+          <p className="text-gray-600">Manage your account</p>
         </div>
       </div>
 

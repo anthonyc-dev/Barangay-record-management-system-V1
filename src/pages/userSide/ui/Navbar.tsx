@@ -2,7 +2,6 @@ import { Bell, Search, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { userService } from "@/services/api/userService";
+import { useUserProfile } from "@/contexts/UserProfileContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -19,26 +18,20 @@ interface NavbarProps {
   onMenuClick?: () => void;
 }
 
-interface User {
-  email: string;
-  id: number;
-  name: string;
-  profile_url?: string;
-}
-
 export function Navbar({ onMenuClick }: NavbarProps) {
-  const [loading, setLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState<User | null>(null);
-
   const { logout } = useAuth();
   const navigate = useNavigate();
 
+  // Use shared user profile context
+  const { userProfile, loading, clearProfile } = useUserProfile();
+
   const handleLogout = async () => {
     try {
+      // Clear profile immediately for instant UI update
+      clearProfile();
+
       await logout();
 
-      // Clear user details cache
-      localStorage.removeItem("user_details_cache");
       toast.success("Logout successful");
       navigate("/", { replace: true });
     } catch (error) {
@@ -47,65 +40,6 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       navigate("/", { replace: true });
     }
   };
-
-  // Load user details from cache or fetch if needed
-  useEffect(() => {
-    const loadUserDetails = async () => {
-      // // Check if we have cached user details
-      // const cachedDetails = localStorage.getItem("user_details_cache");
-      // if (cachedDetails) {
-      //   setUserDetails(JSON.parse(cachedDetails));
-      //   return;
-      // }
-
-      // If no cache, fetch from API
-      setLoading(true);
-      try {
-        const userInfo = localStorage.getItem("user_info");
-        if (userInfo) {
-          const user = JSON.parse(userInfo);
-          setUserInfo(user);
-          if (user.id) {
-            const response = await userService.getUserDetailsById(user.id);
-            const details = response.data;
-            setUserInfo(details);
-            // Cache the details
-            localStorage.setItem("user_details_cache", JSON.stringify(details));
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-        // Fallback to basic user info from localStorage
-        const userInfo = localStorage.getItem("user_info");
-        if (userInfo) {
-          const user = JSON.parse(userInfo);
-          const fallbackDetails = {
-            id: user.id,
-            first_name: user.name || "User",
-            last_name: "",
-            email: user.email || "user@email.com",
-            valid_id_path: "",
-            valid_id_url: "",
-            name: user.name || "User",
-            profile_url: user.profile_url || "",
-          };
-          setUserInfo(fallbackDetails);
-          localStorage.setItem(
-            "user_details_cache",
-            JSON.stringify(fallbackDetails)
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUserDetails();
-  }, []);
-
-  // Get fallback user info from localStorage
-  const userInfos = localStorage.getItem("user_info");
-  const fallbackUser = userInfos ? JSON.parse(userInfos) : null;
 
   return (
     <header className="h-16 border-b border-border bg-background">
@@ -148,9 +82,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
               >
                 <img
                   src={
-                    userInfo?.profile_url ||
-                    fallbackUser?.profile_url ||
-                    `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
+                    userProfile?.profile_url ||
+                    `https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png`
                   }
                   alt="User Profile"
                   className="h-8 w-8 rounded-full object-cover  border-2 border-blue-500"
@@ -162,25 +95,18 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 <div className="flex items-center space-x-2">
                   <img
                     src={
-                      userInfo?.profile_url ||
-                      fallbackUser?.profile_url ||
-                      `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
+                      userProfile?.profile_url ||
+                      `https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png`
                     }
                     alt="User Profile"
                     className="h-8 w-8 rounded-full object-cover"
                   />
                   <div className="hidden text-sm md:block text-left">
                     <p className="font-medium">
-                      {loading
-                        ? "Loading..."
-                        : userInfo?.name || fallbackUser?.name || "User"}
+                      {loading ? "Loading..." : userProfile?.name || "User"}
                     </p>
                     <p className="text-muted-foreground">
-                      {loading
-                        ? "Loading..."
-                        : userInfo?.email ||
-                          fallbackUser?.email ||
-                          "user@email.com"}
+                      {loading ? "Loading..." : userProfile?.email || "user@email.com"}
                     </p>
                   </div>
                 </div>

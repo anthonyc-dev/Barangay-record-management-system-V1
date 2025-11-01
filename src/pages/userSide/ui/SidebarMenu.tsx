@@ -8,21 +8,14 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { userService, type UserDetails } from "@/services/api/userService";
+import { useUserProfile } from "@/contexts/UserProfileContext";
 
 interface SidebarProps {
   className?: string;
   onClose?: () => void;
 }
 
-interface User {
-  email: string;
-  id: number;
-  name: string;
-  profile_url?: string;
-}
 const navigation = [
   { name: "Dashboard", href: "/resident", icon: Home },
   { name: "Documents", href: "/resident/documents", icon: FileText },
@@ -32,82 +25,13 @@ const navigation = [
 ];
 
 export function Sidebar({ className, onClose }: SidebarProps) {
-  // const navigate = useNavigate();
-  // const { logout } = useAuth();
   const location = useLocation();
   const isCollapsed: boolean = false;
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState<User | null>(null);
 
-  console.log("User details:", userDetails);
-  // Load user details from cache or fetch if needed
-  useEffect(() => {
-    const userInfo = localStorage.getItem("user_info");
-    console.log("User info:", userInfo);
-    const loadUserDetails = async () => {
-      // Check if we have cached user details
-      const cachedDetails = localStorage.getItem("user_details_cache");
-      if (cachedDetails) {
-        setUserDetails(JSON.parse(cachedDetails));
-        return;
-      }
+  // Use shared user profile context
+  const { userProfile, loading } = useUserProfile();
 
-      // If no cache, fetch from API
-      setLoading(true);
-      try {
-        const userInfo = localStorage.getItem("user_info");
-        console.log("User info:", userInfo);
-        if (userInfo) {
-          const user = JSON.parse(userInfo);
-          setUserInfo(user);
-          console.log("User:", user);
-          if (user.id) {
-            const response = await userService.getUserDetailsById(user.id);
-            const details = response.data;
-            setUserDetails(details);
-            // Cache the details
-            localStorage.setItem("user_details_cache", JSON.stringify(details));
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-        // Fallback to basic user info from localStorage
-        const userInfo = localStorage.getItem("user_info");
-        const residentInfo = localStorage.getItem("user_details_cache");
-        console.log("Resident info:", residentInfo);
-
-        if (userInfo) {
-          const user = JSON.parse(userInfo);
-          const fallbackDetails = {
-            id: user.id,
-            first_name: user.name || "User",
-            last_name: "",
-            email: user.email || "user@email.com",
-            valid_id_path: user.valid_id_path,
-            valid_id_url: user.valid_id_url,
-            name: user.name || "User",
-            profile_url: user.profile_url || "",
-          };
-          setUserDetails(fallbackDetails);
-          localStorage.setItem(
-            "user_details_cache",
-            JSON.stringify(fallbackDetails)
-          );
-
-          console.log("Fallback details:", fallbackDetails);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUserDetails();
-  }, []);
-
-  // Get fallback user info from localStorage
-  const userInfos = localStorage.getItem("user_info");
-  const fallbackUser = userInfos ? JSON.parse(userInfos) : null;
+  console.log("User profile:", userProfile);
 
   return (
     <div
@@ -184,9 +108,8 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         >
           <img
             src={
-              userInfo?.profile_url ||
-              fallbackUser?.profile_url ||
-              `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
+              userProfile?.profile_url ||
+              `https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png`
             }
             alt="User Profile"
             className="h-8 w-8 rounded-full object-cover flex-shrink-0"
@@ -194,14 +117,10 @@ export function Sidebar({ className, onClose }: SidebarProps) {
           {!isCollapsed && (
             <div className="ml-3 min-w-0">
               <p className="text-sm font-medium text-primary-foreground">
-                {loading
-                  ? "Loading..."
-                  : userInfo?.name || fallbackUser?.name || "User"}
+                {loading ? "Loading..." : userProfile?.name || "User"}
               </p>
               <p className="text-xs text-primary-foreground/70">
-                {loading
-                  ? "Loading..."
-                  : userInfo?.email || fallbackUser?.email || "user@email.com"}
+                {loading ? "Loading..." : userProfile?.email || "user@email.com"}
               </p>
             </div>
           )}
