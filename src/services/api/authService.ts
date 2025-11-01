@@ -183,8 +183,8 @@ export const authService = {
   // Update password
   updatePassword: async (userId: number, passwordData: {
     current_password: string;
-    password: string;
-    password_confirmation: string;
+    new_password: string;
+    new_password_confirmation: string;
   }) => {
     const response = await apiClient.put(`/update-password/${userId}`, passwordData);
     return response.data;
