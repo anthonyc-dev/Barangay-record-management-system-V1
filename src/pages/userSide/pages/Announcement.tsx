@@ -114,33 +114,36 @@ const Announcement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 ">
       {/* Page Header */}
       <div className="flex items-center space-x-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-          <p className="text-gray-600">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+            Announcements
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Stay updated with the latest barangay news and events
           </p>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search announcements..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white"
+            className="pl-10 bg-white h-10"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
           <Button
             variant={filterType === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilterType("all")}
+            className="whitespace-nowrap"
           >
             All
           </Button>
@@ -148,6 +151,7 @@ const Announcement = () => {
             variant={filterType === "event" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilterType("event")}
+            className="whitespace-nowrap"
           >
             Events
           </Button>
@@ -155,6 +159,7 @@ const Announcement = () => {
             variant={filterType === "notice" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilterType("notice")}
+            className="whitespace-nowrap"
           >
             Notices
           </Button>
@@ -162,6 +167,7 @@ const Announcement = () => {
             variant={filterType === "info" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilterType("info")}
+            className="whitespace-nowrap"
           >
             Info
           </Button>
@@ -169,15 +175,15 @@ const Announcement = () => {
       </div>
 
       {/* Announcements List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {filteredAnnouncements.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Megaphone className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+              <Megaphone className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2 text-center">
                 No announcements found
               </h3>
-              <p className="text-gray-500 text-center">
+              <p className="text-sm sm:text-base text-gray-500 text-center max-w-md">
                 {searchTerm || filterType !== "all"
                   ? "Try adjusting your search or filter criteria"
                   : "There are no announcements at the moment"}
@@ -189,41 +195,50 @@ const Announcement = () => {
             <Card
               key={announcement.id}
               className={`transition-all hover:shadow-md ${
-                !announcement.isRead ? "border-l-4 border-l-blue-500" : ""
+                !announcement.isRead
+                  ? "border-l-2 sm:border-l-4 border-l-blue-500"
+                  : ""
               }`}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
+              <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  {/* Icon and Title Section */}
+                  <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
                     <div
-                      className={`p-2 rounded-lg ${getTypeColor(
+                      className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${getTypeColor(
                         announcement.type
                       )}`}
                     >
                       {getTypeIcon(announcement.type)}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <CardTitle className="text-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start space-x-2 mb-1">
+                        <CardTitle className="text-base sm:text-lg flex-1 leading-tight">
                           {announcement.title}
                         </CardTitle>
                         {!announcement.isRead && (
-                          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                          <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></div>
                         )}
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-500">
                         <span className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(announcement.datePosted)}</span>
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="truncate">
+                            {formatDate(announcement.datePosted)}
+                          </span>
                         </span>
-                        <span>By {announcement.author}</span>
+                        <span className="truncate">
+                          By {announcement.author}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+
+                  {/* Badges Section */}
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:ml-2">
                     <Badge
                       variant="outline"
-                      className={`capitalize ${getPriorityColor(
+                      className={`capitalize text-xs ${getPriorityColor(
                         announcement.priority
                       )}`}
                     >
@@ -231,7 +246,7 @@ const Announcement = () => {
                     </Badge>
                     <Badge
                       variant="outline"
-                      className={`capitalize ${getTypeColor(
+                      className={`capitalize text-xs ${getTypeColor(
                         announcement.type
                       )}`}
                     >
@@ -240,8 +255,8 @@ const Announcement = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">
+              <CardContent className="px-4 sm:px-6 pt-0">
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                   {announcement.content}
                 </p>
               </CardContent>

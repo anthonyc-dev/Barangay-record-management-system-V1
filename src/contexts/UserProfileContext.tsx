@@ -57,7 +57,10 @@ export const UserProfileProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Check if user has changed - if so, clear cache and force refresh
-      if (currentUserIdRef.current !== null && currentUserIdRef.current !== user.id) {
+      if (
+        currentUserIdRef.current !== null &&
+        currentUserIdRef.current !== user.id
+      ) {
         console.log("User changed - clearing cache and forcing refresh");
         localStorage.removeItem("user_profile_cache");
         forceRefresh = true;
@@ -104,8 +107,7 @@ export const UserProfileProvider = ({ children }: { children: ReactNode }) => {
 
       // Check for successful response (200-299 status codes are success)
       const isSuccess =
-        response.response_code >= 200 &&
-        response.response_code < 300;
+        response.response_code >= 200 && response.response_code < 300;
 
       if (!isSuccess) {
         throw new Error(response.message || "Failed to fetch profile");
@@ -163,7 +165,10 @@ export const UserProfileProvider = ({ children }: { children: ReactNode }) => {
   // Load profile when user authenticates or user changes
   useEffect(() => {
     if (isAuthenticated && userInfo?.id) {
-      console.log("Auth state changed - loading profile for user:", userInfo.id);
+      console.log(
+        "Auth state changed - loading profile for user:",
+        userInfo.id
+      );
       // Check if this is a different user
       if (currentUserIdRef.current !== userInfo.id) {
         console.log("Different user detected - forcing refresh");

@@ -10,7 +10,8 @@
       "Bash(dir /s \"c:\\Users\\Hp\\Downloads\\GUI-20250813T054956Z-1-001\\barangay-record-management-system\\src\\services\" /B)",
       "Bash(npx tsc:*)",
       "Bash(npx shadcn@latest add avatar)",
-      "Bash(pnpm run dev)"
+      "Bash(pnpm run dev)",
+      "Bash(timeout /t 3 /nobreak)"
     ],
     "deny": [],
     "ask": []

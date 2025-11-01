@@ -26,7 +26,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Clock, CheckCircle, XCircle, User, Loader2, Pencil } from "lucide-react";
+import {
+  Plus,
+  Clock,
+  CheckCircle,
+  XCircle,
+  User,
+  Loader2,
+  Pencil,
+} from "lucide-react";
 import {
   documentService,
   type DocumentRequest,
@@ -49,7 +57,9 @@ const Documents = () => {
   const [isFetchingRequests, setIsFetchingRequests] = useState(false);
   const [referenceCounter, setReferenceCounter] = useState(101);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingRequest, setEditingRequest] = useState<DocumentRequest | null>(null);
+  const [editingRequest, setEditingRequest] = useState<DocumentRequest | null>(
+    null
+  );
   const [editFormData, setEditFormData] = useState({
     documentType: "",
     purpose: "",
@@ -294,14 +304,14 @@ const Documents = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div className="flex items-center space-x-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             Document Requests
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Request barangay documents and track your applications
           </p>
         </div>
@@ -492,7 +502,9 @@ const Documents = () => {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Request History</CardTitle>
+              <CardTitle className="text-base sm:text-lg">
+                Request History
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isFetchingRequests ? (
@@ -500,9 +512,11 @@ const Documents = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : requests.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No document requests found.</p>
-                  <p className="text-sm mt-2">
+                <div className="text-center py-8 px-4 text-muted-foreground">
+                  <p className="text-sm sm:text-base">
+                    No document requests found.
+                  </p>
+                  <p className="text-xs sm:text-sm mt-2">
                     Submit a new request to get started.
                   </p>
                 </div>
@@ -511,27 +525,30 @@ const Documents = () => {
                   {requests.map((request, index) => (
                     <div
                       key={request.id || index}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg"
+                      className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 sm:p-6 border border-border rounded-lg"
                     >
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
+                      {/* Request Details Section */}
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="flex-shrink-0 mt-1 sm:mt-0">
                           {getStatusIcon(request.status || "pending")}
-                          <div>
-                            <h4 className="font-medium">
-                              {request.document_type}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {request.purpose}
-                            </p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm sm:text-base break-words">
+                            {request.document_type}
+                          </h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">
+                            {request.purpose}
+                          </p>
+                          <div className="mt-2 space-y-0.5">
                             {request.reference_number && (
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-muted-foreground truncate">
                                 Ref: {request.reference_number}
                               </p>
                             )}
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground truncate">
                               Requestor: {request.full_name}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground truncate">
                               Contact: {request.contact_number}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -545,9 +562,11 @@ const Documents = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+
+                      {/* Actions Section */}
+                      <div className="flex flex-row sm:flex-row items-center gap-2 sm:gap-3 lg:flex-shrink-0">
                         <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                          className={`px-2 sm:px-3 py-1 text-xs font-medium rounded-full border whitespace-nowrap ${getStatusColor(
                             request.status || "pending"
                           )}`}
                         >
@@ -562,13 +581,18 @@ const Documents = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleEditRequest(request)}
+                            className="whitespace-nowrap"
                           >
-                            <Pencil className="h-4 w-4 mr-1" />
-                            Edit
+                            <Pencil className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Edit</span>
                           </Button>
                         )}
                         {request.status === "ready" && (
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="whitespace-nowrap"
+                          >
                             Claim
                           </Button>
                         )}
@@ -583,29 +607,41 @@ const Documents = () => {
           {/* Quick Info Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Important Information</CardTitle>
+              <CardTitle className="text-base sm:text-lg">
+                Important Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>
-                  <p>Processing time: 3-5 business days for most documents</p>
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <p className="flex-1">
+                    Processing time: 3-5 business days for most documents
+                  </p>
                 </div>
-                <div className="flex items-start space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>
-                  <p>Bring valid ID when claiming documents</p>
+                <div className="flex items-start gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <p className="flex-1">
+                    Bring valid ID when claiming documents
+                  </p>
                 </div>
-                <div className="flex items-start space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>
-                  <p>Office hours: Monday-Friday, 8:00 AM - 5:00 PM</p>
+                <div className="flex items-start gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <p className="flex-1">
+                    Office hours: Monday-Friday, 8:00 AM - 5:00 PM
+                  </p>
                 </div>
-                <div className="flex items-start space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>
-                  <p>For urgent requests, visit the barangay office directly</p>
+                <div className="flex items-start gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <p className="flex-1">
+                    For urgent requests, visit the barangay office directly
+                  </p>
                 </div>
-                <div className="flex items-start space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>
-                  <p>All fields marked with (*) are required</p>
+                <div className="flex items-start gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <p className="flex-1">
+                    All fields marked with (*) are required
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -615,22 +651,27 @@ const Documents = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Document Request</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-lg sm:text-xl">
+              Edit Document Request
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Update your document request information. Only pending and
               processing requests can be edited.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleUpdateRequest} className="space-y-6">
+          <form
+            onSubmit={handleUpdateRequest}
+            className="space-y-4 sm:space-y-6"
+          >
             {/* Personal Information Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
                 Personal Information
               </h3>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="edit-fullName">Full Name *</Label>
                   <Input
@@ -699,11 +740,11 @@ const Documents = () => {
             </div>
 
             {/* Document Details Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
                 Document Details
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-documentType">Document Type *</Label>
                   <Select
@@ -748,12 +789,13 @@ const Documents = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCloseEditDialog}
                 disabled={isUpdating}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -768,6 +810,7 @@ const Documents = () => {
                   !editFormData.address ||
                   !editFormData.contactNumber
                 }
+                className="w-full sm:w-auto"
               >
                 {isUpdating ? (
                   <>
