@@ -127,6 +127,16 @@ const UserLogin = () => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="absolute inset-0 bg-black/30" />
       <div className="relative z-10 w-full max-w-md mx-auto p-8 rounded-2xl shadow-lg border-0 bg-white/95 backdrop-blur-sm">
+        {/* Logo at the top */}
+        <div className="flex justify-center mb-4">
+          <img
+            src="/image/2s.png"
+            alt="Logo"
+            className="h-20 w-20 object-contain rounded-full shadow"
+            draggable={false}
+            style={{ background: "#fff" }}
+          />
+        </div>
         <h2 className="text-3xl font-bold text-center mb-2 ">Sign In</h2>
         <p className="text-center text-gray-500 mb-8">
           Welcome back! Please log in to your account.

@@ -44,8 +44,12 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       {/* Header */}
       <div className="flex h-16 items-center justify-between mx-4">
         <div className="flex items-center space-x-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary-foreground">
-            <Home className="h-5 w-5 text-primary" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground overflow-hidden">
+            <img
+              src="/image/2s.png"
+              alt="Barangay Logo"
+              className="object-cover h-8 w-8 rounded-full"
+            />
           </div>
           {!isCollapsed && (
             <div>
@@ -120,7 +124,9 @@ export function Sidebar({ className, onClose }: SidebarProps) {
                 {loading ? "Loading..." : userProfile?.name || "User"}
               </p>
               <p className="text-xs text-primary-foreground/70">
-                {loading ? "Loading..." : userProfile?.email || "user@email.com"}
+                {loading
+                  ? "Loading..."
+                  : userProfile?.email || "user@email.com"}
               </p>
             </div>
           )}
