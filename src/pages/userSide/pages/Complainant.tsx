@@ -67,7 +67,9 @@ const Complainant = () => {
     additionalInfo: "",
   });
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null);
+  const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(
+    null
+  );
   const [editFormData, setEditFormData] = useState({
     reportType: "",
     title: "",
@@ -129,7 +131,7 @@ const Complainant = () => {
       setUserReports(Array.isArray(complaints) ? complaints : []);
       console.log("Fetched complaints:", complaints);
     } catch (error) {
-      console.error("Error fetching reports:", error);
+      toast.error("Error fetching reports");
       // Set empty array on error to prevent undefined issues
       setUserReports([]);
 
@@ -420,9 +422,7 @@ const Complainant = () => {
         updateData
       );
 
-      toast.success(
-        response.message || "Complaint updated successfully!"
-      );
+      toast.success(response.message || "Complaint updated successfully!");
 
       handleCloseEditDialog();
       fetchUserReports();
@@ -678,8 +678,10 @@ const Complainant = () => {
                       ...formData,
                       isAnonymous: checked === true,
                       // Clear complainant fields when switching to anonymous
-                      complainantName: checked === true ? "" : formData.complainantName,
-                      contactNumber: checked === true ? "" : formData.contactNumber,
+                      complainantName:
+                        checked === true ? "" : formData.complainantName,
+                      contactNumber:
+                        checked === true ? "" : formData.contactNumber,
                       email: checked === true ? "" : formData.email,
                     })
                   }
@@ -1029,8 +1031,10 @@ const Complainant = () => {
                       ...editFormData,
                       isAnonymous: checked === true,
                       // Clear complainant fields when switching to anonymous
-                      complainantName: checked === true ? "" : editFormData.complainantName,
-                      contactNumber: checked === true ? "" : editFormData.contactNumber,
+                      complainantName:
+                        checked === true ? "" : editFormData.complainantName,
+                      contactNumber:
+                        checked === true ? "" : editFormData.contactNumber,
                       email: checked === true ? "" : editFormData.email,
                     })
                   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,15 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   Form,
   FormControl,
@@ -24,18 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Bell,
-  Shield,
-  Save,
-  Camera,
-  Lock,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { User, Mail, Save, Camera, Lock, Eye, EyeOff } from "lucide-react";
 import { authService } from "@/services/api/authService";
 import { toast } from "sonner";
 
@@ -64,35 +51,31 @@ const Settings = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<
+    string | null
+  >(null);
   const [profileData, setProfileData] = useState({
-    firstName: "Juan",
-    lastName: "Dela Cruz",
-    email: "juan.delacruz@email.com",
-    phone: "09123456789",
-    address: "123 Main Street, Barangay Sample",
-    birthDate: "1990-01-15",
-    civilStatus: "Single",
-    occupation: "Teacher",
-    emergencyContact: "09987654321",
-    emergencyContactName: "Maria Dela Cruz",
+    name: "",
+    email: "",
   });
 
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: false,
-    announcementAlerts: true,
-    documentUpdates: true,
-    eventReminders: true,
-  });
+  // Load user data on component mount
+  useEffect(() => {
+    const userInfo = authService.getStoredUserInfo();
+    if (userInfo) {
+      setProfileData({
+        name: userInfo.name || "",
+        email: userInfo.email || "",
+      });
 
-  const [privacySettings, setPrivacySettings] = useState({
-    profileVisibility: "public",
-    showEmail: false,
-    showPhone: false,
-    showAddress: false,
-  });
-  const userInfo = authService.getStoredUserInfo();
-  console.log("Updating password for user ID:", userInfo);
+      // Load existing profile picture if available
+      if (userInfo.profile_url) {
+        setProfilePicturePreview(userInfo.profile_url);
+      }
+    }
+  }, []);
   // Password change form
   const passwordForm = useForm<PasswordChangeFormValues>({
     resolver: zodResolver(passwordChangeSchema),
@@ -103,24 +86,96 @@ const Settings = () => {
     },
   });
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfilePictureChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size must be less than 2MB");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file (JPG, PNG, or GIF)");
+        return;
+      }
+
+      setProfilePicture(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Profile updated:", profileData);
-    // TODO: Replace with actual API call
-    toast.success("Your profile information has been updated successfully.");
-  };
+    setIsUpdatingProfile(true);
 
-  const handleNotificationUpdate = () => {
-    console.log("Notification settings updated:", notificationSettings);
-    // TODO: Replace with actual API call
-    toast.success("Your notification preferences have been saved.");
-  };
+    try {
+      const userInfo = authService.getStoredUserInfo();
+      if (!userInfo?.id) {
+        toast.error("User not authenticated. Please log in again.");
+        return;
+      }
 
-  const handlePrivacyUpdate = () => {
-    console.log("Privacy settings updated:", privacySettings);
-    // TODO: Replace with actual API call
+      const formData = new FormData();
+      formData.append("name", profileData.name);
+      formData.append("email", profileData.email);
 
-    toast.success("Your privacy settings have been saved.");
+      if (profilePicture) {
+        formData.append("profile", profilePicture);
+      }
+
+      const response = await authService.updateProfile(userInfo.id, formData);
+
+      toast.success("Your profile information has been updated successfully.");
+
+      // Update profile picture preview if a new profile picture was returned
+      if (response.user_info?.profile_url) {
+        setProfilePicturePreview(response.user_info.profile_url);
+      }
+
+      // Clear profile picture file after successful upload
+      setProfilePicture(null);
+    } catch (error: unknown) {
+      console.error("Profile update error:", error);
+
+      let errorMessage = "Failed to update profile. Please try again.";
+
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response
+      ) {
+        const responseData = error.response.data as Record<string, unknown>;
+
+        if (responseData.message && typeof responseData.message === "string") {
+          errorMessage = responseData.message;
+        } else if (
+          responseData.errors &&
+          typeof responseData.errors === "object"
+        ) {
+          const errors = responseData.errors as Record<string, string[]>;
+          errorMessage = Object.values(errors).flat().join(", ");
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setIsUpdatingProfile(false);
+    }
   };
 
   const handlePasswordChange = async (data: PasswordChangeFormValues) => {
@@ -195,267 +250,151 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab("profile")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "profile"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Profile
-        </button>
-        <button
-          onClick={() => setActiveTab("security")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "security"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Security
-        </button>
-        <button
-          onClick={() => setActiveTab("notifications")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "notifications"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Notifications
-        </button>
-        <button
-          onClick={() => setActiveTab("privacy")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "privacy"
-              ? "bg-white text-primary shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Privacy
-        </button>
-      </div>
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          {activeTab === "profile" ? (
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-blue-600 font-semibold">
+                Profile
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          ) : (
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => setActiveTab("profile")}
+                className="cursor-pointer"
+              >
+                Profile
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          )}
+          <BreadcrumbSeparator />
+          {activeTab === "security" ? (
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-blue-600 font-semibold">
+                Security
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          ) : (
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => setActiveTab("security")}
+                className="cursor-pointer"
+              >
+                Security
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          )}
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* Profile Tab */}
-      {/* TODO: Template for future implementation - Connect to backend API */}
       {activeTab === "profile" && (
-        <div className="space-y-6">
-          {/* Profile Picture Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Camera className="h-5 w-5" />
-                <span>Profile Picture</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                  <User className="h-10 w-10 text-gray-400" />
-                </div>
-                <div>
-                  <Button variant="outline" size="sm">
-                    Change Photo
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-1">
-                    JPG, PNG or GIF. Max size 2MB.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>Personal Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleProfileUpdate} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      value={profileData.firstName}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          firstName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      value={profileData.lastName}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          lastName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        className="pl-10"
-                        value={profileData.email}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            email: e.target.value,
-                          })
-                        }
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <User className="h-5 w-5" />
+              <span>Profile Information</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
+              {/* Profile Picture Section */}
+              <div className="space-y-2">
+                <Label>Profile Picture</Label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                    {profilePicturePreview ? (
+                      <img
+                        src={profilePicturePreview}
+                        alt="Profile preview"
+                        className="w-full h-full object-cover"
                       />
-                    </div>
+                    ) : (
+                      <User className="h-10 w-10 text-gray-400" />
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                      <Input
-                        id="phone"
-                        className="pl-10"
-                        value={profileData.phone}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            phone: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Textarea
-                      id="address"
-                      className="pl-10"
-                      value={profileData.address}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          address: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate">Birth Date</Label>
+                  <div>
                     <Input
-                      id="birthDate"
-                      type="date"
-                      value={profileData.birthDate}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          birthDate: e.target.value,
-                        })
-                      }
+                      id="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePictureChange}
+                      className="hidden"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="civilStatus">Civil Status</Label>
-                    <Select
-                      value={profileData.civilStatus}
-                      onValueChange={(value) =>
-                        setProfileData({ ...profileData, civilStatus: value })
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        document.getElementById("profilePicture")?.click()
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married">Married</SelectItem>
-                        <SelectItem value="Divorced">Divorced</SelectItem>
-                        <SelectItem value="Widowed">Widowed</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Camera className="h-4 w-4 mr-2" />
+                      Change Photo
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-1">
+                      JPG, PNG or GIF. Max size 2MB.
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="occupation">Occupation</Label>
+              {/* Name Field */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={profileData.name}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+
+              {/* Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
-                    id="occupation"
-                    value={profileData.occupation}
+                    id="email"
+                    type="email"
+                    className="pl-10"
+                    value={profileData.email}
                     onChange={(e) =>
                       setProfileData({
                         ...profileData,
-                        occupation: e.target.value,
+                        email: e.target.value,
                       })
                     }
+                    placeholder="Enter your email address"
+                    required
                   />
                 </div>
+              </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyContactName">
-                      Emergency Contact Name
-                    </Label>
-                    <Input
-                      id="emergencyContactName"
-                      value={profileData.emergencyContactName}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          emergencyContactName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyContact">
-                      Emergency Contact Number
-                    </Label>
-                    <Input
-                      id="emergencyContact"
-                      value={profileData.emergencyContact}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          emergencyContact: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button type="submit" className="flex items-center space-x-2">
-                    <Save className="h-4 w-4" />
-                    <span>Save Changes</span>
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={isUpdatingProfile}
+                  className="flex items-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>
+                    {isUpdatingProfile ? "Updating..." : "Save Changes"}
+                  </span>
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Security Tab */}
@@ -595,225 +534,6 @@ const Settings = () => {
                 </div>
               </form>
             </Form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Notifications Tab */}
-      {/* TODO: Template for future implementation - Connect to backend API */}
-      {activeTab === "notifications" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Bell className="h-5 w-5" />
-              <span>Notification Preferences</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="emailNotifications">Email Notifications</Label>
-                <p className="text-sm text-gray-500">
-                  Receive notifications via email
-                </p>
-              </div>
-              <Switch
-                id="emailNotifications"
-                checked={notificationSettings.emailNotifications}
-                onCheckedChange={(checked) =>
-                  setNotificationSettings({
-                    ...notificationSettings,
-                    emailNotifications: checked,
-                  })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="smsNotifications">SMS Notifications</Label>
-                <p className="text-sm text-gray-500">
-                  Receive notifications via SMS
-                </p>
-              </div>
-              <Switch
-                id="smsNotifications"
-                checked={notificationSettings.smsNotifications}
-                onCheckedChange={(checked) =>
-                  setNotificationSettings({
-                    ...notificationSettings,
-                    smsNotifications: checked,
-                  })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="announcementAlerts">Announcement Alerts</Label>
-                <p className="text-sm text-gray-500">
-                  Get notified about new barangay announcements
-                </p>
-              </div>
-              <Switch
-                id="announcementAlerts"
-                checked={notificationSettings.announcementAlerts}
-                onCheckedChange={(checked) =>
-                  setNotificationSettings({
-                    ...notificationSettings,
-                    announcementAlerts: checked,
-                  })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="documentUpdates">Document Updates</Label>
-                <p className="text-sm text-gray-500">
-                  Get notified about document request status changes
-                </p>
-              </div>
-              <Switch
-                id="documentUpdates"
-                checked={notificationSettings.documentUpdates}
-                onCheckedChange={(checked) =>
-                  setNotificationSettings({
-                    ...notificationSettings,
-                    documentUpdates: checked,
-                  })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="eventReminders">Event Reminders</Label>
-                <p className="text-sm text-gray-500">
-                  Receive reminders about upcoming events
-                </p>
-              </div>
-              <Switch
-                id="eventReminders"
-                checked={notificationSettings.eventReminders}
-                onCheckedChange={(checked) =>
-                  setNotificationSettings({
-                    ...notificationSettings,
-                    eventReminders: checked,
-                  })
-                }
-              />
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={handleNotificationUpdate}
-                className="flex items-center space-x-2"
-              >
-                <Save className="h-4 w-4" />
-                <span>Save Preferences</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Privacy Tab */}
-      {/* TODO: Template for future implementation - Connect to backend API */}
-      {activeTab === "privacy" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>Privacy Settings</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="profileVisibility">Profile Visibility</Label>
-              <Select
-                value={privacySettings.profileVisibility}
-                onValueChange={(value) =>
-                  setPrivacySettings({
-                    ...privacySettings,
-                    profileVisibility: value,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="public">Public</SelectItem>
-                  <SelectItem value="barangay">Barangay Only</SelectItem>
-                  <SelectItem value="private">Private</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-gray-500">
-                Control who can see your profile information
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="showEmail">Show Email Address</Label>
-                <p className="text-sm text-gray-500">
-                  Allow others to see your email address
-                </p>
-              </div>
-              <Switch
-                id="showEmail"
-                checked={privacySettings.showEmail}
-                onCheckedChange={(checked) =>
-                  setPrivacySettings({ ...privacySettings, showEmail: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="showPhone">Show Phone Number</Label>
-                <p className="text-sm text-gray-500">
-                  Allow others to see your phone number
-                </p>
-              </div>
-              <Switch
-                id="showPhone"
-                checked={privacySettings.showPhone}
-                onCheckedChange={(checked) =>
-                  setPrivacySettings({ ...privacySettings, showPhone: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="showAddress">Show Address</Label>
-                <p className="text-sm text-gray-500">
-                  Allow others to see your address
-                </p>
-              </div>
-              <Switch
-                id="showAddress"
-                checked={privacySettings.showAddress}
-                onCheckedChange={(checked) =>
-                  setPrivacySettings({
-                    ...privacySettings,
-                    showAddress: checked,
-                  })
-                }
-              />
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={handlePrivacyUpdate}
-                className="flex items-center space-x-2"
-              >
-                <Save className="h-4 w-4" />
-                <span>Save Settings</span>
-              </Button>
-            </div>
           </CardContent>
         </Card>
       )}

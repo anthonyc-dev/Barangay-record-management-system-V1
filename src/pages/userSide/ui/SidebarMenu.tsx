@@ -21,6 +21,7 @@ interface User {
   email: string;
   id: number;
   name: string;
+  profile_url?: string;
 }
 const navigation = [
   { name: "Dashboard", href: "/resident", icon: Home },
@@ -39,8 +40,11 @@ export function Sidebar({ className, onClose }: SidebarProps) {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState<User | null>(null);
 
+  console.log("User details:", userDetails);
   // Load user details from cache or fetch if needed
   useEffect(() => {
+    const userInfo = localStorage.getItem("user_info");
+    console.log("User info:", userInfo);
     const loadUserDetails = async () => {
       // Check if we have cached user details
       const cachedDetails = localStorage.getItem("user_details_cache");
@@ -53,9 +57,11 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       setLoading(true);
       try {
         const userInfo = localStorage.getItem("user_info");
+        console.log("User info:", userInfo);
         if (userInfo) {
           const user = JSON.parse(userInfo);
           setUserInfo(user);
+          console.log("User:", user);
           if (user.id) {
             const response = await userService.getUserDetailsById(user.id);
             const details = response.data;
@@ -68,6 +74,8 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         console.error("Error fetching user details:", error);
         // Fallback to basic user info from localStorage
         const userInfo = localStorage.getItem("user_info");
+        const residentInfo = localStorage.getItem("user_details_cache");
+        console.log("Resident info:", residentInfo);
 
         if (userInfo) {
           const user = JSON.parse(userInfo);
@@ -78,12 +86,16 @@ export function Sidebar({ className, onClose }: SidebarProps) {
             email: user.email || "user@email.com",
             valid_id_path: user.valid_id_path,
             valid_id_url: user.valid_id_url,
+            name: user.name || "User",
+            profile_url: user.profile_url || "",
           };
           setUserDetails(fallbackDetails);
           localStorage.setItem(
             "user_details_cache",
             JSON.stringify(fallbackDetails)
           );
+
+          console.log("Fallback details:", fallbackDetails);
         }
       } finally {
         setLoading(false);
@@ -172,7 +184,8 @@ export function Sidebar({ className, onClose }: SidebarProps) {
         >
           <img
             src={
-              userDetails?.valid_id_url ||
+              userInfo?.profile_url ||
+              fallbackUser?.profile_url ||
               `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
             }
             alt="User Profile"

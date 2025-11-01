@@ -190,6 +190,22 @@ export const authService = {
     return response.data;
   },
 
+  // Update profile
+  updateProfile: async (userId: number, profileData: FormData) => {
+    const response = await apiClient.post(`/update-profile/${userId}`, profileData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // Update stored user info if name or email changed
+    if (response.data.user_info) {
+      localStorage.setItem('user_info', JSON.stringify(response.data.user_info));
+    }
+
+    return response.data;
+  },
+
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem('auth_token');

@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { userService, type UserDetails } from "@/services/api/userService";
+import { userService } from "@/services/api/userService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -23,10 +23,10 @@ interface User {
   email: string;
   id: number;
   name: string;
+  profile_url?: string;
 }
 
 export function Navbar({ onMenuClick }: NavbarProps) {
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState<User | null>(null);
 
@@ -51,12 +51,12 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   // Load user details from cache or fetch if needed
   useEffect(() => {
     const loadUserDetails = async () => {
-      // Check if we have cached user details
-      const cachedDetails = localStorage.getItem("user_details_cache");
-      if (cachedDetails) {
-        setUserDetails(JSON.parse(cachedDetails));
-        return;
-      }
+      // // Check if we have cached user details
+      // const cachedDetails = localStorage.getItem("user_details_cache");
+      // if (cachedDetails) {
+      //   setUserDetails(JSON.parse(cachedDetails));
+      //   return;
+      // }
 
       // If no cache, fetch from API
       setLoading(true);
@@ -68,7 +68,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           if (user.id) {
             const response = await userService.getUserDetailsById(user.id);
             const details = response.data;
-            setUserDetails(details);
+            setUserInfo(details);
             // Cache the details
             localStorage.setItem("user_details_cache", JSON.stringify(details));
           }
@@ -86,8 +86,10 @@ export function Navbar({ onMenuClick }: NavbarProps) {
             email: user.email || "user@email.com",
             valid_id_path: "",
             valid_id_url: "",
+            name: user.name || "User",
+            profile_url: user.profile_url || "",
           };
-          setUserDetails(fallbackDetails);
+          setUserInfo(fallbackDetails);
           localStorage.setItem(
             "user_details_cache",
             JSON.stringify(fallbackDetails)
@@ -146,7 +148,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
               >
                 <img
                   src={
-                    userDetails?.valid_id_url ||
+                    userInfo?.profile_url ||
+                    fallbackUser?.profile_url ||
                     `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
                   }
                   alt="User Profile"
@@ -159,7 +162,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 <div className="flex items-center space-x-2">
                   <img
                     src={
-                      userDetails?.valid_id_url ||
+                      userInfo?.profile_url ||
+                      fallbackUser?.profile_url ||
                       `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cHJvZmlsZSUyMHBob3RvfGVufDB8fDB8fHww`
                     }
                     alt="User Profile"

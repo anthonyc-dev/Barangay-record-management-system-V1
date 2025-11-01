@@ -6,6 +6,8 @@ export interface UserDetails {
   email: string;
   valid_id_path: string;
   valid_id_url: string;
+  name: string;
+  profile_url: string;
   // Add other fields as needed
 }
 
