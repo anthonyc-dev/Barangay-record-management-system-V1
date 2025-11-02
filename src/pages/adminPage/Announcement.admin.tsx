@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -280,11 +279,11 @@ const Announcement = () => {
                         <Calendar className="mr-1 h-3 w-3" />
                         {formatDate(announcement.date)}
                       </div>
-                      {announcement.posted_by && (
+                      {/* {announcement.posted_by && (
                         <Badge variant="default">
                           By {announcement.posted_by}
                         </Badge>
-                      )}
+                      )} */}
                     </div>
                   </div>
                   <div className="flex space-x-2">
