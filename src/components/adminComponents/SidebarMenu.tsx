@@ -257,7 +257,11 @@ export function Sidebar({ className }: SidebarProps) {
                 >
                   <Avatar className="h-8 w-8 rounded-full">
                     <AvatarImage
-                      src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww"
+                      src={
+                        adminInfo?.role === "admin"
+                          ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4Z4vN_ItrBdi7PHVS6L3R_R1eAG1tmo5Q7qH_WWJn-vjPSySH5MHHr3iED5drU9l6Uzw&usqp=CAU"
+                          : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMyqsqJLX8gBcDfo_gkc6RrEA3Q0F9XvyNzsaiBYTUTyka3ETqfi5QVSyr94Ck1neecm0&usqp=CAU"
+                      }
                       alt={adminInfo?.name || "Admin User"}
                       className="h-8 w-8 rounded-full object-cover border-2 border-blue-500"
                     />
@@ -269,9 +273,9 @@ export function Sidebar({ className }: SidebarProps) {
                     <span className="truncate font-semibold text-white">
                       {adminInfo?.name || "Admin User"}
                     </span>
-                    <span className="truncate text-xs text-white/70">
+                    {/* <span className="truncate text-xs text-white/70">
                       {getRoleLabel()}
-                    </span>
+                    </span> */}
                   </div>
                   <ChevronRight className="ml-auto h-4 w-4 text-white" />
                 </SidebarMenuButton>
@@ -284,22 +288,26 @@ export function Sidebar({ className }: SidebarProps) {
               >
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg">
+                    <Avatar className="h-8 w-8 rounded-full">
                       <AvatarImage
-                        src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww"
+                        src={
+                          adminInfo?.role === "admin"
+                            ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4Z4vN_ItrBdi7PHVS6L3R_R1eAG1tmo5Q7qH_WWJn-vjPSySH5MHHr3iED5drU9l6Uzw&usqp=CAU"
+                            : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMyqsqJLX8gBcDfo_gkc6RrEA3Q0F9XvyNzsaiBYTUTyka3ETqfi5QVSyr94Ck1neecm0&usqp=CAU"
+                        }
                         alt={adminInfo?.name || "Admin User"}
                       />
-                      <AvatarFallback className="rounded-lg">
+                      <AvatarFallback className="rounded-full">
                         <User className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">
-                        {adminInfo?.name || "Admin User"}
-                      </span>
-                      <span className="truncate text-xs text-muted-foreground">
                         {getRoleLabel()}
                       </span>
+                      {/* <span className="truncate text-xs text-muted-foreground">
+                        {getRoleLabel()}
+                      </span> */}
                     </div>
                   </div>
                 </DropdownMenuLabel>
