@@ -296,6 +296,7 @@ export function Sidebar({ className }: SidebarProps) {
                             : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMyqsqJLX8gBcDfo_gkc6RrEA3Q0F9XvyNzsaiBYTUTyka3ETqfi5QVSyr94Ck1neecm0&usqp=CAU"
                         }
                         alt={adminInfo?.name || "Admin User"}
+                        className="h-8 w-8 rounded-full object-cover border-2 border-blue-500"
                       />
                       <AvatarFallback className="rounded-full">
                         <User className="h-4 w-4" />

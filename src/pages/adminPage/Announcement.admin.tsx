@@ -2,6 +2,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Plus,
   Search,
@@ -11,132 +28,159 @@ import {
   Calendar,
   Megaphone,
   Bell,
-  Eye,
-  Pin,
   MessageSquare,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+import eventService, { type Event } from "@/services/api/eventService";
+import GeneralLoading from "@/components/GeneralLoading";
+
+// Zod schema for form validation
+const announcementSchema = z.object({
+  title: z.string().min(1, "Title is required").max(255, "Title is too long"),
+  description: z.string().min(1, "Description is required"),
+  date: z.string().min(1, "Date is required"),
+});
+
+type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
 const Announcement = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [announcements] = useState([
-    {
-      id: 1,
-      title: "Barangay Assembly Meeting",
-      content:
-        "Monthly community meeting will be held on January 15, 2024 at 2:00 PM at the Barangay Hall. All residents are encouraged to attend. Agenda includes budget presentation and community projects discussion.",
-      category: "Meeting",
-      priority: "High",
-      status: "Active",
-      datePosted: "2024-01-10",
-      author: "Barangay Captain",
-      isPinned: true,
-      views: 245,
-    },
-    {
-      id: 2,
-      title: "Clean-Up Drive - Linis Barangay Program",
-      content:
-        "Join us for our monthly clean-up drive this Saturday, January 20, 2024 from 6:00 AM - 10:00 AM. Meeting point: Barangay Basketball Court. Bring your own cleaning materials. Snacks will be provided.",
-      category: "Event",
-      priority: "Medium",
-      status: "Active",
-      datePosted: "2024-01-08",
-      author: "SK Chairperson",
-      isPinned: false,
-      views: 189,
-    },
-    {
-      id: 3,
-      title: "Free Medical Check-Up and Vaccination",
-      content:
-        "Department of Health in partnership with our Barangay will conduct free medical check-up and vaccination on January 25, 2024 from 8:00 AM - 4:00 PM at the Barangay Health Center. Please bring your health records.",
-      category: "Health",
-      priority: "High",
-      status: "Active",
-      datePosted: "2024-01-05",
-      author: "Barangay Health Worker",
-      isPinned: true,
-      views: 312,
-    },
-    {
-      id: 4,
-      title: "Water Interruption Notice",
-      content:
-        "Water supply will be temporarily interrupted on January 18, 2024 from 9:00 AM - 3:00 PM for pipeline maintenance in Purok 1-3. Please store enough water for your daily needs.",
-      category: "Notice",
-      priority: "Medium",
-      status: "Active",
-      datePosted: "2024-01-07",
-      author: "Barangay Secretary",
-      isPinned: false,
-      views: 156,
-    },
-    {
-      id: 5,
-      title: "New Year Community Celebration - THANK YOU",
-      content:
-        "Thank you to all residents who participated in our New Year community celebration. Special thanks to volunteers and sponsors who made the event successful. See you in our next community activities!",
-      category: "Event",
-      priority: "Low",
-      status: "Archived",
-      datePosted: "2024-01-02",
-      author: "Events Committee",
-      isPinned: false,
-      views: 98,
-    },
-  ]);
+  const [announcements, setAnnouncements] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Event | null>(
+    null
+  );
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  const form = useForm<AnnouncementFormValues>({
+    resolver: zodResolver(announcementSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      date: "",
+    },
+  });
+
+  // Fetch announcements on component mount
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const fetchAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const data = await eventService.getAll();
+      setAnnouncements(data);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch announcements";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Draft":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      case "Archived":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  const onSubmit = async (values: AnnouncementFormValues) => {
+    try {
+      setIsSubmitting(true);
+
+      if (editingAnnouncement) {
+        // Update existing announcement
+        await eventService.update(editingAnnouncement.id!, values);
+        toast.success("Announcement updated successfully");
+      } else {
+        // Create new announcement
+        await eventService.create(values);
+        toast.success("Announcement created successfully");
+      }
+
+      setIsDialogOpen(false);
+      form.reset();
+      setEditingAnnouncement(null);
+      fetchAnnouncements();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save announcement";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Meeting":
-        return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      case "Event":
-        return "bg-pink-100 text-pink-800 border-pink-200";
-      case "Health":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "Notice":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  const handleEdit = (announcement: Event) => {
+    setEditingAnnouncement(announcement);
+    form.reset({
+      title: announcement.title,
+      description: announcement.description,
+      date: announcement.date,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+
+    try {
+      setIsSubmitting(true);
+      await eventService.delete(deletingId);
+      toast.success("Announcement deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setDeletingId(null);
+      fetchAnnouncements();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to delete announcement";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const openDeleteDialog = (id: number) => {
+    setDeletingId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleAddNew = () => {
+    setEditingAnnouncement(null);
+    form.reset({
+      title: "",
+      description: "",
+      date: "",
+    });
+    setIsDialogOpen(true);
   };
 
   const filteredAnnouncements = announcements.filter(
     (announcement) =>
       announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      announcement.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      announcement.category.toLowerCase().includes(searchQuery.toLowerCase())
+      announcement.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const pinnedAnnouncements = filteredAnnouncements.filter((a) => a.isPinned);
-  const regularAnnouncements = filteredAnnouncements.filter((a) => !a.isPinned);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  if (loading) {
+    return <GeneralLoading loading={loading} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -150,7 +194,7 @@ const Announcement = () => {
             Manage and publish announcements for the community
           </p>
         </div>
-        <Button className="w-fit">
+        <Button className="w-fit" onClick={handleAddNew}>
           <Plus className="mr-2 h-4 w-4" />
           Create Announcement
         </Button>
@@ -184,7 +228,7 @@ const Announcement = () => {
       </Card>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -204,183 +248,67 @@ const Announcement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Active
+                  Filtered Results
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {announcements.filter((a) => a.status === "Active").length}
+                  {filteredAnnouncements.length}
                 </p>
               </div>
               <Bell className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Pinned
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {announcements.filter((a) => a.isPinned).length}
-                </p>
-              </div>
-              <Pin className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Views
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {announcements.reduce((sum, a) => sum + a.views, 0)}
-                </p>
-              </div>
-              <Eye className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Pinned Announcements */}
-      {pinnedAnnouncements.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <Pin className="mr-2 h-5 w-5 text-blue-500" />
-            Pinned Announcements
-          </h2>
-          <div className="space-y-4">
-            {pinnedAnnouncements.map((announcement) => (
-              <Card
-                key={announcement.id}
-                className="border-l-4 border-l-blue-500"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="text-lg">
-                        {announcement.title}
-                      </CardTitle>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge
-                          className={getPriorityColor(announcement.priority)}
-                        >
-                          {announcement.priority}
-                        </Badge>
-                        <Badge
-                          className={getCategoryColor(announcement.category)}
-                        >
-                          {announcement.category}
-                        </Badge>
-                        <Badge className={getStatusColor(announcement.status)}>
-                          {announcement.status}
-                        </Badge>
-                        {announcement.isPinned && (
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                            <Pin className="mr-1 h-3 w-3" />
-                            Pinned
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    {announcement.content}
-                  </p>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-4">
-                      <span>By {announcement.author}</span>
-                      <span>Posted: {announcement.datePosted}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Eye className="h-4 w-4" />
-                      <span>{announcement.views} views</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Regular Announcements */}
+      {/* All Announcements */}
       <div>
         <h2 className="text-xl font-semibold mb-4 flex items-center">
           <MessageSquare className="mr-2 h-5 w-5 text-gray-500" />
           All Announcements
         </h2>
         <div className="space-y-4">
-          {regularAnnouncements.map((announcement) => (
+          {filteredAnnouncements.map((announcement) => (
             <Card key={announcement.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex-1">
                     <CardTitle className="text-lg">
                       {announcement.title}
                     </CardTitle>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge
-                        className={getPriorityColor(announcement.priority)}
-                      >
-                        {announcement.priority}
-                      </Badge>
-                      <Badge
-                        className={getCategoryColor(announcement.category)}
-                      >
-                        {announcement.category}
-                      </Badge>
-                      <Badge className={getStatusColor(announcement.status)}>
-                        {announcement.status}
-                      </Badge>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Calendar className="mr-1 h-3 w-3" />
+                        {formatDate(announcement.date)}
+                      </div>
+                      {announcement.posted_by && (
+                        <Badge variant="default">
+                          By {announcement.posted_by}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(announcement)}
+                    >
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDeleteDialog(announcement.id!)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  {announcement.content}
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {announcement.description}
                 </p>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-4">
-                    <span>By {announcement.author}</span>
-                    <span>Posted: {announcement.datePosted}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Eye className="h-4 w-4" />
-                    <span>{announcement.views} views</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -404,6 +332,139 @@ const Announcement = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Add/Edit Announcement Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingAnnouncement
+                ? "Edit Announcement"
+                : "Create New Announcement"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingAnnouncement
+                ? "Update the announcement details below."
+                : "Fill in the details to create a new announcement."}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter announcement title"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter announcement description"
+                        rows={6}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    form.reset();
+                    setEditingAnnouncement(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {editingAnnouncement ? "Updating..." : "Creating..."}
+                    </>
+                  ) : (
+                    <>{editingAnnouncement ? "Update" : "Create"}</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Announcement</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this announcement? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setDeletingId(null);
+              }}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

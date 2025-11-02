@@ -96,7 +96,7 @@ export function Header({ className }: HeaderProps) {
                       : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMyqsqJLX8gBcDfo_gkc6RrEA3Q0F9XvyNzsaiBYTUTyka3ETqfi5QVSyr94Ck1neecm0&usqp=CAU"
                   }
                   alt={adminInfo?.name || "Admin User"}
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover border-2 border-blue-500"
                 />
                 <div className="flex flex-col">
                   <p className="font-medium">
