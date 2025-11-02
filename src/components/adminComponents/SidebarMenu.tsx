@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import {
   Home,
   Users,
@@ -7,27 +6,58 @@ import {
   BarChart3,
   Megaphone,
   Settings,
-  ChevronLeft,
   ChevronDown,
   ChevronRight,
   Shield,
   Map,
   Folder,
+  User,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAdmin } from "@/contexts/AdminContext";
+import {
+  Sidebar as SidebarPrimitive,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   className?: string;
-  onClose?: () => void;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/admin/home", icon: Home },
+const allNavigation = [
+  {
+    name: "Dashboard",
+    href: "/admin/home",
+    icon: Home,
+    allowedRoles: ["admin", "official"],
+  },
   {
     name: "Analytics",
     href: "/admin/analytics",
     icon: BarChart3,
+    allowedRoles: ["admin"],
     submenu: [
       { name: "Overview", href: "/admin/analytics", icon: BarChart3 },
       { name: "Population", href: "/admin/analytics/population", icon: Users },
@@ -45,19 +75,52 @@ const navigation = [
       },
     ],
   },
-  { name: "Residents", href: "/admin/residents", icon: Users },
-  { name: "Documents", href: "/admin/documents", icon: FileText },
-  // { name: "Financial", href: "/financial", icon: DollarSign },
-  // { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
-  { name: "Folder Storage", href: "/admin/folder-storage", icon: Folder },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  {
+    name: "Residents",
+    href: "/admin/residents",
+    icon: Users,
+    allowedRoles: ["admin"],
+  },
+  {
+    name: "Documents",
+    href: "/admin/documents",
+    icon: FileText,
+    allowedRoles: ["admin"],
+  },
+  {
+    name: "Announcements",
+    href: "/admin/announcement",
+    icon: Megaphone,
+    allowedRoles: ["admin", "official"],
+  },
+  {
+    name: "Folder Storage",
+    href: "/admin/folder-storage",
+    icon: Folder,
+    allowedRoles: ["admin"],
+  },
+  {
+    name: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+    allowedRoles: ["admin", "official"],
+  },
 ];
 
-export function Sidebar({ className, onClose }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
-  const isCollapsed: boolean = false;
+  const { adminInfo, isAdmin, isOfficial } = useAdmin();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  // Filter navigation based on role
+  const navigation = useMemo(() => {
+    const userRole = isAdmin ? "admin" : isOfficial ? "official" : null;
+    if (!userRole) return [];
+
+    return allNavigation.filter((item) =>
+      item.allowedRoles?.includes(userRole)
+    );
+  }, [isAdmin, isOfficial]);
 
   const toggleExpanded = (itemName: string) => {
     setExpandedItems((prev) =>
@@ -67,156 +130,191 @@ export function Sidebar({ className, onClose }: SidebarProps) {
     );
   };
 
+  const getRoleLabel = () => {
+    if (isAdmin) return "Administrator";
+    if (isOfficial) return "Official";
+    return "Admin";
+  };
+
   return (
-    <div
-      className={cn(
-        "flex h-screen w-64 flex-col bg-blue-900 border-r border-border transition-all duration-300",
-        isCollapsed && "w-16",
-        className
-      )}
-    >
-      {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-500 px-4">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary-foreground">
-            <Home className="h-5 w-5 text-primary" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h1 className="text-lg font-bold text-primary-foreground">
+    <SidebarPrimitive collapsible="icon" className={cn("border-r", className)}>
+      <SidebarHeader className="border-b border-white/10 bg-[#11224E]">
+        <div className="flex h-16 items-center justify-between gap-3 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-600 bg-white overflow-hidden flex-shrink-0 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 transition-all duration-200">
+              <img
+                src="/image/2s.png"
+                alt="Barangay RMS Logo"
+                className="object-cover h-10 w-10 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 transition-all duration-200"
+              />
+            </div>
+            <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+              <h1 className="text-base font-bold text-white truncate">
                 Barangay
               </h1>
-              <p className="text-xs text-primary-foreground/70">
+              <p className="text-xs text-white/70 truncate">
                 Record Management System
               </p>
             </div>
-          )}
+          </div>
         </div>
-        {/* Close Button */}
-        {onClose && (
-          <button
-            onClick={onClose}
-            className={cn(
-              "ml-2 rounded-md p-1 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-primary",
-              isCollapsed && "mx-auto"
-            )}
-            aria-label="Close sidebar"
-            type="button"
-          >
-            <ChevronLeft className="h-5 w-5 text-primary-foreground" />
-          </button>
-        )}
-      </div>
+      </SidebarHeader>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const isExpanded = expandedItems.includes(item.name);
-          const hasSubmenu = "submenu" in item;
-          const isActive = location.pathname === item.href;
+      <SidebarContent className="bg-[#11224E]">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const isExpanded = expandedItems.includes(item.name);
+                const hasSubmenu = "submenu" in item;
+                const isActive = !hasSubmenu && location.pathname === item.href;
+                const isSubActive = hasSubmenu
+                  ? item.submenu?.some(
+                      (subItem) => location.pathname === subItem.href
+                    )
+                  : false;
 
-          return (
-            <div key={item.name}>
-              {hasSubmenu ? (
-                <button
-                  onClick={() => toggleExpanded(item.name)}
-                  className={cn(
-                    "flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    "text-primary-foreground/80 hover:bg-blue-700 hover:text-primary-foreground",
-                    "focus:bg-primary-light focus:text-primary-foreground focus:outline-none"
-                  )}
-                >
-                  <div className="flex items-center">
-                    <Icon className="h-5 w-5 flex-shrink-0" />
-                    {!isCollapsed && <span className="ml-3">{item.name}</span>}
-                  </div>
-                  {!isCollapsed && (
-                    <div className="ml-auto">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  )}
-                </button>
-              ) : (
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-blue-700 text-primary-foreground"
-                      : "text-primary-foreground/80 hover:bg-blue-700 hover:text-primary-foreground",
-                    "focus:bg-primary-light focus:text-primary-foreground focus:outline-none"
-                  )}
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  {!isCollapsed && <span className="ml-3">{item.name}</span>}
-                </Link>
-              )}
-
-              {/* Submenu */}
-              {hasSubmenu && !isCollapsed && (
-                <div
-                  className={cn(
-                    "ml-6 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out",
-                    isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                  )}
-                >
-                  {item.submenu?.map((subItem) => {
-                    const SubIcon = subItem.icon;
-                    const isSubActive = location.pathname === subItem.href;
-                    return (
-                      <Link
-                        key={subItem.name}
-                        to={subItem.href}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isSubActive
-                            ? "bg-blue-800 text-primary-foreground/90"
-                            : "text-primary-foreground/60 hover:bg-blue-800 hover:text-primary-foreground/80",
-                          "focus:bg-primary-light focus:text-primary-foreground focus:outline-none"
+                return (
+                  <SidebarMenuItem key={item.name}>
+                    {hasSubmenu ? (
+                      <>
+                        <SidebarMenuButton
+                          onClick={() => toggleExpanded(item.name)}
+                          isActive={isSubActive || isExpanded}
+                          tooltip={item.name}
+                          className={cn(
+                            "text-white/80 hover:bg-white/10 hover:text-white",
+                            (isSubActive || isExpanded) &&
+                              "bg-white/20 text-white hover:bg-white/25 hover:text-white"
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span>{item.name}</span>
+                          {isExpanded ? (
+                            <ChevronDown className="ml-auto h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="ml-auto h-4 w-4" />
+                          )}
+                        </SidebarMenuButton>
+                        {isExpanded && item.submenu && (
+                          <SidebarMenuSub>
+                            {item.submenu.map((subItem) => {
+                              const SubIcon = subItem.icon;
+                              const isSubItemActive =
+                                location.pathname === subItem.href;
+                              return (
+                                <SidebarMenuSubItem key={subItem.name}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={isSubItemActive}
+                                  >
+                                    <Link to={subItem.href}>
+                                      <SubIcon className="h-4 w-4" />
+                                      <span>{subItem.name}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
+                          </SidebarMenuSub>
                         )}
+                      </>
+                    ) : (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.name}
+                        className={
+                          isActive
+                            ? "bg-white/20 text-white hover:bg-white/25 hover:text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }
                       >
-                        <SubIcon className="h-4 w-4 flex-shrink-0" />
-                        <span className="ml-3">{subItem.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
+                        <Link to={item.href}>
+                          <Icon className="h-5 w-5" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-      {/* User Profile */}
-      <div className="border-t border-slate-500 p-4">
-        <div
-          className={cn(
-            "flex items-center rounded-lg px-3 py-2 text-sm",
-            "text-primary-foreground/80 hover:bg-primary-light transition-colors"
-          )}
-        >
-          <img
-            src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww"
-            alt="Admin User"
-            className="h-8 w-8 rounded-full object-cover flex-shrink-0"
-          />
-          {!isCollapsed && (
-            <div className="ml-3 min-w-0">
-              <p className="text-sm font-medium text-primary-foreground">
-                Admin User
-              </p>
-              <p className="text-xs text-primary-foreground/70">
-                System Administrator
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      <SidebarFooter className="bg-[#11224E]">
+        <SidebarSeparator className="bg-white/10" />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="text-white hover:bg-white/10 data-[state=open]:bg-white/15 data-[state=open]:text-white"
+                >
+                  <Avatar className="h-8 w-8 rounded-full">
+                    <AvatarImage
+                      src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww"
+                      alt={adminInfo?.name || "Admin User"}
+                      className="h-8 w-8 rounded-full object-cover border-2 border-blue-500"
+                    />
+                    <AvatarFallback className="rounded-lg">
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold text-white">
+                      {adminInfo?.name || "Admin User"}
+                    </span>
+                    <span className="truncate text-xs text-white/70">
+                      {getRoleLabel()}
+                    </span>
+                  </div>
+                  <ChevronRight className="ml-auto h-4 w-4 text-white" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage
+                        src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww"
+                        alt={adminInfo?.name || "Admin User"}
+                      />
+                      <AvatarFallback className="rounded-lg">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {adminInfo?.name || "Admin User"}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {getRoleLabel()}
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </SidebarPrimitive>
   );
 }

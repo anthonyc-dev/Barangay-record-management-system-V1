@@ -1,4 +1,4 @@
-import { Bell, Search, Menu, LogOut, User } from "lucide-react";
+import { Bell, Search, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -9,29 +9,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAdmin } from "@/contexts/AdminContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
-  onMenuClick?: () => void;
   className?: string;
 }
 
-export function Header({ onMenuClick, className }: HeaderProps) {
+export function Header({ className }: HeaderProps) {
   const { adminInfo } = useAdmin();
   const { logout } = useAuth();
 
   const handleLogout = async () => {
     try {
+      // Start logout process - logoutLoading will be set to true
+      // AuthContext will handle redirect for admin logout
       await logout();
       toast.success("Logout successful");
-      // Use hard redirect to ensure navigation to /admin
-      window.location.href = "/admin";
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed. Please try again.");
-      // Still redirect to admin login page even on error
+      // Fallback redirect if logout doesn't redirect automatically
       window.location.href = "/admin";
     }
   };
@@ -54,15 +54,7 @@ export function Header({ onMenuClick, className }: HeaderProps) {
       <div className="flex h-full items-center justify-between px-6">
         {/* Left side */}
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onMenuClick}
-            className="lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-
+          <SidebarTrigger />
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -91,18 +83,8 @@ export function Header({ onMenuClick, className }: HeaderProps) {
                 <img
                   src={`https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww`}
                   alt={adminInfo?.name || "Admin User"}
-                  className="h-8 w-8 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover border-2 border-blue-500"
                 />
-                <div className="hidden text-sm text-left md:block">
-                  <p className="font-medium">
-                    {adminInfo?.name || "Admin User"}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {adminInfo?.role
-                      ? getRoleLabel(adminInfo.role)
-                      : "Administrator"}
-                  </p>
-                </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

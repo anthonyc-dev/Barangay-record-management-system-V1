@@ -10,9 +10,15 @@ function AppContent() {
   const { logoutLoading } = useAuth();
   const { isLoading } = useAdmin();
 
+  // Show loading overlay during logout or initial loading
+  const showLoading = logoutLoading || isLoading;
+
+  // During logout, hide routes to prevent dashboard flash
+  const shouldShowRoutes = !logoutLoading;
+
   return (
     <>
-      {(logoutLoading || isLoading) && (
+      {showLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="text-center flex flex-col items-center">
             {/* Logo at the top */}
@@ -29,7 +35,7 @@ function AppContent() {
           </div>
         </div>
       )}
-      <AppRoutes />
+      {shouldShowRoutes && <AppRoutes />}
       <Toaster />
     </>
   );

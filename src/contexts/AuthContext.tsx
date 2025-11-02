@@ -88,19 +88,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     setLogoutLoading(true);
     try {
-      if (userType === "admin") {
+      const isAdmin = userType === "admin";
+      if (isAdmin) {
         await authService.adminLogout();
+        // Redirect immediately for admin before clearing state to prevent dashboard flash
+        window.location.href = "/admin";
+        // Don't clear state here - redirect will reload the page
+        return;
       } else {
         await authService.userLogout();
       }
     } catch (error) {
       console.error("Logout error:", error);
+      // On error, still redirect for admin
+      if (userType === "admin") {
+        window.location.href = "/admin";
+        return;
+      }
     } finally {
-      setIsAuthenticated(false);
-      setUserType(null);
-      setUserInfo(null);
-      setAdminInfo(null);
-      setLogoutLoading(false);
+      // Only clear state if not redirected (for non-admin users)
+      if (userType !== "admin") {
+        setIsAuthenticated(false);
+        setUserType(null);
+        setUserInfo(null);
+        setAdminInfo(null);
+        setLogoutLoading(false);
+      }
     }
   };
 
