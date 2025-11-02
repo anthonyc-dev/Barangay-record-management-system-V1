@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Shield, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Lock, User } from "lucide-react";
 
 const LoginAdmin = () => {
   const [formData, setFormData] = useState({
@@ -36,7 +36,7 @@ const LoginAdmin = () => {
       // Validate credentials (this would be handled by your backend)
       if (formData.username === "admin" && formData.password === "password") {
         // Redirect to admin dashboard
-        window.location.href = "/admin";
+        window.location.href = "/admin/home";
       } else {
         setError("Invalid username or password");
       }
@@ -48,16 +48,33 @@ const LoginAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-      <div className="w-full max-w-md">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        backgroundImage: 'url("/image/4.jpg")',
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-blue-100/70 backdrop-blur-sm z-0"></div>
+
+      <div className="relative w-full max-w-md z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600">
-              <Shield className="h-8 w-8 text-white" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-inner overflow-hidden">
+              <img
+                src="/image/2s.png"
+                alt="Admin Logo"
+                className="h-20 w-20 object-contain"
+              />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Login</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Brgy Admin/Officer Login
+          </h1>
           <p className="text-gray-600 mt-2">
             Access the Barangay Record Management System
           </p>
