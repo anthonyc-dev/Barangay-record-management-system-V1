@@ -12,7 +12,7 @@ const SidebarLayout: React.FC = () => {
         {location.pathname !== "/admin" && <Sidebar />}
         <SidebarInset>
           {location.pathname !== "/admin" && <Header />}
-          <main className="flex-1 p-6 overflow-y-auto bg-gray-100">
+          <main className="flex-1 overflow-y-auto bg-gray-100">
             <Outlet />
           </main>
         </SidebarInset>

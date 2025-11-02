@@ -6,7 +6,7 @@ import { OverviewSection } from "@/components/analytics/OverviewSection";
 const HomePage = () => {
   return (
     <div>
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         {/* Page Header */}
         <OverviewSection />
         {/* Calendar and Updates */}
