@@ -1,8 +1,9 @@
 interface GeneralLoadingProps {
   loading: boolean;
+  message?: string;
 }
 
-const GeneralLoading = ({ loading }: GeneralLoadingProps) => {
+const GeneralLoading = ({ loading, message }: GeneralLoadingProps) => {
   return (
     <div>
       <div className="flex items-center justify-center h-96">
@@ -16,7 +17,7 @@ const GeneralLoading = ({ loading }: GeneralLoadingProps) => {
           />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-sm text-muted-foreground">
-            {loading ? "loading..." : "Loading..."}
+            {loading ? message : message}
           </p>
         </div>
       </div>

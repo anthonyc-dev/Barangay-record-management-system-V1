@@ -46,6 +46,7 @@ import complainantService, {
   type UrgencyLevel,
 } from "@/services/api/complainantService";
 import { authService } from "@/services/api";
+import GeneralLoading from "@/components/GeneralLoading";
 
 const Complainant = () => {
   const [activeTab, setActiveTab] = useState("report");
@@ -862,8 +863,10 @@ const Complainant = () => {
           {isLoadingReports ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-gray-500">Loading your reports...</p>
+                <GeneralLoading
+                  loading={isLoadingReports}
+                  message="Loading your reports..."
+                />
               </CardContent>
             </Card>
           ) : !userReports || userReports.length === 0 ? (

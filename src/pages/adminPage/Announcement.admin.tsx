@@ -179,7 +179,7 @@ const Announcement = () => {
   };
 
   if (loading) {
-    return <GeneralLoading loading={loading} />;
+    return <GeneralLoading loading={loading} message="Loading" />;
   }
 
   return (

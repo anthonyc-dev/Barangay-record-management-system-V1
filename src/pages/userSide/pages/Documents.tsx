@@ -41,6 +41,7 @@ import {
 } from "@/services/api/documentService";
 import { authService } from "@/services/api/authService";
 import { toast } from "sonner";
+import GeneralLoading from "@/components/GeneralLoading";
 
 const Documents = () => {
   const [activeTab, setActiveTab] = useState("request");
@@ -509,7 +510,10 @@ const Documents = () => {
             <CardContent>
               {isFetchingRequests ? (
                 <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <GeneralLoading
+                    loading={isFetchingRequests}
+                    message="Loading your request"
+                  />
                 </div>
               ) : requests.length === 0 ? (
                 <div className="text-center py-8 px-4 text-muted-foreground">
