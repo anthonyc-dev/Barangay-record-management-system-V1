@@ -1,7 +1,17 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { Bell, Search, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAdmin } from "@/contexts/AdminContext";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -9,6 +19,34 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick, className }: HeaderProps) {
+  const { adminInfo } = useAdmin();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logout successful");
+      // Use hard redirect to ensure navigation to /admin
+      window.location.href = "/admin";
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed. Please try again.");
+      // Still redirect to admin login page even on error
+      window.location.href = "/admin";
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "Administrator";
+      case "official":
+        return "Official";
+      default:
+        return "Admin";
+    }
+  };
+
   return (
     <header
       className={cn("h-16 border-b border-border bg-background", className)}
@@ -43,17 +81,66 @@ export function Header({ onMenuClick, className }: HeaderProps) {
             </span>
           </Button>
 
-          <div className="flex items-center space-x-3">
-            <img
-              src={`https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww`}
-              alt="Admin User"
-              className="h-8 w-8 rounded-full object-cover"
-            />
-            <div className="hidden text-sm md:block">
-              <p className="font-medium">Admin User</p>
-              <p className="text-muted-foreground">Administrator</p>
-            </div>
-          </div>
+          {/* Admin Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex items-center space-x-3 p-2"
+              >
+                <img
+                  src={`https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww`}
+                  alt={adminInfo?.name || "Admin User"}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+                <div className="hidden text-sm text-left md:block">
+                  <p className="font-medium">
+                    {adminInfo?.name || "Admin User"}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {adminInfo?.role
+                      ? getRoleLabel(adminInfo.role)
+                      : "Administrator"}
+                  </p>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <img
+                  src={`https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuJTIwYXZhdGFyfGVufDB8fDB8fHww`}
+                  alt={adminInfo?.name || "Admin User"}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <div className="flex flex-col">
+                  <p className="font-medium">
+                    {adminInfo?.name || "Admin User"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {adminInfo?.username || "admin"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {adminInfo?.role
+                      ? getRoleLabel(adminInfo.role)
+                      : "Administrator"}
+                  </p>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <User className="h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

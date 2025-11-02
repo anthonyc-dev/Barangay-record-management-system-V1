@@ -1,18 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const LoginAdmin = () => {
+  const navigate = useNavigate();
+  const { login, isAuthenticated, isLoading } = useAdmin();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLogin, setIsLoadingLogin] = useState(false);
   const [error, setError] = useState("");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate("/admin/home", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -26,24 +37,25 @@ const LoginAdmin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoadingLogin(true);
     setError("");
 
     try {
-      // TODO: Replace with actual authentication logic
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      await login({
+        username: formData.username,
+        password: formData.password,
+      });
 
-      // Validate credentials (this would be handled by your backend)
-      if (formData.username === "admin" && formData.password === "password") {
-        // Redirect to admin dashboard
-        window.location.href = "/admin/home";
-      } else {
-        setError("Invalid username or password");
-      }
+      // Redirect to admin dashboard on success
+      navigate("/admin/home", { replace: true });
     } catch (err) {
-      setError("Login failed. Please try again." + err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Invalid username or password. Please try again.";
+      setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsLoadingLogin(false);
     }
   };
 
@@ -73,7 +85,7 @@ const LoginAdmin = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Brgy Admin/Officer Login
+            Brgy Admin/Official Login
           </h1>
           <p className="text-gray-600 mt-2">
             Access the Barangay Record Management System
@@ -144,8 +156,12 @@ const LoginAdmin = () => {
               )}
 
               {/* Submit Button */}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoadingLogin || isLoading}
+              >
+                {isLoadingLogin ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 

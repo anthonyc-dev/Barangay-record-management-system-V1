@@ -2,15 +2,17 @@ import "./App.css";
 import { BrowserRouter as Router } from "react-router-dom";
 import AppRoutes from "./routers";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AdminProvider, useAdmin } from "@/contexts/AdminContext";
 import { UserProfileProvider } from "@/contexts/UserProfileContext";
 import { Toaster } from "@/components/ui/sonner";
 
 function AppContent() {
   const { logoutLoading } = useAuth();
+  const { isLoading } = useAdmin();
 
   return (
     <>
-      {logoutLoading && (
+      {(logoutLoading || isLoading) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="text-center flex flex-col items-center">
             {/* Logo at the top */}
@@ -21,7 +23,9 @@ function AppContent() {
               style={{ background: "white" }}
             />
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-sm text-muted-foreground">Logging out...</p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {logoutLoading ? "Logging out..." : "Loading..."}
+            </p>
           </div>
         </div>
       )}
@@ -35,9 +39,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <UserProfileProvider>
-          <AppContent />
-        </UserProfileProvider>
+        <AdminProvider>
+          <UserProfileProvider>
+            <AppContent />
+          </UserProfileProvider>
+        </AdminProvider>
       </AuthProvider>
     </Router>
   );
