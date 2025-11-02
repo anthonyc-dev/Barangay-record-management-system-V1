@@ -26,6 +26,7 @@ interface AuthContextType {
   userInfo: UserInfo | null;
   adminInfo: AdminInfo | null;
   loading: boolean;
+  logoutLoading: boolean;
   login: (userInfo: UserInfo | AdminInfo, type: "user" | "admin") => void;
   logout: () => void;
   checkAuth: () => void;
@@ -39,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [logoutLoading, setLogoutLoading] = useState<boolean>(false);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -84,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    setLogoutLoading(true);
     try {
       if (userType === "admin") {
         await authService.adminLogout();
@@ -97,6 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserType(null);
       setUserInfo(null);
       setAdminInfo(null);
+      setLogoutLoading(false);
     }
   };
 
@@ -106,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userInfo,
     adminInfo,
     loading,
+    logoutLoading,
     login,
     logout,
     checkAuth,

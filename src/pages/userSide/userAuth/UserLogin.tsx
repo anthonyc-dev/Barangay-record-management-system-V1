@@ -95,9 +95,7 @@ const UserLogin = () => {
       }
 
       setLoginError(errorMessage);
-      toast.error(errorMessage, {
-        duration: 5000, // Show error for 5 seconds
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -154,8 +152,12 @@ const UserLogin = () => {
                       type="email"
                       placeholder="you@email.com"
                       autoComplete="email"
-                      {...field}
                       disabled={loading}
+                      value={field.value}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -185,8 +187,12 @@ const UserLogin = () => {
                       type="password"
                       placeholder="Enter your password"
                       autoComplete="current-password"
-                      {...field}
                       disabled={loading}
+                      value={field.value}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
