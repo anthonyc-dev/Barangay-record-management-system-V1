@@ -119,6 +119,7 @@ export function Sidebar() {
                           "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
                         }
                         alt={userProfile?.name || "User"}
+                        className="h-8 w-8 rounded-full object-cover  border-2 border-blue-500"
                       />
                       <AvatarFallback className="rounded-lg">
                         <User className="h-4 w-4" />

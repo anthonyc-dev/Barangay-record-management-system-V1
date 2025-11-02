@@ -86,7 +86,7 @@ const Complainant = () => {
   });
   const [isUpdating, setIsUpdating] = useState(false);
 
-  console.log("from complaiant", userReports);
+  console.log("from complainant", userReports);
 
   const reportTypes = [
     "Noise Complaint",
@@ -131,6 +131,7 @@ const Complainant = () => {
       setUserReports(Array.isArray(complaints) ? complaints : []);
       console.log("Fetched complaints:", complaints);
     } catch (error) {
+      console.error("Error fetching reports:", error);
       toast.error("Error fetching reports");
       // Set empty array on error to prevent undefined issues
       setUserReports([]);
@@ -374,85 +375,6 @@ const Complainant = () => {
     });
   };
 
-  const handleUpdateComplaint = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!editingComplaint?.id) {
-      toast.error("Invalid complaint.");
-      return;
-    }
-
-    // Validate form
-    const validationError = validateEditForm();
-    if (validationError) {
-      toast.error(validationError);
-      return;
-    }
-
-    setIsUpdating(true);
-
-    try {
-      // Convert datetime-local format to MySQL datetime format
-      const dateTimeFormatted = editFormData.dateTime.replace("T", " ") + ":00";
-
-      const updateData: Partial<CreateComplaintRequest> = {
-        report_type: editFormData.reportType,
-        title: editFormData.title,
-        description: editFormData.description,
-        location: editFormData.location,
-        date_time: dateTimeFormatted,
-        complainant_name: editFormData.isAnonymous
-          ? null
-          : editFormData.complainantName,
-        contact_number: editFormData.isAnonymous
-          ? null
-          : editFormData.contactNumber,
-        email:
-          editFormData.isAnonymous || !editFormData.email
-            ? null
-            : editFormData.email,
-        is_anonymous: editFormData.isAnonymous,
-        urgency_level: editFormData.urgencyLevel as UrgencyLevel,
-        witnesses: editFormData.witnesses.trim() || null,
-        additional_info: editFormData.additionalInfo.trim() || null,
-      };
-
-      const response = await complainantService.updateComplaint(
-        editingComplaint.id,
-        updateData
-      );
-
-      toast.success(response.message || "Complaint updated successfully!");
-
-      handleCloseEditDialog();
-      fetchUserReports();
-    } catch (error: unknown) {
-      console.error("Error updating complaint:", error);
-
-      if (error && typeof error === "object") {
-        const apiError = error as {
-          message?: string;
-          errors?: Record<string, string[]>;
-        };
-
-        if (apiError.errors) {
-          const errorMessages = Object.values(apiError.errors)
-            .flat()
-            .join(", ");
-          toast.error(errorMessages);
-        } else if (apiError.message) {
-          toast.error(apiError.message);
-        } else {
-          toast.error("Failed to update complaint. Please try again.");
-        }
-      } else {
-        toast.error("Failed to update complaint. Please try again.");
-      }
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const validateEditForm = (): string | null => {
     if (!editFormData.reportType.trim()) {
       return "Please select a report type";
@@ -493,6 +415,126 @@ const Complainant = () => {
     }
 
     return null;
+  };
+
+  const handleUpdateComplaint = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingComplaint?.id) {
+      toast.error("Invalid complaint.");
+      return;
+    }
+
+    // Validate form
+    const validationError = validateEditForm();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      // Convert datetime-local format to MySQL datetime format
+      const dateTimeFormatted = editFormData.dateTime.replace("T", " ") + ":00";
+
+      // Build update data - only include fields that have changed
+      const updateData: Partial<CreateComplaintRequest> = {};
+
+      // Always include these core fields
+      updateData.report_type = editFormData.reportType;
+      updateData.title = editFormData.title;
+      updateData.description = editFormData.description;
+      updateData.location = editFormData.location;
+      updateData.date_time = dateTimeFormatted;
+      updateData.urgency_level = editFormData.urgencyLevel as UrgencyLevel;
+      updateData.is_anonymous = editFormData.isAnonymous;
+
+      // Handle nullable fields properly
+      updateData.complainant_name = editFormData.isAnonymous
+        ? null
+        : editFormData.complainantName || null;
+
+      updateData.contact_number = editFormData.isAnonymous
+        ? null
+        : editFormData.contactNumber || null;
+
+      updateData.email =
+        editFormData.isAnonymous || !editFormData.email
+          ? null
+          : editFormData.email;
+
+      // Handle optional fields
+      updateData.witnesses = editFormData.witnesses.trim() || null;
+      updateData.additional_info = editFormData.additionalInfo.trim() || null;
+
+      console.log("Updating complaint with ID:", editingComplaint.id);
+      console.log("Update data:", updateData);
+
+      const response = await complainantService.updateComplaint(
+        editingComplaint.id,
+        updateData
+      );
+
+      toast.success(response.message || "Complaint updated successfully!");
+
+      // Close dialog and refresh the list
+      handleCloseEditDialog();
+
+      // Refresh the reports list to show updated data
+      await fetchUserReports();
+    } catch (error: unknown) {
+      console.error("Error updating complaint:", error);
+
+      if (error && typeof error === "object") {
+        const apiError = error as {
+          message?: string;
+          errors?: Record<string, string[]>;
+          response?: {
+            data?: {
+              message?: string;
+              errors?: Record<string, string[]>;
+            };
+            status?: number;
+          };
+        };
+
+        // Check if it's an axios error with response data
+        if (apiError.response?.data) {
+          const responseData = apiError.response.data;
+
+          if (responseData.errors) {
+            const errorMessages = Object.entries(responseData.errors)
+              .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+              .join("; ");
+            toast.error(`Validation errors: ${errorMessages}`);
+          } else if (responseData.message) {
+            toast.error(responseData.message);
+          } else {
+            toast.error("Failed to update complaint. Please try again.");
+          }
+
+          // Log additional debug info
+          console.error("API Error Response:", {
+            status: apiError.response.status,
+            data: responseData,
+          });
+        } else if (apiError.errors) {
+          const errorMessages = Object.values(apiError.errors)
+            .flat()
+            .join(", ");
+          toast.error(errorMessages);
+        } else if (apiError.message) {
+          toast.error(apiError.message);
+        } else {
+          toast.error("Failed to update complaint. Please try again.");
+        }
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -673,18 +715,21 @@ const Complainant = () => {
                 <Checkbox
                   id="anonymous"
                   checked={formData.isAnonymous}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked) => {
+                    const newIsAnonymous = checked === true;
                     setFormData({
                       ...formData,
-                      isAnonymous: checked === true,
+                      isAnonymous: newIsAnonymous,
                       // Clear complainant fields when switching to anonymous
-                      complainantName:
-                        checked === true ? "" : formData.complainantName,
-                      contactNumber:
-                        checked === true ? "" : formData.contactNumber,
-                      email: checked === true ? "" : formData.email,
-                    })
-                  }
+                      complainantName: newIsAnonymous
+                        ? ""
+                        : formData.complainantName,
+                      contactNumber: newIsAnonymous
+                        ? ""
+                        : formData.contactNumber,
+                      email: newIsAnonymous ? "" : formData.email,
+                    });
+                  }}
                 />
                 <Label
                   htmlFor="anonymous"
@@ -693,50 +738,84 @@ const Complainant = () => {
                   Submit anonymously
                 </Label>
               </div>
-              {!formData.isAnonymous && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="complainantName">Full Name *</Label>
-                    <Input
-                      id="complainantName"
-                      placeholder="Enter your full name"
-                      value={formData.complainantName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          complainantName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contactNumber">Contact Number *</Label>
-                    <Input
-                      id="contactNumber"
-                      placeholder="09123456789"
-                      value={formData.contactNumber}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          contactNumber: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                    />
-                  </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="complainantName"
+                    className={formData.isAnonymous ? "text-gray-400" : ""}
+                  >
+                    Full Name {!formData.isAnonymous && "*"}
+                  </Label>
+                  <Input
+                    id="complainantName"
+                    name="complainantName"
+                    type="text"
+                    placeholder={
+                      formData.isAnonymous
+                        ? "Anonymous"
+                        : "Enter your full name"
+                    }
+                    value={formData.complainantName}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        complainantName: e.target.value,
+                      });
+                    }}
+                    disabled={formData.isAnonymous}
+                    className={formData.isAnonymous ? "bg-gray-100" : ""}
+                  />
                 </div>
-              )}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="contactNumber"
+                    className={formData.isAnonymous ? "text-gray-400" : ""}
+                  >
+                    Contact Number {!formData.isAnonymous && "*"}
+                  </Label>
+                  <Input
+                    id="contactNumber"
+                    name="contactNumber"
+                    type="text"
+                    placeholder={
+                      formData.isAnonymous ? "Anonymous" : "09123456789"
+                    }
+                    value={formData.contactNumber}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        contactNumber: e.target.value,
+                      });
+                    }}
+                    disabled={formData.isAnonymous}
+                    className={formData.isAnonymous ? "bg-gray-100" : ""}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label
+                    htmlFor="email"
+                    className={formData.isAnonymous ? "text-gray-400" : ""}
+                  >
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder={
+                      formData.isAnonymous
+                        ? "Anonymous"
+                        : "your.email@example.com"
+                    }
+                    value={formData.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                    }}
+                    disabled={formData.isAnonymous}
+                    className={formData.isAnonymous ? "bg-gray-100" : ""}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -824,24 +903,34 @@ const Complainant = () => {
                       <div className="space-y-1.5 text-xs sm:text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                          <span className="truncate">Type: {report.report_type}</span>
+                          <span className="truncate">
+                            Type: {report.report_type}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                          <span className="truncate">Location: {report.location}</span>
+                          <span className="truncate">
+                            Location: {report.location}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span>
                             Reported:{" "}
-                            {new Date(report.created_at).toLocaleDateString()}
+                            {report.created_at
+                              .replace("T", " ")
+                              .replace(".000000Z", "")
+                              .replace(/:\d{2}$/, "")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span>
                             Incident Date:{" "}
-                            {new Date(report.date_time).toLocaleString()}
+                            {report.date_time
+                              .replace("T", " ")
+                              .replace(".000000Z", "")
+                              .replace(/:\d{2}$/, "")}
                           </span>
                         </div>
                       </div>
@@ -889,14 +978,19 @@ const Complainant = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-lg sm:text-xl">Edit Complaint/Report</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
+              Edit Complaint/Report
+            </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
               Update your complaint or incident report. Only pending and under
               investigation reports can be edited.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleUpdateComplaint} className="space-y-4 sm:space-y-6">
+          <form
+            onSubmit={handleUpdateComplaint}
+            className="space-y-4 sm:space-y-6"
+          >
             {/* Report Details */}
             <div className="space-y-3 sm:space-y-4">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
@@ -1030,18 +1124,21 @@ const Complainant = () => {
                 <Checkbox
                   id="edit-anonymous"
                   checked={editFormData.isAnonymous}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked) => {
+                    const newIsAnonymous = checked === true;
                     setEditFormData({
                       ...editFormData,
-                      isAnonymous: checked === true,
+                      isAnonymous: newIsAnonymous,
                       // Clear complainant fields when switching to anonymous
-                      complainantName:
-                        checked === true ? "" : editFormData.complainantName,
-                      contactNumber:
-                        checked === true ? "" : editFormData.contactNumber,
-                      email: checked === true ? "" : editFormData.email,
-                    })
-                  }
+                      complainantName: newIsAnonymous
+                        ? ""
+                        : editFormData.complainantName,
+                      contactNumber: newIsAnonymous
+                        ? ""
+                        : editFormData.contactNumber,
+                      email: newIsAnonymous ? "" : editFormData.email,
+                    });
+                  }}
                 />
                 <Label
                   htmlFor="edit-anonymous"
@@ -1050,53 +1147,87 @@ const Complainant = () => {
                   Submit anonymously
                 </Label>
               </div>
-              {!editFormData.isAnonymous && (
-                <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-complainantName">Full Name *</Label>
-                    <Input
-                      id="edit-complainantName"
-                      placeholder="Enter your full name"
-                      value={editFormData.complainantName}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          complainantName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-contactNumber">Contact Number *</Label>
-                    <Input
-                      id="edit-contactNumber"
-                      placeholder="09123456789"
-                      value={editFormData.contactNumber}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          contactNumber: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="edit-email">Email Address</Label>
-                    <Input
-                      id="edit-email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={editFormData.email}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          email: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+              <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-complainantName"
+                    className={editFormData.isAnonymous ? "text-gray-400" : ""}
+                  >
+                    Full Name {!editFormData.isAnonymous && "*"}
+                  </Label>
+                  <Input
+                    id="edit-complainantName"
+                    name="complainantName"
+                    type="text"
+                    placeholder={
+                      editFormData.isAnonymous
+                        ? "Anonymous"
+                        : "Enter your full name"
+                    }
+                    value={editFormData.complainantName}
+                    onChange={(e) => {
+                      setEditFormData({
+                        ...editFormData,
+                        complainantName: e.target.value,
+                      });
+                    }}
+                    disabled={editFormData.isAnonymous}
+                    className={editFormData.isAnonymous ? "bg-gray-100" : ""}
+                  />
                 </div>
-              )}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-contactNumber"
+                    className={editFormData.isAnonymous ? "text-gray-400" : ""}
+                  >
+                    Contact Number {!editFormData.isAnonymous && "*"}
+                  </Label>
+                  <Input
+                    id="edit-contactNumber"
+                    name="contactNumber"
+                    type="text"
+                    placeholder={
+                      editFormData.isAnonymous ? "Anonymous" : "09123456789"
+                    }
+                    value={editFormData.contactNumber}
+                    onChange={(e) => {
+                      setEditFormData({
+                        ...editFormData,
+                        contactNumber: e.target.value,
+                      });
+                    }}
+                    disabled={editFormData.isAnonymous}
+                    className={editFormData.isAnonymous ? "bg-gray-100" : ""}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label
+                    htmlFor="edit-email"
+                    className={editFormData.isAnonymous ? "text-gray-400" : ""}
+                  >
+                    Email Address
+                  </Label>
+                  <Input
+                    id="edit-email"
+                    name="email"
+                    type="email"
+                    placeholder={
+                      editFormData.isAnonymous
+                        ? "Anonymous"
+                        : "your.email@example.com"
+                    }
+                    value={editFormData.email}
+                    onChange={(e) => {
+                      setEditFormData({
+                        ...editFormData,
+                        email: e.target.value,
+                      });
+                    }}
+                    disabled={editFormData.isAnonymous}
+                    className={editFormData.isAnonymous ? "bg-gray-100" : ""}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Additional Information */}
@@ -1132,7 +1263,11 @@ const Complainant = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isUpdating} className="w-full sm:w-auto">
+              <Button
+                type="submit"
+                disabled={isUpdating}
+                className="w-full sm:w-auto"
+              >
                 {isUpdating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
