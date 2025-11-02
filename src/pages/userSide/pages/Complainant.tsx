@@ -919,11 +919,7 @@ const Complainant = () => {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span>
-                            Reported:{" "}
-                            {report.created_at
-                              .replace("T", " ")
-                              .replace(".000000Z", "")
-                              .replace(/:\d{2}$/, "")}
+                            Reported: {report.created_at.split("T")[0]}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">

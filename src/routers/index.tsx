@@ -32,8 +32,14 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* admin side */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<LoginAdmin />} />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredType="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="home" element={<HomeAdmin />} />
         <Route path="residents" element={<Residents />} />
         <Route path="addResident" element={<AddResident />} />
@@ -77,6 +83,9 @@ export default function AppRoutes() {
       <Route path="documentReq" element={<DocumentRequest />} />
       <Route path="signin" element={<Signin />} />
       <Route path="signup" element={<Signup />} />
+
+      {/* admin */}
+      <Route index element={<LoginAdmin />} />
     </Routes>
   );
 }

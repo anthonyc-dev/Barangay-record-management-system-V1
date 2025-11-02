@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
-import { authService } from "@/services/api";
+import { authService, adminService } from "@/services/api";
 
 export type AdminRole = "admin" | "official";
 
@@ -42,6 +42,7 @@ interface AdminContextType {
   login: (credentials: AdminLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => void;
+  refreshAdminInfo: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -143,6 +144,29 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshAdminInfo = async (): Promise<void> => {
+    try {
+      const response = await adminService.getCurrentAdmin();
+
+      if (response.admin_info) {
+        const freshAdminData: AdminInfo = {
+          id: response.admin_info.id,
+          name: response.admin_info.name,
+          username: response.admin_info.username,
+          role: response.admin_info.role as AdminRole,
+        };
+
+        setAdminInfo(freshAdminData);
+
+        // Also update auth context
+        authLogin(freshAdminData, "admin");
+      }
+    } catch (error) {
+      console.error("Failed to refresh admin info:", error);
+      throw error;
+    }
+  };
+
   const value: AdminContextType = {
     adminInfo,
     isAuthenticated,
@@ -153,6 +177,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     login,
     logout,
     checkAuth,
+    refreshAdminInfo,
   };
 
   return (

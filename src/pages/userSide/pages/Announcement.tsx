@@ -1,110 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar, Megaphone, AlertCircle, Info, Search } from "lucide-react";
+import { Calendar, Megaphone, Search } from "lucide-react";
+import { eventService } from "@/services/api/eventService";
+import type { Event } from "@/services/api/eventService";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import GeneralLoading from "@/components/GeneralLoading";
 
 const Announcement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [announcements, setAnnouncements] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const mockAnnouncements = [
-    {
-      id: 1,
-      title: "Community Clean-Up Drive",
-      content:
-        "Join us for our monthly community clean-up drive this Saturday, January 20, 2024, at 7:00 AM. Meeting point is at the Barangay Hall. Please bring gloves and face masks.",
-      type: "event",
-      priority: "high",
-      datePosted: "2024-01-15",
-      author: "Barangay Captain",
-      isRead: false,
-    },
-    {
-      id: 2,
-      title: "Water Interruption Notice",
-      content:
-        "Please be advised that there will be a scheduled water interruption on January 18, 2024, from 8:00 AM to 5:00 PM due to pipe maintenance. We apologize for any inconvenience.",
-      type: "notice",
-      priority: "medium",
-      datePosted: "2024-01-14",
-      author: "Barangay Council",
-      isRead: true,
-    },
-    {
-      id: 3,
-      title: "New Health Center Operating Hours",
-      content:
-        "Starting January 22, 2024, the Barangay Health Center will be open from 8:00 AM to 6:00 PM, Monday to Friday. Saturday hours are 8:00 AM to 12:00 PM.",
-      type: "info",
-      priority: "low",
-      datePosted: "2024-01-12",
-      author: "Health Officer",
-      isRead: true,
-    },
-    {
-      id: 4,
-      title: "Basketball Tournament Registration",
-      content:
-        "Registration for the Inter-Purok Basketball Tournament is now open! Register your team at the Barangay Hall until January 25, 2024. Registration fee is PHP 500 per team.",
-      type: "event",
-      priority: "medium",
-      datePosted: "2024-01-10",
-      author: "Sports Committee",
-      isRead: false,
-    },
-  ];
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await eventService.getAll();
+      setAnnouncements(data);
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load announcements. Please try again later.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
-  const filteredAnnouncements = mockAnnouncements.filter((announcement) => {
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const filteredAnnouncements = announcements.filter((announcement) => {
     const matchesSearch =
       announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      announcement.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterType === "all" || announcement.type === filterType;
-    return matchesSearch && matchesFilter;
+      announcement.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "event":
-        return <Calendar className="h-4 w-4" />;
-      case "notice":
-        return <AlertCircle className="h-4 w-4" />;
-      case "info":
-        return <Info className="h-4 w-4" />;
-      default:
-        return <Megaphone className="h-4 w-4" />;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "event":
-        return "bg-blue-100 text-blue-800";
-      case "notice":
-        return "bg-orange-100 text-orange-800";
-      case "info":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -127,56 +65,29 @@ const Announcement = () => {
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search announcements..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white h-10"
-          />
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-          <Button
-            variant={filterType === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilterType("all")}
-            className="whitespace-nowrap"
-          >
-            All
-          </Button>
-          <Button
-            variant={filterType === "event" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilterType("event")}
-            className="whitespace-nowrap"
-          >
-            Events
-          </Button>
-          <Button
-            variant={filterType === "notice" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilterType("notice")}
-            className="whitespace-nowrap"
-          >
-            Notices
-          </Button>
-          <Button
-            variant={filterType === "info" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilterType("info")}
-            className="whitespace-nowrap"
-          >
-            Info
-          </Button>
-        </div>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Input
+          placeholder="Search announcements..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 bg-white h-10"
+        />
       </div>
 
       {/* Announcements List */}
       <div className="space-y-3 sm:space-y-4">
-        {filteredAnnouncements.length === 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
+              <GeneralLoading
+                loading={loading}
+                message=" Loading announcements..."
+              />
+            </CardContent>
+          </Card>
+        ) : filteredAnnouncements.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
               <Megaphone className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-4" />
@@ -184,8 +95,8 @@ const Announcement = () => {
                 No announcements found
               </h3>
               <p className="text-sm sm:text-base text-gray-500 text-center max-w-md">
-                {searchTerm || filterType !== "all"
-                  ? "Try adjusting your search or filter criteria"
+                {searchTerm
+                  ? "Try adjusting your search criteria"
                   : "There are no announcements at the moment"}
               </p>
             </CardContent>
@@ -194,70 +105,27 @@ const Announcement = () => {
           filteredAnnouncements.map((announcement) => (
             <Card
               key={announcement.id}
-              className={`transition-all hover:shadow-md ${
-                !announcement.isRead
-                  ? "border-l-2 sm:border-l-4 border-l-blue-500"
-                  : ""
-              }`}
+              className="transition-all hover:shadow-md"
             >
               <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  {/* Icon and Title Section */}
-                  <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
-                    <div
-                      className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${getTypeColor(
-                        announcement.type
-                      )}`}
-                    >
-                      {getTypeIcon(announcement.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start space-x-2 mb-1">
-                        <CardTitle className="text-base sm:text-lg flex-1 leading-tight">
-                          {announcement.title}
-                        </CardTitle>
-                        {!announcement.isRead && (
-                          <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></div>
-                        )}
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span className="truncate">
-                            {formatDate(announcement.datePosted)}
-                          </span>
-                        </span>
-                        <span className="truncate">
-                          By {announcement.author}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badges Section */}
-                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:ml-2">
-                    <Badge
-                      variant="outline"
-                      className={`capitalize text-xs ${getPriorityColor(
-                        announcement.priority
-                      )}`}
-                    >
-                      {announcement.priority}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={`capitalize text-xs ${getTypeColor(
-                        announcement.type
-                      )}`}
-                    >
-                      {announcement.type}
+                <div className="space-y-2">
+                  <CardTitle className="text-base sm:text-lg leading-tight">
+                    {announcement.title}
+                  </CardTitle>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                    <span className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span>{formatDate(announcement.date)}</span>
+                    </span>
+                    <Badge variant="default">
+                      By {announcement.posted_by || "Admin"}
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pt-0">
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                  {announcement.content}
+                  {announcement.description}
                 </p>
               </CardContent>
             </Card>
