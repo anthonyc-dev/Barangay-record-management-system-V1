@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { useUserProfile } from "@/contexts/UserProfileContext";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/services/api/config";
 
 // Helper function to format date string to YYYY-MM-DD
 const formatDate = (dateString: string | null | undefined): string => {
@@ -807,21 +808,55 @@ export default function Residents() {
                 <div className="mt-4">
                   <p className="text-sm text-muted-foreground mb-2">Valid ID</p>
                   <div className="border rounded-lg p-4 bg-muted/50">
-                    {selectedResident.valid_id_url ? (
-                      <img
-                        src={selectedResident.valid_id_url}
-                        alt="Valid ID"
-                        className="max-w-full h-auto rounded-lg object-contain max-h-96 mx-auto"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8">
-                        No valid ID uploaded
-                      </p>
-                    )}
+                    {(() => {
+                      // Get the image URL - check both valid_id_path and valid_id_url
+                      const imagePath =
+                        selectedResident.valid_id_path ||
+                        selectedResident.valid_id_url;
+
+                      if (!imagePath) {
+                        return (
+                          <p className="text-center text-muted-foreground py-8">
+                            No valid ID uploaded
+                          </p>
+                        );
+                      }
+
+                      // Convert relative path to full URL if needed
+                      let imageUrl = imagePath;
+                      if (
+                        !imagePath.startsWith("http://") &&
+                        !imagePath.startsWith("https://") &&
+                        !imagePath.startsWith("data:")
+                      ) {
+                        // It's a relative path, convert to full URL
+                        const cleanPath = imagePath.startsWith("/")
+                          ? imagePath.slice(1)
+                          : imagePath;
+                        // Add cache-busting parameter
+                        const cacheBuster = `?t=${Date.now()}`;
+                        imageUrl = `${API_BASE_URL}/storage/${cleanPath}${cacheBuster}`;
+                      } else if (
+                        imagePath.startsWith("http://") ||
+                        imagePath.startsWith("https://")
+                      ) {
+                        // Add cache-busting to existing URLs
+                        const separator = imageUrl.includes("?") ? "&" : "?";
+                        imageUrl = `${imageUrl}${separator}t=${Date.now()}`;
+                      }
+
+                      return (
+                        <img
+                          src={imageUrl}
+                          alt="Valid ID"
+                          className="max-w-full h-auto rounded-lg object-contain max-h-96 mx-auto"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

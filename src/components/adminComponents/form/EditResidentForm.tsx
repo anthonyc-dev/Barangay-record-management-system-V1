@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, User } from "lucide-react";
+import { API_BASE_URL } from "@/services/api/config";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,12 +105,40 @@ export function EditResidentForm({
   const [validIdFile, setValidIdFile] = useState<File | null>(null);
   const [validIdBase64, setValidIdBase64] = useState<string | null>(null);
 
-  // Get the valid ID image URL - handle both base64 and URL formats
-  const validIdImageUrl = initialData.valid_id_url
-    ? (initialData.valid_id_url.startsWith('data:')
-        ? initialData.valid_id_url
-        : initialData.valid_id_url)
-    : null;
+  console.log("initialData", initialData);
+
+  // Get the valid ID image URL - check both valid_id_path and valid_id_url
+  // Handle both base64, relative paths, and full URL formats
+  const getValidIdImageUrl = () => {
+    const imagePath = initialData.valid_id_path || initialData.valid_id_url;
+
+    if (!imagePath) return null;
+
+    // If it's already a base64 data URL, return as is
+    if (imagePath.startsWith("data:")) {
+      return imagePath;
+    }
+
+    // If it's already a full URL (starts with http), return as is
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      return imagePath;
+    }
+
+    // If it's a relative path (like "uploads/valid_ids/..."), convert to full URL
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = imagePath.startsWith("/")
+      ? imagePath.slice(1)
+      : imagePath;
+    // Add cache-busting parameter to prevent browser caching old images
+    const cacheBuster = `?t=${Date.now()}`;
+    return `${API_BASE_URL}/storage/${cleanPath}${cacheBuster}`;
+  };
+
+  const validIdImageUrl = getValidIdImageUrl();
+
+  console.log("validIdImageUrl:", validIdImageUrl);
+  console.log("initialData.valid_id_path:", initialData.valid_id_path);
+  console.log("initialData.valid_id_url:", initialData.valid_id_url);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -153,6 +182,50 @@ export function EditResidentForm({
     },
   });
 
+  // Update form when initialData changes (after async fetch)
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        firstName: initialData.first_name || "",
+        middleName: initialData.middle_name || "",
+        lastName: initialData.last_name || "",
+        suffix: initialData.suffix || "",
+        dateOfBirth: initialData.birth_date
+          ? new Date(initialData.birth_date)
+          : new Date(),
+        gender: (initialData.gender as "Male" | "Female") || "Male",
+        civilStatus:
+          (initialData.civil_status as
+            | "Single"
+            | "Married"
+            | "Divorced"
+            | "Widowed"
+            | "Separated") || "Single",
+        contactNumber: initialData.contact_number || "",
+        email: initialData.email || "",
+        houseNumber: initialData.house_number || "",
+        street: initialData.street || "",
+        zone: initialData.zone || "",
+        city: initialData.city || "Quezon City",
+        province: initialData.province || "Metro Manila",
+        occupation: initialData.occupation || "",
+        placeOfBirth: initialData.place_of_birth || "",
+        nationality: initialData.nationality || "Filipino",
+        religion: initialData.religion || "",
+        fatherFirstName: initialData.father_first_name || "",
+        fatherMiddleName: initialData.father_middle_name || "",
+        fatherLastName: initialData.father_last_name || "",
+        motherFirstName: initialData.mother_first_name || "",
+        motherMiddleName: initialData.mother_middle_name || "",
+        motherMaidenName: initialData.mother_maiden_name || "",
+        uploadId: initialData.upload_id || "",
+        uploadDate: initialData.upload_date
+          ? new Date(initialData.upload_date)
+          : new Date(),
+      });
+    }
+  }, [initialData, form]);
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     console.log("File selected:", file);
@@ -179,7 +252,10 @@ export function EditResidentForm({
   const handleFormSubmit = (data: FormData) => {
     console.log("Form submitted!");
     console.log("validIdFile state:", validIdFile);
-    console.log("validIdBase64 state:", validIdBase64 ? "Base64 string present" : "No base64");
+    console.log(
+      "validIdBase64 state:",
+      validIdBase64 ? "Base64 string present" : "No base64"
+    );
     const formDataWithFile: EditResidentFormData = {
       ...data,
       validIdFile: validIdFile,
@@ -218,6 +294,11 @@ export function EditResidentForm({
                       src={validIdImageUrl}
                       alt="Valid ID"
                       className="h-full w-full object-contain"
+                      onError={(e) => {
+                        console.error("Failed to load image:", validIdImageUrl);
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                      }}
                     />
                   ) : (
                     <User className="h-12 w-12 text-muted-foreground" />
@@ -251,7 +332,10 @@ export function EditResidentForm({
                       replace it.
                     </p>
                     <p className="text-xs text-muted-foreground break-all">
-                      Current: {initialData.valid_id_url}
+                      Current:{" "}
+                      {initialData.valid_id_path ||
+                        initialData.valid_id_url ||
+                        "No image"}
                     </p>
                   </div>
                 ) : (

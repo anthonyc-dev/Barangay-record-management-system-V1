@@ -50,53 +50,105 @@ export default function EditResident() {
     setIsLoading(true);
 
     try {
-      // Check if a new image was uploaded (base64 format)
       console.log("Form data received:", data);
-      console.log("Valid ID Base64:", data.validIdBase64 ? "Base64 present" : "No base64");
+      console.log(
+        "Valid ID File:",
+        data.validIdFile
+          ? `File present: ${data.validIdFile.name}, type: ${data.validIdFile.type}, size: ${data.validIdFile.size}`
+          : "No file"
+      );
+      console.log(
+        "validIdFile instanceof File:",
+        data.validIdFile instanceof File
+      );
+      console.log("validIdFile type:", typeof data.validIdFile);
 
-      // Prepare resident data with all fields
-      const residentData = {
-        first_name: data.firstName,
-        middle_name: data.middleName || "",
-        last_name: data.lastName,
-        suffix: data.suffix || "",
-        birth_date: data.dateOfBirth?.toISOString().split("T")[0],
-        gender: data.gender,
-        place_of_birth: data.placeOfBirth,
-        civil_status: data.civilStatus,
-        nationality: data.nationality,
-        religion: data.religion || "",
-        occupation: data.occupation,
-        house_number: data.houseNumber,
-        street: data.street,
-        zone: data.zone,
-        city: data.city,
-        province: data.province,
-        contact_number: data.contactNumber,
-        email: data.email || "",
-        father_first_name: data.fatherFirstName,
-        father_middle_name: data.fatherMiddleName || "",
-        father_last_name: data.fatherLastName,
-        mother_first_name: data.motherFirstName,
-        mother_middle_name: data.motherMiddleName || "",
-        mother_maiden_name: data.motherMaidenName,
-        upload_id: data.uploadId,
-        upload_date:
-          data.uploadDate?.toISOString().split("T")[0] +
-            " " +
-            data.uploadDate?.toTimeString().split(" ")[0] || "",
-        status: "Active",
-        // Include valid_id_url as base64 string if new image was uploaded
-        ...(data.validIdBase64 && { valid_id_url: data.validIdBase64 }),
-      };
+      // Always use FormData for updates to ensure file uploads work correctly
+      // Laravel can handle both file and non-file updates with FormData
+      const formData = new FormData();
 
-      console.log("Sending resident data with base64 image to API");
-      const response = await residentService.update(
+      // Some Laravel backends require _method for PUT requests with FormData
+      formData.append("_method", "PUT");
+
+      // Add all resident fields
+      formData.append("first_name", data.firstName);
+      if (data.middleName) formData.append("middle_name", data.middleName);
+      formData.append("last_name", data.lastName);
+      if (data.suffix) formData.append("suffix", data.suffix);
+      formData.append(
+        "birth_date",
+        data.dateOfBirth?.toISOString().split("T")[0] || ""
+      );
+      formData.append("gender", data.gender);
+      formData.append("place_of_birth", data.placeOfBirth);
+      formData.append("civil_status", data.civilStatus);
+      formData.append("nationality", data.nationality);
+      if (data.religion) formData.append("religion", data.religion);
+      formData.append("occupation", data.occupation);
+      formData.append("house_number", data.houseNumber);
+      formData.append("street", data.street);
+      formData.append("zone", data.zone);
+      formData.append("city", data.city);
+      formData.append("province", data.province);
+      formData.append("contact_number", data.contactNumber);
+      if (data.email) formData.append("email", data.email);
+      formData.append("father_first_name", data.fatherFirstName);
+      if (data.fatherMiddleName)
+        formData.append("father_middle_name", data.fatherMiddleName);
+      formData.append("father_last_name", data.fatherLastName);
+      formData.append("mother_first_name", data.motherFirstName);
+      if (data.motherMiddleName)
+        formData.append("mother_middle_name", data.motherMiddleName);
+      formData.append("mother_maiden_name", data.motherMaidenName);
+      formData.append("upload_id", data.uploadId);
+      formData.append(
+        "upload_date",
+        data.uploadDate
+          ? data.uploadDate.toISOString().split("T")[0] +
+              " " +
+              data.uploadDate.toTimeString().split(" ")[0]
+          : ""
+      );
+
+      // Add valid ID file if a new file was uploaded
+      // Laravel expects the file upload field to be named 'valid_id'
+      // The backend should store the file and update the 'valid_id_path' column
+      if (data.validIdFile && data.validIdFile instanceof File) {
+        formData.append("valid_id", data.validIdFile);
+        console.log(
+          "Added file to FormData:",
+          data.validIdFile.name,
+          "Size:",
+          data.validIdFile.size,
+          "Type:",
+          data.validIdFile.type
+        );
+      } else {
+        console.log("No new file uploaded, keeping existing valid_id_path");
+      }
+
+      // Log FormData contents for debugging
+      console.log("FormData contents:");
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(
+            `${key}: File(${value.name}, ${value.size} bytes, ${value.type})`
+          );
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      console.log("Sending resident data using FormData");
+      const response = await residentService.updateWithFile(
         parseInt(id),
-        residentData
+        formData
       );
       toast.success(response.message || "Resident updated successfully!");
       console.log("Resident updated:", response);
+
+      // Navigate back to residents list
+      // The list will refresh when the component mounts
       navigate("/admin/residents");
     } catch (error: unknown) {
       let errorMessage = "Failed to update resident";

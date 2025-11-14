@@ -109,6 +109,19 @@ export const residentService = {
     return response.data;
   },
 
+  // Update resident with file upload (uses FormData for file handling)
+  // Laravel requires POST with _method field for multipart/form-data updates
+  updateWithFile: async (
+    id: number,
+    formData: FormData
+  ): Promise<UpdateResidentResponse> => {
+    const response = await apiClient.post<UpdateResidentResponse>(
+      `/residents/${id}`,
+      formData
+    );
+    return response.data;
+  },
+
   // Delete resident
   delete: async (id: number): Promise<DeleteResidentResponse> => {
     const response = await apiClient.delete<DeleteResidentResponse>(

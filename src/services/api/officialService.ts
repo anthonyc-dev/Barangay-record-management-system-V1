@@ -6,6 +6,8 @@ export type Official = {
   username?: string;
   password?: string;
   role?: string;
+  valid_id_path?: string;
+  valid_id_url?: string;
   created_at?: string;
   updated_at?: string;
 };
