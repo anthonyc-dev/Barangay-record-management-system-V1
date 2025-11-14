@@ -6,6 +6,7 @@ import ResidentLayout from "@/layouts/ResidentLayout";
 import Signin from "@/pages/general/auth/signin";
 import Signup from "@/pages/general/auth/signup";
 import AddResident from "@/pages/adminPage/functions/AddResident";
+import EditResident from "@/pages/adminPage/functions/EditResident";
 import ComplaintForm from "@/pages/userPage/section/ComplaintForm";
 import DocumentRequest from "@/pages/userPage/section/DocumentRequest";
 import PreRegister from "@/pages/userSide/userAuth/PreRegister";
@@ -27,11 +28,18 @@ import Complainant from "@/pages/userSide/pages/Complainant";
 import LoginAdmin from "@/pages/adminPage/auth.admin/Login";
 import HomeAdmin from "@/pages/adminPage/Home.admin";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Officials from "@/pages/adminPage/Official.admint";
+import AddOfficial from "@/pages/adminPage/functions/AddOfficial";
+import EditOfficial from "@/pages/adminPage/functions/EditOfficial";
 
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* admin side */}
+      {/* Public login routes - accessible without authentication */}
+      <Route path="/admin/login" element={<LoginAdmin />} />
+      <Route path="/resident/login" element={<UserLogin />} />
+
+      {/* admin side - Protected routes */}
       <Route
         path="/admin"
         element={
@@ -40,10 +48,15 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route index element={<HomeAdmin />} />
         <Route path="home" element={<HomeAdmin />} />
         <Route path="residents" element={<Residents />} />
         <Route path="addResident" element={<AddResident />} />
+        <Route path="editResident/:id" element={<EditResident />} />
         <Route path="documents" element={<Documents />} />
+        <Route path="officials" element={<Officials />} />
+        <Route path="addOfficial" element={<AddOfficial />} />
+        <Route path="editOfficial/:id" element={<EditOfficial />} />
         {/* analytics */}
         <Route path="analytics" element={<OverviewSection />} />
         <Route path="analytics/population" element={<PopulationAnalytics />} />
@@ -57,9 +70,8 @@ export default function AppRoutes() {
         <Route path="announcement" element={<AnnouncementAdmin />} />
         <Route path="folder-storage" element={<FolderStorage />} />
         <Route path="settings" element={<SettingsAdmin />} />
-
-        <Route path="admin-login" element={<LoginAdmin />} />
       </Route>
+
       {/* user side - Protected routes for authenticated users */}
       <Route
         path="/resident"
@@ -76,16 +88,13 @@ export default function AppRoutes() {
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      {/* general */}
+      {/* general public routes */}
       <Route path="/" element={<UserLogin />} />
       <Route path="preRegister" element={<PreRegister />} />
       <Route path="complaint" element={<ComplaintForm />} />
       <Route path="documentReq" element={<DocumentRequest />} />
       <Route path="signin" element={<Signin />} />
       <Route path="signup" element={<Signup />} />
-
-      {/* admin */}
-      <Route index element={<LoginAdmin />} />
     </Routes>
   );
 }

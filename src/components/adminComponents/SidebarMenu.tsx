@@ -82,6 +82,12 @@ const allNavigation = [
     allowedRoles: ["admin"],
   },
   {
+    name: "Officials",
+    href: "/admin/officials",
+    icon: Users,
+    allowedRoles: ["admin"],
+  },
+  {
     name: "Documents",
     href: "/admin/documents",
     icon: FileText,

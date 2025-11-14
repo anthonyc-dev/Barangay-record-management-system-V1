@@ -23,8 +23,14 @@ export const ProtectedRoute = ({
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to appropriate login page if not authenticated
   if (!isAuthenticated) {
+    if (requiredType === "admin") {
+      return <Navigate to="/admin/login" replace />;
+    }
+    if (requiredType === "user") {
+      return <Navigate to="/resident/login" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 

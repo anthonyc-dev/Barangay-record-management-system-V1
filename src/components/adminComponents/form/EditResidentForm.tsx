@@ -31,24 +31,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import type { Resident } from "@/services/api/residentService";
 
 const formSchema = z.object({
-  // Account Information
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-
   // Personal Information
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   middleName: z.string().optional(),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   suffix: z.string().optional(),
   dateOfBirth: z.date(),
-  gender: z.enum(["Male", "Female"], "Please select a gender"),
+  gender: z.enum(["Male", "Female"], {
+    message: "Please select a gender",
+  }),
   civilStatus: z.enum(
     ["Single", "Married", "Divorced", "Widowed", "Separated"],
-    "Please select civil status"
+    {
+      message: "Please select civil status",
+    }
   ),
   placeOfBirth: z.string().min(1, "Place of birth is required"),
   nationality: z.string().min(1, "Nationality is required"),
@@ -59,6 +58,7 @@ const formSchema = z.object({
   contactNumber: z
     .string()
     .min(11, "Contact number must be at least 11 digits"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
 
   // Address Information
   houseNumber: z.string().min(1, "House number is required"),
@@ -80,74 +80,113 @@ const formSchema = z.object({
   uploadDate: z.date(),
 });
 
-export type FormData = z.infer<typeof formSchema> & {
-  validIdFile?: File | null;
-};
+export type FormData = z.infer<typeof formSchema>;
 
-interface AddResidentFormProps {
-  onSubmit: (data: FormData) => void;
+export interface EditResidentFormData extends FormData {
+  validIdFile?: File | null;
+  validIdBase64?: string | null;
+}
+
+interface EditResidentFormProps {
+  initialData: Resident;
+  onSubmit: (data: EditResidentFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
-export function AddResidentForm({
+export function EditResidentForm({
+  initialData,
   onSubmit,
   onCancel,
   isLoading = false,
-}: AddResidentFormProps) {
-  const { toast } = useToast();
+}: EditResidentFormProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [validIdFile, setValidIdFile] = useState<File | null>(null);
+  const [validIdBase64, setValidIdBase64] = useState<string | null>(null);
+
+  // Get the valid ID image URL - handle both base64 and URL formats
+  const validIdImageUrl = initialData.valid_id_url
+    ? (initialData.valid_id_url.startsWith('data:')
+        ? initialData.valid_id_url
+        : initialData.valid_id_url)
+    : null;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      suffix: "",
-      contactNumber: "",
-      houseNumber: "",
-      street: "",
-      zone: "",
-      city: "Quezon City",
-      province: "Metro Manila",
-      occupation: "",
-      placeOfBirth: "",
-      nationality: "Filipino",
-      religion: "",
-      fatherFirstName: "",
-      fatherMiddleName: "",
-      fatherLastName: "",
-      motherFirstName: "",
-      motherMiddleName: "",
-      motherMaidenName: "",
-      uploadId: "",
-      uploadDate: new Date(),
+      firstName: initialData.first_name || "",
+      middleName: initialData.middle_name || "",
+      lastName: initialData.last_name || "",
+      suffix: initialData.suffix || "",
+      dateOfBirth: initialData.birth_date
+        ? new Date(initialData.birth_date)
+        : new Date(),
+      gender: (initialData.gender as "Male" | "Female") || "Male",
+      civilStatus:
+        (initialData.civil_status as
+          | "Single"
+          | "Married"
+          | "Divorced"
+          | "Widowed"
+          | "Separated") || "Single",
+      contactNumber: initialData.contact_number || "",
+      email: initialData.email || "",
+      houseNumber: initialData.house_number || "",
+      street: initialData.street || "",
+      zone: initialData.zone || "",
+      city: initialData.city || "Quezon City",
+      province: initialData.province || "Metro Manila",
+      occupation: initialData.occupation || "",
+      placeOfBirth: initialData.place_of_birth || "",
+      nationality: initialData.nationality || "Filipino",
+      religion: initialData.religion || "",
+      fatherFirstName: initialData.father_first_name || "",
+      fatherMiddleName: initialData.father_middle_name || "",
+      fatherLastName: initialData.father_last_name || "",
+      motherFirstName: initialData.mother_first_name || "",
+      motherMiddleName: initialData.mother_middle_name || "",
+      motherMaidenName: initialData.mother_maiden_name || "",
+      uploadId: initialData.upload_id || "",
+      uploadDate: initialData.upload_date
+        ? new Date(initialData.upload_date)
+        : new Date(),
     },
   });
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log("File selected:", file);
     if (file) {
+      console.log("File details:", {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      });
       setValidIdFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const base64String = e.target?.result as string;
+        setImagePreview(base64String);
+        setValidIdBase64(base64String); // Store base64 for submission
+        console.log("Image converted to base64 successfully");
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log("No file selected");
     }
   };
 
   const handleFormSubmit = (data: FormData) => {
-    onSubmit({ ...data, validIdFile });
-    toast({
-      title: "Resident registered successfully",
-      description: `${data.firstName} ${data.lastName} has been added to the system.`,
-    });
+    console.log("Form submitted!");
+    console.log("validIdFile state:", validIdFile);
+    console.log("validIdBase64 state:", validIdBase64 ? "Base64 string present" : "No base64");
+    const formDataWithFile: EditResidentFormData = {
+      ...data,
+      validIdFile: validIdFile,
+      validIdBase64: validIdBase64, // Include base64 string
+    };
+    console.log("Passing to parent:", formDataWithFile);
+    onSubmit(formDataWithFile);
   };
 
   return (
@@ -174,13 +213,30 @@ export function AddResidentForm({
                       alt="ID preview"
                       className="h-full w-full object-contain"
                     />
+                  ) : validIdImageUrl ? (
+                    <img
+                      src={validIdImageUrl}
+                      alt="Valid ID"
+                      className="h-full w-full object-contain"
+                    />
                   ) : (
                     <User className="h-12 w-12 text-muted-foreground" />
                   )}
                 </div>
+                {validIdImageUrl && !imagePreview && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground text-center">
+                      Current Valid ID
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="valid-id">Upload Valid ID</Label>
+                <Label htmlFor="valid-id">
+                  {validIdImageUrl
+                    ? "Update Valid ID (Optional)"
+                    : "Upload Valid ID"}
+                </Label>
                 <Input
                   id="valid-id"
                   type="file"
@@ -188,68 +244,22 @@ export function AddResidentForm({
                   onChange={handleImageUpload}
                   className="w-full"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Upload a clear image of valid ID. Max file size: 5MB.
-                </p>
+                {validIdImageUrl ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-green-600 dark:text-green-500">
+                      Valid ID already uploaded. You can upload a new one to
+                      replace it.
+                    </p>
+                    <p className="text-xs text-muted-foreground break-all">
+                      Current: {initialData.valid_id_url}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Upload a clear image of valid ID. Max file size: 5MB.
+                  </p>
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Account Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Jean Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="john1@gmail.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="password123"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
           </CardContent>
         </Card>
@@ -269,7 +279,7 @@ export function AddResidentForm({
                   <FormItem>
                     <FormLabel>Last Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Crausus" {...field} />
+                      <Input placeholder="Doe" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -282,7 +292,7 @@ export function AddResidentForm({
                   <FormItem>
                     <FormLabel>First Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Anthony" {...field} />
+                      <Input placeholder="John" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -386,6 +396,7 @@ export function AddResidentForm({
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -410,6 +421,7 @@ export function AddResidentForm({
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -464,19 +476,34 @@ export function AddResidentForm({
             <CardTitle>Contact Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="contactNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Number *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="09171234567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="contactNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contact Number *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="09171234567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="john1@gmail.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -758,7 +785,7 @@ export function AddResidentForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading} className="shadow-primary">
-            {isLoading ? "Registering..." : "Register Resident"}
+            {isLoading ? "Updating..." : "Update Resident"}
           </Button>
         </div>
       </form>
