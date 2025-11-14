@@ -16,20 +16,56 @@ export default function EditOfficial() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [officialData, setOfficialData] = useState<Official | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  console.log(officialData);
 
   const fetchOfficial = useCallback(
     async (officialId: number) => {
       try {
         setIsFetching(true);
+        setFetchError(null);
         const response = await officialService.getById(officialId);
-        setOfficialData(response.data);
+        console.log("Fetched official data - Full response:", response);
+
+        // Handle different response structures
+        let official: Official | null = null;
+
+        // Check if response has nested data structure
+        if (response && typeof response === "object") {
+          if ("data" in response && response.data) {
+            // Standard structure: { status: string, data: Official }
+            official = response.data as Official;
+          } else if ("id" in response || "name" in response) {
+            // Direct structure: Official object directly
+            official = response as Official;
+          }
+        }
+
+        console.log("Extracted official data:", official);
+
+        if (!official || !official.id) {
+          throw new Error("Official data not found in response");
+        }
+
+        setOfficialData(official);
       } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch official data";
+        console.error("Error fetching official:", error);
+        let errorMessage = "Failed to fetch official data";
+
+        if (error && typeof error === "object" && "message" in error) {
+          errorMessage = String(error.message);
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
+        setFetchError(errorMessage);
         toast.error(errorMessage);
-        navigate("/admin/officials");
+
+        // Delay navigation to allow user to see the error
+        setTimeout(() => {
+          navigate("/admin/officials");
+        }, 2000);
       } finally {
         setIsFetching(false);
       }
@@ -39,9 +75,23 @@ export default function EditOfficial() {
 
   // Fetch official data on component mount
   useEffect(() => {
-    if (id) {
-      fetchOfficial(parseInt(id));
+    if (!id) {
+      console.error("No ID provided in URL params");
+      setFetchError("No official ID provided");
+      setIsFetching(false);
+      return;
     }
+
+    const officialId = parseInt(id);
+    if (isNaN(officialId)) {
+      console.error("Invalid ID format:", id);
+      setFetchError(`Invalid official ID format: ${id}`);
+      setIsFetching(false);
+      return;
+    }
+
+    console.log("Fetching official with ID:", officialId);
+    fetchOfficial(officialId);
   }, [id, fetchOfficial]);
 
   const handleSubmit = async (data: FormData) => {
@@ -51,12 +101,19 @@ export default function EditOfficial() {
 
     try {
       console.log("Form data received:", data);
+      console.log("Current role from form:", data.role);
 
       // Prepare official data
+      // Convert role to lowercase to match API expectations (consistent with AddOfficialForm)
+      const roleValue = data.role.toLowerCase();
+      console.log("Role value to send (lowercase):", roleValue);
+      console.log("Original role from form:", data.role);
+
+      // Always include role in the update request - this is required for role updates
       const officialData: Partial<Official> = {
         name: data.name,
         username: data.username,
-        role: data.role,
+        role: roleValue, // CRITICAL: Always include role field to allow role updates
       };
 
       // Only include password if it was provided (not empty)
@@ -64,13 +121,52 @@ export default function EditOfficial() {
         officialData.password = data.password;
       }
 
-      console.log("Sending official data to API");
-      const response = await officialService.update(
-        parseInt(id),
-        officialData
+      // Ensure role is explicitly set and valid
+      if (
+        !officialData.role ||
+        (officialData.role !== "admin" && officialData.role !== "official")
+      ) {
+        console.error(
+          "Role is missing or invalid in officialData!",
+          officialData.role
+        );
+        throw new Error("Role is required and must be 'admin' or 'official'");
+      }
+
+      // Double-check role is in the payload
+      console.log("Final payload before sending:", {
+        ...officialData,
+        role: officialData.role,
+        roleType: typeof officialData.role,
+      });
+
+      console.log(
+        "Sending official data to API:",
+        JSON.stringify(officialData, null, 2)
       );
+      console.log("Role field in request:", officialData.role);
+      console.log("Official ID:", parseInt(id));
+
+      const response = await officialService.update(parseInt(id), officialData);
+
+      console.log("API Response:", response);
+      console.log("Updated official data:", response.data);
+      console.log("Updated role in response:", response.data?.role);
+
+      // Verify the role was actually updated
+      if (
+        response.data?.role &&
+        response.data.role.toLowerCase() !== roleValue
+      ) {
+        console.warn(
+          `Role mismatch! Sent: ${roleValue}, Received: ${response.data.role}`
+        );
+        toast.warning(
+          `Role update may have failed. Expected: ${roleValue}, Got: ${response.data.role}`
+        );
+      }
+
       toast.success(response.message || "Official updated successfully!");
-      console.log("Official updated:", response);
       navigate("/admin/officials");
     } catch (error: unknown) {
       let errorMessage = "Failed to update official";
@@ -133,15 +229,36 @@ export default function EditOfficial() {
   if (isFetching) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading official data...</p>
+        </div>
       </div>
     );
   }
 
-  if (!officialData) {
+  if (fetchError || !officialData) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Official not found</p>
+        <div className="max-w-md mx-auto space-y-4">
+          <div className="text-destructive text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold">Official Not Found</h2>
+          <p className="text-muted-foreground">
+            {fetchError ||
+              "The official you are trying to edit could not be found. This may be because:"}
+          </p>
+          {!fetchError && (
+            <ul className="text-sm text-muted-foreground space-y-1 text-left">
+              <li>• The official was deleted</li>
+              <li>• The ID is invalid</li>
+              <li>• The backend server is not running</li>
+              <li>• You don't have permission to access this official</li>
+            </ul>
+          )}
+          <Button onClick={() => navigate("/admin/officials")} className="mt-4">
+            Back to Officials List
+          </Button>
+        </div>
       </div>
     );
   }

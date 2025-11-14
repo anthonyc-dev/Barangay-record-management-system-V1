@@ -68,9 +68,9 @@ export const officialService = {
     id: number,
     officialData: Official
   ): Promise<UpdateOfficialResponse> => {
-    const response = await apiClient.get<UpdateOfficialResponse>(
+    const response = await apiClient.put<UpdateOfficialResponse>(
       `/admin-update/${id}`,
-      { params: officialData }
+      officialData
     );
     return response.data;
   },

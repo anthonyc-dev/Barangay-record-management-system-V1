@@ -80,7 +80,7 @@ export default function Residents() {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch residents";
-      toast.success(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,7 @@ export default function Residents() {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete resident";
-      toast.success(errorMessage);
+      toast.error(errorMessage);
     }
   };
 

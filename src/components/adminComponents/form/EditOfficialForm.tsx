@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Shield } from "lucide-react";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().optional().or(z.literal("")),
-  role: z.enum(["Admin", "Official", "Staff"], "Please select a role"),
+  role: z.enum(["Admin", "Official"], "Please select a role"),
 });
 
 export type FormData = z.infer<typeof formSchema>;
@@ -39,6 +40,15 @@ interface EditOfficialFormProps {
   isLoading?: boolean;
 }
 
+// Helper function to normalize role
+const normalizeRole = (role: string | undefined): "Admin" | "Official" => {
+  if (!role) return "Official";
+  const roleLower = role.toLowerCase();
+  if (roleLower === "admin") return "Admin";
+  if (roleLower === "official") return "Official";
+  return "Official";
+};
+
 export function EditOfficialForm({
   initialData,
   onSubmit,
@@ -48,12 +58,24 @@ export function EditOfficialForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialData.name || "",
-      username: initialData.username || "",
+      name: initialData?.name || "",
+      username: initialData?.username || "",
       password: "",
-      role: (initialData.role as "Admin" | "Official" | "Staff") || "Official",
+      role: normalizeRole(initialData?.role),
     },
   });
+
+  // Update form when initialData changes (after async fetch)
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData.name || "",
+        username: initialData.username || "",
+        password: "",
+        role: normalizeRole(initialData.role),
+      });
+    }
+  }, [initialData, form]);
 
   const handleFormSubmit = (data: FormData) => {
     onSubmit(data);
@@ -139,7 +161,6 @@ export function EditOfficialForm({
                     <SelectContent>
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="Official">Official</SelectItem>
-                      <SelectItem value="Staff">Staff</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
