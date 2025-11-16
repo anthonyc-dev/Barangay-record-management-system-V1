@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,98 +11,124 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Folder,
-  FileText,
   Download,
-  Eye,
   Trash2,
   Search,
   Calendar,
-  User,
   FolderPlus,
-  FilePlus,
+  Loader2,
+  SquarePen,
 } from "lucide-react";
 import { FaFolder } from "react-icons/fa";
+import { toast } from "sonner";
+import folderService, {
+  type Folder as FolderType,
+} from "@/services/api/folderService";
+import UploadFolderDialog from "@/components/adminComponents/UploadFolderDialog";
+import EditFolderDialog from "@/components/adminComponents/EditFolderDialog";
+import SelectFilesDownloadDialog from "@/components/adminComponents/SelectFilesDownloadDialog";
 
 const FolderStorage = () => {
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Mock data for folders and files
-  const folders = [
-    {
-      id: 1,
-      name: "Barangay Documents",
-      type: "folder",
-      size: "2.3 MB",
-      modified: "2024-01-15",
-      modifiedBy: "Admin User",
-      items: 12,
-    },
-    {
-      id: 2,
-      name: "Resident Records",
-      type: "folder",
-      size: "15.7 MB",
-      modified: "2024-01-14",
-      modifiedBy: "Secretary",
-      items: 45,
-    },
-    {
-      id: 3,
-      name: "Financial Reports",
-      type: "folder",
-      size: "8.1 MB",
-      modified: "2024-01-13",
-      modifiedBy: "Treasurer",
-      items: 23,
-    },
-    {
-      id: 4,
-      name: "Meeting Minutes - January 2024.pdf",
-      type: "file",
-      size: "512 KB",
-      modified: "2024-01-12",
-      modifiedBy: "Admin User",
-      items: null,
-    },
-    {
-      id: 5,
-      name: "Barangay Ordinances",
-      type: "folder",
-      size: "5.2 MB",
-      modified: "2024-01-11",
-      modifiedBy: "Captain",
-      items: 8,
-    },
-    {
-      id: 6,
-      name: "Budget Proposal 2024.xlsx",
-      type: "file",
-      size: "1.2 MB",
-      modified: "2024-01-10",
-      modifiedBy: "Treasurer",
-      items: null,
-    },
-  ];
-
-  const filteredFolders = folders.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const [folders, setFolders] = useState<FolderType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null);
+  const [folderToDownload, setFolderToDownload] = useState<FolderType | null>(
+    null
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<FolderType | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const formatFileSize = (size: string) => {
-    return size;
+  useEffect(() => {
+    fetchFolders();
+  }, []);
+
+  const fetchFolders = async () => {
+    try {
+      setLoading(true);
+      const data = await folderService.getAll();
+      setFolders(data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to load folders";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const formatDate = (date: string) => {
+  const handleUploadSuccess = () => {
+    fetchFolders();
+  };
+
+  const handleEditSuccess = () => {
+    fetchFolders();
+  };
+
+  const handleViewFolder = (folder: FolderType) => {
+    setSelectedFolder(folder);
+    setEditDialogOpen(true);
+  };
+
+  const handleDownloadFolder = (folder: FolderType) => {
+    setFolderToDownload(folder);
+    setDownloadDialogOpen(true);
+  };
+
+  const handleDeleteClick = (folder: FolderType) => {
+    setFolderToDelete(folder);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!folderToDelete?.id) return;
+
+    try {
+      setDeleting(true);
+      const response = await folderService.delete(folderToDelete.id);
+      toast.success(response.message || "Folder deleted successfully");
+      fetchFolders();
+      setDeleteDialogOpen(false);
+      setFolderToDelete(null);
+    } catch (error) {
+      console.error("Delete error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete folder";
+      toast.error(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const filteredFolders = folders.filter((item) =>
+    item.folder_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const formatDate = (date?: string) => {
+    if (!date) return "N/A";
     return new Date(date).toLocaleDateString();
   };
 
-  const getFileIcon = (type: string) => {
-    return type === "folder" ? (
-      <FaFolder className="h-7 w-7 text-blue-600" />
-    ) : (
-      <FileText className="h-7 w-7 text-gray-600" />
-    );
+  const calculateFolderSize = (files?: string[]) => {
+    if (!files || files.length === 0) return "0 KB";
+    // This is a placeholder - the actual size should come from the backend
+    return `${files.length} files`;
   };
 
   return (
@@ -116,13 +142,12 @@ const FolderStorage = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" className="flex items-center space-x-2">
+          <Button
+            onClick={() => setUploadDialogOpen(true)}
+            className="flex items-center space-x-2"
+          >
             <FolderPlus className="h-4 w-4" />
             <span>Upload Folder</span>
-          </Button>
-          <Button className="flex items-center space-x-2">
-            <FilePlus className="h-4 w-4" />
-            <span>Upload Files</span>
           </Button>
         </div>
       </div>
@@ -134,7 +159,7 @@ const FolderStorage = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search folders and files..."
+                placeholder="Search folders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -149,94 +174,178 @@ const FolderStorage = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Folder className="h-5 w-5" />
-            <span>Files and Folders</span>
+            <span>Folders</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[300px]">Name</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Modified</TableHead>
-                <TableHead>Modified By</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredFolders.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center space-x-3">
-                      {getFileIcon(item.type)}
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {item.name}
-                        </div>
-                        {item.type === "folder" && item.items && (
-                          <div className="text-sm text-gray-500">
-                            {item.items} items
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-gray-600">
-                      {formatFileSize(item.size)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">
-                        {formatDate(item.modified)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{item.modifiedBy}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {filteredFolders.length === 0 && (
-            <div className="text-center py-8">
-              <Folder className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No files or folders found
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {searchQuery
-                  ? "Try adjusting your search query"
-                  : "Get started by uploading some files or creating a folder"}
-              </p>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[300px]">Name</TableHead>
+                    <TableHead>Files</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Modified</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredFolders.map((item) => (
+                    <TableRow key={item.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center space-x-3">
+                          <FaFolder className="h-7 w-7 text-blue-600" />
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {item.folder_name}
+                            </div>
+                            {item.original_files &&
+                              item.original_files.length > 0 && (
+                                <div className="text-sm text-gray-500">
+                                  {item.original_files.length} file(s)
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-gray-600">
+                          {calculateFolderSize(item.original_files)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-gray-600 text-sm line-clamp-1">
+                          {item.description || "No description"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-600">
+                            {formatDate(item.updated_at || item.created_at)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewFolder(item)}
+                            title="View Details"
+                          >
+                            <SquarePen className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownloadFolder(item)}
+                            disabled={!item.zip_name}
+                            title="Select Files to Download"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteClick(item)}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {filteredFolders.length === 0 && (
+                <div className="text-center py-12">
+                  <Folder className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No folders found
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {searchQuery
+                      ? "Try adjusting your search query"
+                      : "Get started by uploading a folder"}
+                  </p>
+                  {!searchQuery && (
+                    <Button
+                      onClick={() => setUploadDialogOpen(true)}
+                      className="mt-4"
+                      variant="outline"
+                    >
+                      <FolderPlus className="mr-2 h-4 w-4" />
+                      Upload Folder
+                    </Button>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Upload Dialog */}
+      <UploadFolderDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onSuccess={handleUploadSuccess}
+      />
+
+      {/* Edit/View Dialog */}
+      <EditFolderDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        folder={selectedFolder}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Download Files Selection Dialog */}
+      <SelectFilesDownloadDialog
+        open={downloadDialogOpen}
+        onOpenChange={setDownloadDialogOpen}
+        folder={folderToDownload}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the folder "
+              {folderToDelete?.folder_name}" and all its contents. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

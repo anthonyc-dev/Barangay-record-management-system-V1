@@ -2,31 +2,30 @@ import apiClient from "./config";
 
 export interface DocumentRequest {
   id?: number;
-  userid?: number;
+  userId?: number;
+  user_id?: number;
   document_type: string;
   full_name: string;
   address: string;
   contact_number: string;
   email: string;
   purpose: string;
-  quantity?: number;
-  notes?: string;
   reference_number?: string;
-  status?: "pending" | "processing" | "ready" | "claimed";
+  status?: "pending" | "ready";
   created_at?: string;
   updated_at?: string;
-  [key: string]: unknown;
 }
 
 export interface CreateDocumentRequest {
-  userid: number;
+  user_id: number;
+  userId?: number;
   document_type: string;
   full_name: string;
   address: string;
   contact_number: string;
   email: string;
   purpose: string;
-  status?: "pending" | "processing" | "ready" | "claimed";
+  status?: "pending" | "ready";
   reference_number?: string;
 }
 
@@ -51,6 +50,12 @@ export interface UpdateDocumentResponse {
   data: DocumentRequest;
 }
 
+export interface DeleteDocumentResponse {
+  response_code: number;
+  status: string;
+  message: string;
+}
+
 export const documentService = {
   // Create document request
   createRequest: async (
@@ -63,7 +68,15 @@ export const documentService = {
     return response.data;
   },
 
-  // Get all document requests (for admin or filtered by user)
+  // Get all document requests (admin)
+  getAllDocuments: async (): Promise<GetDocumentRequestsResponse> => {
+    const response = await apiClient.get<GetDocumentRequestsResponse>(
+      "/getAlldocument"
+    );
+    return response.data;
+  },
+
+  // Get document requests by user ID
   getRequests: async (id?: number): Promise<GetDocumentRequestsResponse> => {
     const url = id ? `/get-document?id=${id}` : "/get-document";
     const response = await apiClient.get<GetDocumentRequestsResponse>(url);
@@ -78,7 +91,7 @@ export const documentService = {
     return response.data;
   },
 
-  // Update document request
+  // Update document request (admin can update status)
   updateRequest: async (
     id: number,
     documentData: Partial<DocumentRequest>
@@ -90,9 +103,12 @@ export const documentService = {
     return response.data;
   },
 
-  // Delete document request
-  deleteRequest: async (id: number): Promise<void> => {
-    await apiClient.delete(`/request-documents/${id}`);
+  // Delete document request (admin)
+  deleteRequest: async (id: number): Promise<DeleteDocumentResponse> => {
+    const response = await apiClient.delete<DeleteDocumentResponse>(
+      `/delete-document/${id}`
+    );
+    return response.data;
   },
 };
 

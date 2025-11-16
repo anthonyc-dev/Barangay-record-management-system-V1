@@ -20,7 +20,7 @@ export interface CreateComplaintRequest {
   contact_number?: string | null;
   email?: string | null;
   is_anonymous: boolean;
-  urgency_level: UrgencyLevel;
+  urgency_level?: UrgencyLevel;
   witnesses?: string | null;
   additional_info?: string | null;
 }

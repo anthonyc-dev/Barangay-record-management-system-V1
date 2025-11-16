@@ -1,21 +1,23 @@
-import apiClient from './config';
+import apiClient from "./config";
 
 export interface Folder {
   id?: number;
-  name?: string;
-  file_path?: string;
+  folder_name: string;
+  zip_name?: string;
+  original_files?: string[]; // Array of file paths/names
+  description?: string;
   created_at?: string;
   updated_at?: string;
-  [key: string]: unknown;
 }
 
 export interface FolderListResponse {
   data: Folder[];
+  message?: string;
 }
 
 export interface FolderResponse {
-  data?: Folder;
-  error?: string;
+  data: Folder;
+  message?: string;
 }
 
 export interface CreateFolderResponse {
@@ -30,61 +32,103 @@ export interface UpdateFolderResponse {
 }
 
 export interface DeleteFolderResponse {
-  message?: string;
-  error?: string;
+  message: string;
 }
 
-export const folderService = {
+const folderService = {
   // Get all folders
   getAll: async (): Promise<Folder[]> => {
-    const response = await apiClient.get<Folder[]>('/folders');
+    const response = await apiClient.get<Folder[]>("/folders");
     return response.data;
   },
 
   // Get folder by ID
   getById: async (id: number): Promise<Folder> => {
-    const response = await apiClient.get<Folder | { error: string }>(`/folders/${id}`);
-
-    if ('error' in response.data) {
-      throw new Error(response.data.error);
-    }
-
+    const response = await apiClient.get<Folder>(`/folders/${id}`);
     return response.data;
   },
 
-  // Create new folder
+  // Create new folder with files
   create: async (folderData: FormData): Promise<CreateFolderResponse> => {
-    const response = await apiClient.post<CreateFolderResponse>('/folders', folderData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Don't set Content-Type header - let axios set it automatically with boundary
+    const response = await apiClient.post<CreateFolderResponse>(
+      "/folders",
+      folderData
+    );
     return response.data;
   },
 
   // Update folder
-  update: async (id: number, folderData: FormData): Promise<UpdateFolderResponse> => {
-    const response = await apiClient.put<UpdateFolderResponse>(`/folders/${id}`, folderData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  update: async (
+    id: number,
+    folderData: FormData
+  ): Promise<UpdateFolderResponse> => {
+    // Don't set Content-Type header - let axios set it automatically with boundary
+    const response = await apiClient.put<UpdateFolderResponse>(
+      `/folders/${id}`,
+      folderData
+    );
     return response.data;
   },
 
   // Delete folder
   delete: async (id: number): Promise<DeleteFolderResponse> => {
-    const response = await apiClient.delete<DeleteFolderResponse>(`/folders/${id}`);
+    const response = await apiClient.delete<DeleteFolderResponse>(
+      `/folders/${id}`
+    );
     return response.data;
   },
 
   // Download folder as ZIP
   downloadZip: async (zipName: string): Promise<Blob> => {
     const response = await apiClient.get(`/folders/download/${zipName}`, {
-      responseType: 'blob',
+      responseType: "blob",
     });
+    return response.data;
+  },
+
+  // Download selected files from folder
+  downloadSelectedFiles: async (
+    folderId: number,
+    fileNames: string[]
+  ): Promise<Blob> => {
+    const response = await apiClient.post(
+      `/folders/${folderId}/download-selected`,
+      { files: fileNames },
+      {
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  },
+
+  // Download single file from folder
+  downloadSingleFile: async (
+    folderId: number,
+    fileName: string
+  ): Promise<Blob> => {
+    const response = await apiClient.post(
+      `/folders/downloadSingle/${folderId}`,
+      { file: fileName },
+      {
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  },
+
+  // Download multiple folders as one ZIP
+  downloadMultipleFolders: async (folderIds: number[]): Promise<Blob> => {
+    const response = await apiClient.post(
+      `/folders/download-multiple`,
+      { folder_ids: folderIds },
+      {
+        responseType: "blob",
+      }
+    );
     return response.data;
   },
 };
 
+export { folderService };
 export default folderService;

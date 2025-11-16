@@ -43,7 +43,6 @@ import { toast } from "sonner";
 import complainantService, {
   type CreateComplaintRequest,
   type Complaint,
-  type UrgencyLevel,
 } from "@/services/api/complainantService";
 import { authService } from "@/services/api";
 import GeneralLoading from "@/components/GeneralLoading";
@@ -63,7 +62,6 @@ const Complainant = () => {
     contactNumber: "",
     email: "",
     isAnonymous: false,
-    urgencyLevel: "",
     witnesses: "",
     additionalInfo: "",
   });
@@ -81,7 +79,6 @@ const Complainant = () => {
     contactNumber: "",
     email: "",
     isAnonymous: false,
-    urgencyLevel: "",
     witnesses: "",
     additionalInfo: "",
   });
@@ -100,13 +97,6 @@ const Complainant = () => {
     "Infrastructure Problem",
     "Violence/Assault",
     "Other",
-  ];
-
-  const urgencyLevels = [
-    { value: "low", label: "Low Priority", color: "text-green-600" },
-    { value: "medium", label: "Medium Priority", color: "text-yellow-600" },
-    { value: "high", label: "High Priority", color: "text-orange-600" },
-    { value: "emergency", label: "Emergency", color: "text-red-600" },
   ];
 
   // Fetch user's complaints when the history tab is active
@@ -165,9 +155,6 @@ const Complainant = () => {
     }
     if (!formData.dateTime) {
       return "Please select the date and time";
-    }
-    if (!formData.urgencyLevel) {
-      return "Please select an urgency level";
     }
 
     // Validate complainant info if not anonymous
@@ -231,7 +218,6 @@ const Complainant = () => {
         contact_number: formData.isAnonymous ? null : formData.contactNumber,
         email: formData.isAnonymous || !formData.email ? null : formData.email,
         is_anonymous: formData.isAnonymous,
-        urgency_level: formData.urgencyLevel as UrgencyLevel,
         witnesses: formData.witnesses.trim() || null,
         additional_info: formData.additionalInfo.trim() || null,
       };
@@ -255,7 +241,6 @@ const Complainant = () => {
         contactNumber: "",
         email: "",
         isAnonymous: false,
-        urgencyLevel: "",
         witnesses: "",
         additionalInfo: "",
       });
@@ -319,21 +304,6 @@ const Complainant = () => {
     }
   };
 
-  const getUrgencyColor = (urgencyLevel: string) => {
-    switch (urgencyLevel) {
-      case "low":
-        return "text-green-600 bg-green-50 border-green-200";
-      case "medium":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      case "high":
-        return "text-orange-600 bg-orange-50 border-orange-200";
-      case "emergency":
-        return "text-red-600 bg-red-50 border-red-200";
-      default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
-    }
-  };
-
   const handleEditComplaint = (complaint: Complaint) => {
     setEditingComplaint(complaint);
 
@@ -350,7 +320,6 @@ const Complainant = () => {
       contactNumber: complaint.contact_number || "",
       email: complaint.email || "",
       isAnonymous: complaint.is_anonymous,
-      urgencyLevel: complaint.urgency_level,
       witnesses: complaint.witnesses || "",
       additionalInfo: complaint.additional_info || "",
     });
@@ -370,7 +339,6 @@ const Complainant = () => {
       contactNumber: "",
       email: "",
       isAnonymous: false,
-      urgencyLevel: "",
       witnesses: "",
       additionalInfo: "",
     });
@@ -391,9 +359,6 @@ const Complainant = () => {
     }
     if (!editFormData.dateTime) {
       return "Please select the date and time";
-    }
-    if (!editFormData.urgencyLevel) {
-      return "Please select an urgency level";
     }
 
     if (!editFormData.isAnonymous) {
@@ -448,7 +413,6 @@ const Complainant = () => {
       updateData.description = editFormData.description;
       updateData.location = editFormData.location;
       updateData.date_time = dateTimeFormatted;
-      updateData.urgency_level = editFormData.urgencyLevel as UrgencyLevel;
       updateData.is_anonymous = editFormData.isAnonymous;
 
       // Handle nullable fields properly
@@ -599,47 +563,25 @@ const Complainant = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="reportType">Type of Report *</Label>
-                  <Select
-                    value={formData.reportType}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, reportType: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select report type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {reportTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="urgencyLevel">Urgency Level *</Label>
-                  <Select
-                    value={formData.urgencyLevel}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, urgencyLevel: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select urgency level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {urgencyLevels.map((level) => (
-                        <SelectItem key={level.value} value={level.value}>
-                          <span className={level.color}>{level.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="reportType">Type of Report *</Label>
+                <Select
+                  value={formData.reportType}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, reportType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reportTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="title">Report Title *</Label>
@@ -937,18 +879,6 @@ const Complainant = () => {
 
                     {/* Actions Section */}
                     <div className="flex flex-row sm:flex-col lg:flex-col items-start sm:items-end gap-2 lg:flex-shrink-0">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${getUrgencyColor(
-                          report.urgency_level
-                        )}`}
-                      >
-                        {report.urgency_level === "emergency"
-                          ? "Emergency"
-                          : `${
-                              report.urgency_level.charAt(0).toUpperCase() +
-                              report.urgency_level.slice(1)
-                            } Priority`}
-                      </span>
                       {(report.status === "pending" ||
                         report.status === "under_investigation") && (
                         <Button
@@ -995,47 +925,25 @@ const Complainant = () => {
               <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
                 Report Details
               </h3>
-              <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-reportType">Type of Report *</Label>
-                  <Select
-                    value={editFormData.reportType}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, reportType: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select report type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {reportTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-urgencyLevel">Urgency Level *</Label>
-                  <Select
-                    value={editFormData.urgencyLevel}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, urgencyLevel: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select urgency level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {urgencyLevels.map((level) => (
-                        <SelectItem key={level.value} value={level.value}>
-                          <span className={level.color}>{level.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-reportType">Type of Report *</Label>
+                <Select
+                  value={editFormData.reportType}
+                  onValueChange={(value) =>
+                    setEditFormData({ ...editFormData, reportType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reportTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-title">Report Title *</Label>

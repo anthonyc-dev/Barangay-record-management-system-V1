@@ -77,10 +77,6 @@ const Documents = () => {
     "Barangay Clearance",
     "Certificate of Residency",
     "Certificate of Indigency",
-    "Business Permit",
-    "Community Tax Certificate",
-    "Certificate of Good Moral Character",
-    "Certificate of Non-Issuance of Building Permit",
   ];
 
   // Auto-fill user information on mount
@@ -157,7 +153,7 @@ const Documents = () => {
       };
 
       const requestData = {
-        userid: userInfo.id,
+        user_id: userInfo.id,
         document_type: formData.documentType,
         full_name: formData.fullName,
         address: formData.address,
@@ -579,8 +575,7 @@ const Documents = () => {
                             .toUpperCase() +
                             (request.status || "pending").slice(1)}
                         </span>
-                        {(request.status === "pending" ||
-                          request.status === "processing") && (
+                        {request.status === "pending" && (
                           <Button
                             size="sm"
                             variant="outline"

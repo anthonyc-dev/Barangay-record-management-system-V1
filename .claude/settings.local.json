@@ -11,7 +11,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx shadcn@latest add avatar)",
       "Bash(pnpm run dev)",
-      "Bash(timeout /t 3 /nobreak)"
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(npx shadcn@latest add scroll-area)"
     ],
     "deny": [],
     "ask": []

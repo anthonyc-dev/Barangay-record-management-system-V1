@@ -1,62 +1,40 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Plus,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Search,
   Filter,
   Download,
   FileText,
   Calendar,
-  User,
   DollarSign,
   Eye,
   Printer,
+  Trash2,
+  Loader2,
 } from "lucide-react";
-
-const documents = [
-  {
-    id: "BC2024001",
-    type: "Barangay Clearance",
-    residentName: "Juan Dela Cruz",
-    dateIssued: "2024-01-15",
-    purpose: "Employment",
-    fee: 50,
-    status: "Issued",
-    issuedBy: "Admin User",
-  },
-  {
-    id: "CI2024012",
-    type: "Certificate of Indigency",
-    residentName: "Ana Rodriguez",
-    dateIssued: "2024-01-14",
-    purpose: "Medical Assistance",
-    fee: 0,
-    status: "Issued",
-    issuedBy: "Staff User",
-  },
-  {
-    id: "CR2024008",
-    type: "Certificate of Residency",
-    residentName: "Maria Santos",
-    dateIssued: "2024-01-13",
-    purpose: "School Registration",
-    fee: 30,
-    status: "Issued",
-    issuedBy: "Admin User",
-  },
-  {
-    id: "BP2024003",
-    type: "Business Permit",
-    residentName: "Pedro Rodriguez",
-    dateIssued: "2024-01-12",
-    purpose: "Sari-sari Store",
-    fee: 100,
-    status: "Pending",
-    issuedBy: "Admin User",
-  },
-];
+import { toast } from "sonner";
+import documentService from "@/services/api/documentService";
+import type { DocumentRequest } from "@/services/api/documentService";
 
 const documentTypes = [
   {
@@ -70,7 +48,7 @@ const documentTypes = [
     name: "Certificate of Indigency",
     description: "For qualified residents needing assistance",
     fee: "Free",
-    icon: User,
+    icon: FileText,
     color: "bg-green-500",
   },
   {
@@ -90,6 +68,106 @@ const documentTypes = [
 ];
 
 export default function Documents() {
+  const [documents, setDocuments] = useState<DocumentRequest[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<number | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+
+  // Fetch all documents on component mount
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  // Filter documents when search query changes
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredDocuments(documents);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = documents.filter(
+        (doc) =>
+          doc.reference_number?.toLowerCase().includes(query) ||
+          doc.full_name.toLowerCase().includes(query) ||
+          doc.document_type.toLowerCase().includes(query) ||
+          doc.email.toLowerCase().includes(query)
+      );
+      setFilteredDocuments(filtered);
+    }
+  }, [searchQuery, documents]);
+
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await documentService.getAllDocuments();
+      setDocuments(response.data);
+      setFilteredDocuments(response.data);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      toast.error("Failed to load documents. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (
+    documentId: number,
+    newStatus: "pending" | "ready"
+  ) => {
+    try {
+      setUpdatingStatus(documentId);
+      await documentService.updateRequest(documentId, { status: newStatus });
+
+      // Update local state
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === documentId ? { ...doc, status: newStatus } : doc
+        )
+      );
+
+      toast.success(`Document status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating document status:", error);
+      toast.error("Failed to update document status. Please try again.");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleDeleteClick = (documentId: number) => {
+    setDocumentToDelete(documentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (documentToDelete === null) return;
+
+    try {
+      await documentService.deleteRequest(documentToDelete);
+
+      // Remove from local state
+      setDocuments((prev) => prev.filter((doc) => doc.id !== documentToDelete));
+
+      toast.success("Document deleted successfully");
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast.error("Failed to delete document. Please try again.");
+    }
+  };
+
+  // Calculate stats
+  const stats = {
+    total: documents.length,
+    pending: documents.filter((doc) => doc.status === "pending").length,
+    ready: documents.filter((doc) => doc.status === "ready").length,
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Page Header */}
@@ -97,13 +175,9 @@ export default function Documents() {
         <div>
           <h1 className="text-3xl font-bold">Document Management</h1>
           <p className="text-muted-foreground">
-            Generate, track, and manage barangay documents and certificates
+            Track and manage resident document requests
           </p>
         </div>
-        <Button className="shadow-primary">
-          <Plus className="h-4 w-4" />
-          Issue New Document
-        </Button>
       </div>
 
       {/* Document Types Grid */}
@@ -139,15 +213,15 @@ export default function Documents() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Total Issued
+                  Total Requests
                 </p>
-                <p className="text-2xl font-bold">1,247</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
               </div>
               <FileText className="h-8 w-8 text-primary" />
             </div>
@@ -159,23 +233,11 @@ export default function Documents() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  This Month
-                </p>
-                <p className="text-2xl font-bold text-success">156</p>
-              </div>
-              <Calendar className="h-8 w-8 text-success" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
                   Pending
                 </p>
-                <p className="text-2xl font-bold text-warning">12</p>
+                <p className="text-2xl font-bold text-warning">
+                  {stats.pending}
+                </p>
               </div>
               <div className="h-8 w-8 rounded-full bg-warning/10 flex items-center justify-center">
                 <FileText className="h-4 w-4 text-warning" />
@@ -189,11 +251,11 @@ export default function Documents() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Revenue
+                  Ready for Pickup
                 </p>
-                <p className="text-2xl font-bold text-primary">₱78,450</p>
+                <p className="text-2xl font-bold text-success">{stats.ready}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-primary" />
+              <Calendar className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -207,8 +269,10 @@ export default function Documents() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search by document ID, resident name..."
+                  placeholder="Search by reference number, name, email..."
                   className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Button variant="outline">
@@ -229,117 +293,175 @@ export default function Documents() {
       {/* Documents Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Documents</CardTitle>
+          <CardTitle>Document Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Document ID
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Type
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Resident
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Purpose
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Date Issued
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Fee
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((document) => (
-                  <tr
-                    key={document.id}
-                    className="border-b border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <p className="font-medium">{document.id}</p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="font-medium">{document.type}</p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium">{document.residentName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Issued by: {document.issuedBy}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">{document.purpose}</td>
-                    <td className="py-3 px-4">{document.dateIssued}</td>
-                    <td className="py-3 px-4">₱{document.fee}</td>
-                    <td className="py-3 px-4">
-                      <Badge
-                        variant="secondary"
-                        className={
-                          document.status === "Issued"
-                            ? "bg-success/10 text-success"
-                            : "bg-warning/10 text-warning"
-                        }
-                      >
-                        {document.status}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Printer className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex items-center justify-between mt-6">
-            <p className="text-sm text-muted-foreground">
-              Showing 1-4 of 1,247 documents
-            </p>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                Previous
-              </Button>
-              <Button variant="outline" size="sm">
-                1
-              </Button>
-              <Button variant="outline" size="sm">
-                2
-              </Button>
-              <Button variant="outline" size="sm">
-                3
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          </div>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? "No documents found matching your search."
+                  : "No document requests yet."}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Reference #
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Document Type
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Requestor
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Purpose
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Contact
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDocuments.map((document) => (
+                      <tr
+                        key={document.id}
+                        className="border-b border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <td className="py-3 px-4">
+                          <p className="font-medium">
+                            {document.reference_number || "N/A"}
+                          </p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="font-medium">
+                            {document.document_type}
+                          </p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-medium">{document.full_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {document.email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="text-sm">{document.purpose}</p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="text-sm">{document.contact_number}</p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Select
+                            value={document.status || "pending"}
+                            onValueChange={(value: "pending" | "ready") =>
+                              handleStatusUpdate(document.id!, value)
+                            }
+                            disabled={updatingStatus === document.id}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-warning/10 text-warning"
+                                >
+                                  Pending
+                                </Badge>
+                              </SelectItem>
+                              <SelectItem value="ready">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-success/10 text-success"
+                                >
+                                  Ready
+                                </Badge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="View details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" title="Print">
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(document.id!)}
+                              title="Delete"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between mt-6">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredDocuments.length} of {documents.length}{" "}
+                  documents
+                </p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this document request. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDocumentToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
