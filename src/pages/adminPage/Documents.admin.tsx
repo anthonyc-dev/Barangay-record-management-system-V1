@@ -21,6 +21,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Search,
   Filter,
   Download,
@@ -33,6 +40,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
 
@@ -77,6 +85,8 @@ export default function Documents() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentRequest | null>(null);
 
   // Fetch all documents on component mount
   useEffect(() => {
@@ -158,6 +168,193 @@ export default function Documents() {
     } catch (error) {
       console.error("Error deleting document:", error);
       toast.error("Failed to delete document. Please try again.");
+    }
+  };
+
+  const handleViewDocument = (document: DocumentRequest) => {
+    setSelectedDocument(document);
+    setViewDialogOpen(true);
+  };
+
+  const handlePrintDocument = (document: DocumentRequest) => {
+    // Create a print-friendly window
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Please allow popups to print documents");
+      return;
+    }
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Document Request - ${document.reference_number || "N/A"}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .header p {
+              margin: 5px 0;
+              color: #666;
+            }
+            .content {
+              margin: 20px 0;
+            }
+            .field {
+              margin: 15px 0;
+              display: flex;
+              border-bottom: 1px solid #eee;
+              padding: 10px 0;
+            }
+            .field-label {
+              font-weight: bold;
+              width: 200px;
+              color: #333;
+            }
+            .field-value {
+              flex: 1;
+              color: #666;
+            }
+            .status {
+              display: inline-block;
+              padding: 5px 15px;
+              border-radius: 5px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-pending {
+              background-color: #fff3cd;
+              color: #856404;
+            }
+            .status-ready {
+              background-color: #d4edda;
+              color: #155724;
+            }
+            @media print {
+              body {
+                padding: 20px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Barangay Document Request</h1>
+            <p>Document Management System</p>
+          </div>
+          <div class="content">
+            <div class="field">
+              <div class="field-label">Reference Number:</div>
+              <div class="field-value">${document.reference_number || "N/A"}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Document Type:</div>
+              <div class="field-value">${document.document_type}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Full Name:</div>
+              <div class="field-value">${document.full_name}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Email:</div>
+              <div class="field-value">${document.email}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Contact Number:</div>
+              <div class="field-value">${document.contact_number}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Purpose:</div>
+              <div class="field-value">${document.purpose}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Status:</div>
+              <div class="field-value">
+                <span class="status status-${document.status || "pending"}">
+                  ${document.status || "pending"}
+                </span>
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">Request Date:</div>
+              <div class="field-value">${document.created_at ? new Date(document.created_at).toLocaleDateString() : "N/A"}</div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    toast.success("Print dialog opened");
+  };
+
+  const handleExportToExcel = () => {
+    try {
+      // Prepare data for Excel export
+      const exportData = filteredDocuments.map((doc) => ({
+        "Reference Number": doc.reference_number || "N/A",
+        "Document Type": doc.document_type,
+        "Full Name": doc.full_name,
+        "Email": doc.email,
+        "Contact Number": doc.contact_number,
+        "Purpose": doc.purpose,
+        "Status": doc.status || "pending",
+        "Request Date": doc.created_at
+          ? new Date(doc.created_at).toLocaleDateString()
+          : "N/A",
+      }));
+
+      // Create a new workbook
+      const wb = XLSX.utils.book_new();
+
+      // Convert data to worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const colWidths = [
+        { wch: 18 }, // Reference Number
+        { wch: 25 }, // Document Type
+        { wch: 20 }, // Full Name
+        { wch: 25 }, // Email
+        { wch: 15 }, // Contact Number
+        { wch: 30 }, // Purpose
+        { wch: 10 }, // Status
+        { wch: 15 }, // Request Date
+      ];
+      ws["!cols"] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Document Requests");
+
+      // Generate filename with current date
+      const fileName = `Document_Requests_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, fileName);
+
+      toast.success("Excel file exported successfully");
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast.error("Failed to export to Excel. Please try again.");
     }
   };
 
@@ -281,9 +478,13 @@ export default function Documents() {
               </Button>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline">
-                <Download className="h-4 w-4" />
-                Export
+              <Button
+                variant="outline"
+                onClick={handleExportToExcel}
+                disabled={filteredDocuments.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export to Excel
               </Button>
             </div>
           </div>
@@ -405,10 +606,16 @@ export default function Documents() {
                               variant="ghost"
                               size="sm"
                               title="View details"
+                              onClick={() => handleViewDocument(document)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" title="Print">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Print"
+                              onClick={() => handlePrintDocument(document)}
+                            >
                               <Printer className="h-4 w-4" />
                             </Button>
                             <Button
@@ -462,6 +669,133 @@ export default function Documents() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* View Document Details Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Document Request Details</DialogTitle>
+            <DialogDescription>
+              Complete information about this document request
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDocument && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Reference Number
+                  </p>
+                  <p className="text-base font-semibold">
+                    {selectedDocument.reference_number || "N/A"}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Status
+                  </p>
+                  <Badge
+                    variant="secondary"
+                    className={
+                      selectedDocument.status === "ready"
+                        ? "bg-success/10 text-success"
+                        : "bg-warning/10 text-warning"
+                    }
+                  >
+                    {selectedDocument.status || "pending"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Document Information</h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Document Type
+                    </p>
+                    <p className="text-base">{selectedDocument.document_type}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Purpose
+                    </p>
+                    <p className="text-base">{selectedDocument.purpose}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Requestor Information</h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Full Name
+                    </p>
+                    <p className="text-base">{selectedDocument.full_name}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Email Address
+                    </p>
+                    <p className="text-base">{selectedDocument.email}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Contact Number
+                    </p>
+                    <p className="text-base">{selectedDocument.contact_number}</p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedDocument.created_at && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-3">Request Details</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Request Date
+                      </p>
+                      <p className="text-base">
+                        {new Date(selectedDocument.created_at).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePrintDocument(selectedDocument)}
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => setViewDialogOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
