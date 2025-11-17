@@ -4,7 +4,7 @@ export interface Folder {
   id?: number;
   folder_name: string;
   zip_name?: string;
-  original_files?: string[]; // Array of file paths/names
+  original_files?: string[] | string; // Array of file paths/names OR JSON string
   description?: string;
   created_at?: string;
   updated_at?: string;
@@ -63,8 +63,10 @@ const folderService = {
     id: number,
     folderData: FormData
   ): Promise<UpdateFolderResponse> => {
+    // Use POST with _method=PUT for Laravel method spoofing (required for file uploads)
+    folderData.append("_method", "PUT");
     // Don't set Content-Type header - let axios set it automatically with boundary
-    const response = await apiClient.put<UpdateFolderResponse>(
+    const response = await apiClient.post<UpdateFolderResponse>(
       `/folders/${id}`,
       folderData
     );

@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Folder,
   User,
+  FileChartLine,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -57,6 +58,13 @@ const allNavigation = [
     icon: Users,
     allowedRoles: ["admin"],
   },
+  {
+    name: "Complaints",
+    href: "/admin/complainantAdmin",
+    icon: FileChartLine,
+    allowedRoles: ["admin"],
+  },
+
   {
     name: "Documents",
     href: "/admin/documents",

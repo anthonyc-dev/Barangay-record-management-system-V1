@@ -125,10 +125,26 @@ const FolderStorage = () => {
     return new Date(date).toLocaleDateString();
   };
 
-  const calculateFolderSize = (files?: string[]) => {
-    if (!files || files.length === 0) return "0 KB";
-    // This is a placeholder - the actual size should come from the backend
-    return `${files.length} files`;
+  const parseFiles = (files?: string[] | string): string[] => {
+    if (!files) return [];
+
+    if (Array.isArray(files)) {
+      return files;
+    } else if (typeof files === 'string') {
+      try {
+        return JSON.parse(files);
+      } catch (e) {
+        console.error('Failed to parse files:', e);
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const calculateFolderSize = (files?: string[] | string) => {
+    const fileArray = parseFiles(files);
+    if (fileArray.length === 0) return "0 files";
+    return `${fileArray.length} file${fileArray.length > 1 ? 's' : ''}`;
   };
 
   return (
@@ -204,12 +220,11 @@ const FolderStorage = () => {
                             <div className="font-medium text-gray-900">
                               {item.folder_name}
                             </div>
-                            {item.original_files &&
-                              item.original_files.length > 0 && (
-                                <div className="text-sm text-gray-500">
-                                  {item.original_files.length} file(s)
-                                </div>
-                              )}
+                            {parseFiles(item.original_files).length > 0 && (
+                              <div className="text-sm text-gray-500">
+                                {parseFiles(item.original_files).length} file(s)
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>

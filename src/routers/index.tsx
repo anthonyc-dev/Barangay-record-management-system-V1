@@ -31,6 +31,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Officials from "@/pages/adminPage/Official.admint";
 import AddOfficial from "@/pages/adminPage/functions/AddOfficial";
 import EditOfficial from "@/pages/adminPage/functions/EditOfficial";
+import ComplainantAdmin from "@/pages/adminPage/Complainant.admin";
 
 export default function AppRoutes() {
   return (
@@ -57,6 +58,7 @@ export default function AppRoutes() {
         <Route path="officials" element={<Officials />} />
         <Route path="addOfficial" element={<AddOfficial />} />
         <Route path="editOfficial/:id" element={<EditOfficial />} />
+        <Route path="complainantAdmin" element={<ComplainantAdmin />} />
         {/* analytics */}
         <Route path="analytics" element={<OverviewSection />} />
         <Route path="analytics/population" element={<PopulationAnalytics />} />

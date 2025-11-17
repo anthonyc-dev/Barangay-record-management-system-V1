@@ -73,11 +73,7 @@ const Documents = () => {
 
   console.log("...", requests, referenceCounter);
 
-  const documentTypes = [
-    "Barangay Clearance",
-    "Certificate of Residency",
-    "Certificate of Indigency",
-  ];
+  const documentTypes = ["Clearance Certification", "Certification"];
 
   // Auto-fill user information on mount
   useEffect(() => {

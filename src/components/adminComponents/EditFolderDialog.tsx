@@ -64,7 +64,22 @@ const EditFolderDialog = ({
         folder_name: folder.folder_name || "",
         description: folder.description || "",
       });
-      setExistingFiles(folder.original_files || []);
+
+      // Parse original_files - handle both array and JSON string
+      let files: string[] = [];
+      if (folder.original_files) {
+        if (Array.isArray(folder.original_files)) {
+          files = folder.original_files;
+        } else if (typeof folder.original_files === 'string') {
+          try {
+            files = JSON.parse(folder.original_files);
+          } catch (e) {
+            console.error('Failed to parse original_files:', e);
+            files = [];
+          }
+        }
+      }
+      setExistingFiles(files);
       setNewFiles([]);
     }
   }, [folder, form]);
@@ -92,9 +107,7 @@ const EditFolderDialog = ({
     try {
       const formData = new FormData();
       formData.append("folder_name", data.folder_name);
-      if (data.description) {
-        formData.append("description", data.description);
-      }
+      formData.append("description", data.description || "");
 
       // Add new files if any
       if (newFiles.length > 0) {

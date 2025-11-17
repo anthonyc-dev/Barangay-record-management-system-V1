@@ -27,6 +27,23 @@ const SelectFilesDownloadDialog = ({
 }: SelectFilesDownloadDialogProps) => {
   const [downloadingSingleFile, setDownloadingSingleFile] = useState<string | null>(null);
 
+  // Helper function to parse original_files (handles both array and JSON string)
+  const parseFiles = (files?: string[] | string): string[] => {
+    if (!files) return [];
+
+    if (Array.isArray(files)) {
+      return files;
+    } else if (typeof files === 'string') {
+      try {
+        return JSON.parse(files);
+      } catch (e) {
+        console.error('Failed to parse original_files:', e);
+        return [];
+      }
+    }
+    return [];
+  };
+
   const handleDownloadSingleFile = async (fileName: string) => {
     if (!folder?.id) {
       toast.error("Folder information not available");
@@ -82,8 +99,8 @@ const SelectFilesDownloadDialog = ({
           {/* File List */}
           <ScrollArea className="h-[400px] border rounded-md p-4">
             <div className="space-y-2">
-              {folder.original_files && folder.original_files.length > 0 ? (
-                folder.original_files.map((file, index) => (
+              {parseFiles(folder.original_files).length > 0 ? (
+                parseFiles(folder.original_files).map((file, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between space-x-3 p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
