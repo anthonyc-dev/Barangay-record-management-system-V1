@@ -8,6 +8,7 @@ import {
   Folder,
   User,
   FileChartLine,
+  CheckCheck,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -69,6 +70,12 @@ const allNavigation = [
     name: "Documents",
     href: "/admin/documents",
     icon: FileText,
+    allowedRoles: ["admin"],
+  },
+  {
+    name: "Report",
+    href: "/admin/report",
+    icon: CheckCheck,
     allowedRoles: ["admin"],
   },
   {

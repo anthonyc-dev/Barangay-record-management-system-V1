@@ -211,7 +211,9 @@ export default function Documents() {
     }
 
     // Determine which template to use based on document type
-    const isClearance = document.document_type.toLowerCase().includes("clearance");
+    const isClearance = document.document_type
+      .toLowerCase()
+      .includes("clearance");
 
     // Generate random age between 21 and 38
     const randomAge = Math.floor(Math.random() * (38 - 21 + 1)) + 21;
@@ -304,7 +306,9 @@ export default function Documents() {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Clearance Certification - ${document.reference_number || "N/A"}</title>
+            <title>Clearance Certification - ${
+              document.reference_number || "N/A"
+            }</title>
             <style>
               ${commonStyles}
             </style>
@@ -325,7 +329,9 @@ export default function Documents() {
             <div class="document-title">CLEARANCE CERTIFICATION</div>
 
             <div class="content-text">
-              This is to certify that <strong>${document.full_name}</strong>, ${randomAge} years of age, Filipino,
+              This is to certify that <strong>${
+                document.full_name
+              }</strong>, ${randomAge} years of age, Filipino,
               resident of Purok ${randomPurok}, Simpak, Lala, Lanao del Norte is a bona fide member of this Barangay.
             </div>
 
@@ -341,7 +347,15 @@ export default function Documents() {
             </div>
 
             <div class="content-text">
-              Issued this ${document.created_at ? new Date(document.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '_____ day of _____ 2025'}
+              Issued this ${
+                document.created_at
+                  ? new Date(document.created_at).toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "_____ day of _____ 2025"
+              }
               at the Barangay Local Government Center of Simpak, Lala, Lanao del Norte.
             </div>
 
@@ -353,9 +367,13 @@ export default function Documents() {
             <div class="footer-info">
               <p>________________________</p>
               <p>Signature over printed Name</p>
-              <p style="margin-top: 20px;">Issued on: ${document.created_at ? new Date(document.created_at).toLocaleDateString() : '_______'}</p>
+              <p style="margin-top: 20px;">Issued on: ${
+                document.created_at
+                  ? new Date(document.created_at).toLocaleDateString()
+                  : "_______"
+              }</p>
               <p>Issued at: Barangay Simpak</p>
-              <p>Control No. ${document.reference_number || '_______'}</p>
+              <p>Control No. ${document.reference_number || "_______"}</p>
               <p style="margin-top: 20px;">Brgy. Dry-Seal</p>
             </div>
 
@@ -395,12 +413,16 @@ export default function Documents() {
             <div class="salutation">TO WHOM IT MAY CONCERN</div>
 
             <div class="content-text">
-              This is to certify that <strong>${document.full_name}</strong>, ${randomAge} years of age,
+              This is to certify that <strong>${
+                document.full_name
+              }</strong>, ${randomAge} years of age,
               is a bonafide resident of Purok ${randomPurok}, Simpak, Lala, Lanao del Norte.
             </div>
 
             <div class="content-text">
-              As per record, this certification is issued for the purpose of <strong>${document.purpose}</strong>.
+              As per record, this certification is issued for the purpose of <strong>${
+                document.purpose
+              }</strong>.
             </div>
 
             <div class="content-text">
@@ -408,7 +430,15 @@ export default function Documents() {
             </div>
 
             <div class="content-text">
-              Given this ${document.created_at ? new Date(document.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '_____ day of _____ 2025'}
+              Given this ${
+                document.created_at
+                  ? new Date(document.created_at).toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "_____ day of _____ 2025"
+              }
               at the Barangay Local Government Center of Simpak, Lala, Lanao del Norte.
             </div>
 

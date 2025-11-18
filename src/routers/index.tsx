@@ -32,6 +32,7 @@ import Officials from "@/pages/adminPage/Official.admint";
 import AddOfficial from "@/pages/adminPage/functions/AddOfficial";
 import EditOfficial from "@/pages/adminPage/functions/EditOfficial";
 import ComplainantAdmin from "@/pages/adminPage/Complainant.admin";
+import Report from "@/pages/adminPage/Report";
 
 export default function AppRoutes() {
   return (
@@ -59,6 +60,7 @@ export default function AppRoutes() {
         <Route path="addOfficial" element={<AddOfficial />} />
         <Route path="editOfficial/:id" element={<EditOfficial />} />
         <Route path="complainantAdmin" element={<ComplainantAdmin />} />
+        <Route path="report" element={<Report />} />
         {/* analytics */}
         <Route path="analytics" element={<OverviewSection />} />
         <Route path="analytics/population" element={<PopulationAnalytics />} />
