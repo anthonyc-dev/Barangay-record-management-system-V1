@@ -1,4 +1,4 @@
-import { Bell, LogOut, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -24,14 +24,12 @@ export function Header({ className }: HeaderProps) {
 
   const handleLogout = async () => {
     try {
-      // Start logout process - logoutLoading will be set to true
-      // AuthContext will handle redirect for admin logout
       await logout();
       toast.success("Logout successful");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed. Please try again.");
-      // Fallback redirect if logout doesn't redirect automatically
+
       window.location.href = "/admin";
     }
   };
@@ -62,12 +60,12 @@ export function Header({ className }: HeaderProps) {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="relative">
+          {/* <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive text-xs">
               <span className="sr-only">Notifications</span>
             </span>
-          </Button>
+          </Button> */}
 
           {/* Admin Profile Dropdown */}
           <DropdownMenu>

@@ -28,7 +28,7 @@ import {
   Calendar,
   FolderPlus,
   Loader2,
-  SquarePen,
+  // SquarePen, // Temporarily disabled - edit functionality needs backend fix
 } from "lucide-react";
 import { FaFolder } from "react-icons/fa";
 import { toast } from "sonner";
@@ -36,7 +36,7 @@ import folderService, {
   type Folder as FolderType,
 } from "@/services/api/folderService";
 import UploadFolderDialog from "@/components/adminComponents/UploadFolderDialog";
-import EditFolderDialog from "@/components/adminComponents/EditFolderDialog";
+// import EditFolderDialog from "@/components/adminComponents/EditFolderDialog"; // Temporarily disabled
 import SelectFilesDownloadDialog from "@/components/adminComponents/SelectFilesDownloadDialog";
 
 const FolderStorage = () => {
@@ -44,9 +44,9 @@ const FolderStorage = () => {
   const [folders, setFolders] = useState<FolderType[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  // const [editDialogOpen, setEditDialogOpen] = useState(false); // Temporarily disabled
+  // const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null); // Temporarily disabled
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null);
   const [folderToDownload, setFolderToDownload] = useState<FolderType | null>(
     null
   );
@@ -77,14 +77,14 @@ const FolderStorage = () => {
     fetchFolders();
   };
 
-  const handleEditSuccess = () => {
-    fetchFolders();
-  };
+  // const handleEditSuccess = () => {
+  //   fetchFolders();
+  // };
 
-  const handleViewFolder = (folder: FolderType) => {
-    setSelectedFolder(folder);
-    setEditDialogOpen(true);
-  };
+  // const handleViewFolder = (folder: FolderType) => {
+  //   setSelectedFolder(folder);
+  //   setEditDialogOpen(true);
+  // };
 
   const handleDownloadFolder = (folder: FolderType) => {
     setFolderToDownload(folder);
@@ -248,14 +248,15 @@ const FolderStorage = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <Button
+                          {/* Edit button temporarily disabled - updateFolder needs to be fixed in backend first */}
+                          {/* <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewFolder(item)}
                             title="View Details"
                           >
                             <SquarePen className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -316,13 +317,13 @@ const FolderStorage = () => {
         onSuccess={handleUploadSuccess}
       />
 
-      {/* Edit/View Dialog */}
-      <EditFolderDialog
+      {/* Edit/View Dialog - Temporarily disabled until backend updateFolder is fixed */}
+      {/* <EditFolderDialog
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         folder={selectedFolder}
         onSuccess={handleEditSuccess}
-      />
+      /> */}
 
       {/* Download Files Selection Dialog */}
       <SelectFilesDownloadDialog

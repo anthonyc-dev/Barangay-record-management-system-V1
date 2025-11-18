@@ -12,6 +12,7 @@ export interface DocumentRequest {
   purpose: string;
   reference_number?: string;
   status?: "pending" | "ready";
+  price?: number; // Document price in pesos
   created_at?: string;
   updated_at?: string;
 }

@@ -52,11 +52,25 @@ const SelectFilesDownloadDialog = ({
       return;
     }
 
+    console.log("Download attempt:", {
+      folderId: folder.id,
+      fileName: fileName,
+      folderName: folder.folder_name,
+      totalFiles: parseFiles(folder.original_files).length,
+    });
+
     setDownloadingSingleFile(fileName);
 
     try {
       // Call backend endpoint to download single file
       const blob = await folderService.downloadSingleFile(folder.id, fileName);
+
+      // Check if the blob is actually an error response (has JSON content)
+      if (blob.type === "application/json") {
+        const text = await blob.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || "Failed to download file");
+      }
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -72,6 +86,41 @@ const SelectFilesDownloadDialog = ({
       // Don't close dialog - let user download more files
     } catch (error) {
       console.error("Download error:", error);
+
+      // Handle blob error responses
+      if (error && typeof error === "object" && "data" in error) {
+        const errorData = error as { status: number; message: string; data: unknown };
+
+        // If data is a Blob, try to read it as JSON
+        if (errorData.data instanceof Blob) {
+          try {
+            const text = await errorData.data.text();
+            console.log("Backend error response:", text);
+            const jsonError = JSON.parse(text);
+
+            const backendMessage = jsonError.message || jsonError.error || "File not found";
+            toast.error(`${backendMessage}: ${fileName}`);
+
+            // Log additional info for debugging
+            console.error("Backend error details:", {
+              status: errorData.status,
+              message: backendMessage,
+              fileName: fileName,
+              folderId: folder?.id,
+            });
+            return;
+          } catch (parseError) {
+            console.error("Failed to parse error blob:", parseError);
+            // If parsing fails, show generic error
+            toast.error(`File not found or cannot be downloaded: ${fileName}`);
+            return;
+          }
+        }
+
+        toast.error(errorData.message || "Failed to download file");
+        return;
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : "Failed to download file";
       toast.error(errorMessage);

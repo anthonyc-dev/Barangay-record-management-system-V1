@@ -95,59 +95,121 @@ export const UserProfileProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Fetch from API using getUserProfileById
-      console.log("Fetching profile for user ID:", user.id);
-      const response = await userService.getUserProfileById(user.id);
-      console.log("API Response:", response);
+      // Check if we're using mock data (localStorage-based auth)
+      const authToken = localStorage.getItem("auth_token");
+      const isMockAuth = authToken && authToken.startsWith("mock_token_");
 
-      // Validate response structure
-      if (!response || typeof response !== "object") {
-        throw new Error("Invalid response structure");
-      }
+      if (isMockAuth) {
+        // Use localStorage data for mock authentication
+        console.log("Mock authentication detected - using localStorage data");
 
-      // Check for successful response (200-299 status codes are success)
-      const isSuccess =
-        response.response_code >= 200 && response.response_code < 300;
+        // Get approved user data
+        const approvedUsers = JSON.parse(
+          localStorage.getItem("approvedUsers") || "[]"
+        );
+        const approvedUser = approvedUsers.find(
+          (u: { id: string; email: string }) => u.id === user.id || u.email === user.email
+        );
 
-      if (!isSuccess) {
-        throw new Error(response.message || "Failed to fetch profile");
-      }
+        if (approvedUser) {
+          // Create profile from approved user data
+          const mockProfile: UserProfile = {
+            id: approvedUser.id || user.id,
+            name: approvedUser.fullName || user.name,
+            email: approvedUser.email || user.email,
+            profile_url: approvedUser.profile_url || "",
+          };
+          console.log("Created mock profile:", mockProfile);
+          setUserProfile(mockProfile);
+          localStorage.setItem("user_profile_cache", JSON.stringify(mockProfile));
+        } else {
+          // Fallback to basic user info
+          const fallbackProfile: UserProfile = {
+            id: user.id || 0,
+            name: user.name || "User",
+            email: user.email || "user@email.com",
+            profile_url: "",
+          };
+          console.log("Using fallback profile:", fallbackProfile);
+          setUserProfile(fallbackProfile);
+          localStorage.setItem(
+            "user_profile_cache",
+            JSON.stringify(fallbackProfile)
+          );
+        }
+      } else {
+        // Fetch from API using getUserProfileById (real backend)
+        try {
+          console.log("Fetching profile from API for user ID:", user.id);
+          const response = await userService.getUserProfileById(user.id);
+          console.log("API Response:", response);
 
-      // Get profile data - API may return either 'data' or 'user_info'
-      const profile = response.data || response.user_info;
+          // Validate response structure
+          if (!response || typeof response !== "object") {
+            throw new Error("Invalid response structure");
+          }
 
-      // Validate profile exists
-      if (!profile) {
-        console.error("Response missing profile data:", response);
-        throw new Error("Profile data not found in response");
-      }
+          // Check for successful response (200-299 status codes are success)
+          const isSuccess =
+            response.response_code >= 200 && response.response_code < 300;
 
-      console.log("Profile data:", profile);
+          if (!isSuccess) {
+            throw new Error(response.message || "Failed to fetch profile");
+          }
 
-      // Validate profile data structure
-      if (!profile.id) {
-        console.error("Invalid profile structure:", profile);
-        throw new Error("Invalid profile data - missing ID");
-      }
+          // Get profile data - API may return either 'data' or 'user_info'
+          const profile = response.data || response.user_info;
 
-      setUserProfile(profile);
-      // Cache the profile
-      localStorage.setItem("user_profile_cache", JSON.stringify(profile));
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+          // Validate profile exists
+          if (!profile) {
+            console.error("Response missing profile data:", response);
+            throw new Error("Profile data not found in response");
+          }
 
-      // Fallback to basic user info from localStorage
-      try {
-        const storedUserInfo = localStorage.getItem("user_info");
-        if (storedUserInfo) {
-          const user = JSON.parse(storedUserInfo);
+          console.log("Profile data:", profile);
+
+          // Validate profile data structure
+          if (!profile.id) {
+            console.error("Invalid profile structure:", profile);
+            throw new Error("Invalid profile data - missing ID");
+          }
+
+          setUserProfile(profile);
+          // Cache the profile
+          localStorage.setItem("user_profile_cache", JSON.stringify(profile));
+        } catch (error) {
+          console.error("Error fetching user profile from API:", error);
+
+          // Fallback to basic user info from localStorage
           const fallbackProfile: UserProfile = {
             id: user.id || 0,
             name: user.name || user.first_name || "User",
             email: user.email || "user@email.com",
             profile_url: user.profile_url || "",
           };
-          console.log("Using fallback profile:", fallbackProfile);
+          console.log("Using fallback profile after API error:", fallbackProfile);
+          setUserProfile(fallbackProfile);
+          localStorage.setItem(
+            "user_profile_cache",
+            JSON.stringify(fallbackProfile)
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error in loadUserProfile:", error);
+
+      // Final fallback - always create a basic profile to prevent logout
+      try {
+        const storedUserInfo = localStorage.getItem("user_info");
+        if (storedUserInfo) {
+          const user = JSON.parse(storedUserInfo);
+          const fallbackProfile: UserProfile = {
+            id: user.id || 0,
+            name: user.name || "User",
+            email: user.email || "user@email.com",
+            profile_url: "",
+          };
+          console.log("Using emergency fallback profile:", fallbackProfile);
           setUserProfile(fallbackProfile);
           localStorage.setItem(
             "user_profile_cache",

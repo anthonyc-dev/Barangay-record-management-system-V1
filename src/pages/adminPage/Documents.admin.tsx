@@ -44,36 +44,23 @@ import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
 import { sendContactEmail } from "@/services/api/emailSend";
 
-// const documentTypes = [
-//   {
-//     name: "Barangay Clearance",
-//     description: "Certification for employment, travel, and other purposes",
-//     fee: "₱50.00",
-//     icon: FileText,
-//     color: "bg-primary",
-//   },
-//   {
-//     name: "Certificate of Indigency",
-//     description: "For qualified residents needing assistance",
-//     fee: "Free",
-//     icon: FileText,
-//     color: "bg-green-500",
-//   },
-//   {
-//     name: "Certificate of Residency",
-//     description: "Proof of residence in the barangay",
-//     fee: "₱30.00",
-//     icon: FileText,
-//     color: "bg-yellow-500",
-//   },
-//   {
-//     name: "Business Permit",
-//     description: "Local business registration and permits",
-//     fee: "₱100.00",
-//     icon: DollarSign,
-//     color: "bg-destructive",
-//   },
-// ];
+// Helper function to get document price based on type
+const getDocumentPrice = (documentType: string): number => {
+  const type = documentType.toLowerCase();
+
+  // Clearance Certification - ₱40
+  if (type.includes("clearance")) {
+    return 40;
+  }
+
+  // Certification (Residency, etc.) - ₱30
+  if (type.includes("certification") || type.includes("certificate")) {
+    return 30;
+  }
+
+  // Default price
+  return 30;
+};
 
 export default function Documents() {
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
@@ -115,8 +102,15 @@ export default function Documents() {
     try {
       setLoading(true);
       const response = await documentService.getAllDocuments();
-      setDocuments(response.data);
-      setFilteredDocuments(response.data);
+
+      // Add price to each document based on type
+      const documentsWithPrice = response.data.map((doc) => ({
+        ...doc,
+        price: doc.price || getDocumentPrice(doc.document_type),
+      }));
+
+      setDocuments(documentsWithPrice);
+      setFilteredDocuments(documentsWithPrice);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast.error("Failed to load documents. Please try again.");
@@ -473,6 +467,7 @@ export default function Documents() {
         Email: doc.email,
         "Contact Number": doc.contact_number,
         Purpose: doc.purpose,
+        Price: `₱${doc.price || 30}.00`,
         Status: doc.status || "pending",
         "Request Date": doc.created_at
           ? new Date(doc.created_at).toLocaleDateString()
@@ -493,6 +488,7 @@ export default function Documents() {
         { wch: 25 }, // Email
         { wch: 15 }, // Contact Number
         { wch: 30 }, // Purpose
+        { wch: 12 }, // Price
         { wch: 10 }, // Status
         { wch: 15 }, // Request Date
       ];
@@ -687,6 +683,9 @@ export default function Documents() {
                         Purpose
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Price
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                         Contact
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
@@ -723,6 +722,11 @@ export default function Documents() {
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-sm">{document.purpose}</p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="text-sm font-semibold text-green-600">
+                            ₱{document.price || 30}.00
+                          </p>
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-sm">{document.contact_number}</p>

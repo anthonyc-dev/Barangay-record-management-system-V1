@@ -261,16 +261,12 @@ const UploadFolderDialog = ({
 
             <div className="space-y-2">
               <FormLabel>Files</FormLabel>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <div className="border-2  border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 <div className="mt-4">
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
                       Click to upload
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {" "}
-                      or drag and drop
                     </span>
                   </label>
                   <Input

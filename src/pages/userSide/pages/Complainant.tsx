@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -654,7 +653,7 @@ const Complainant = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2 mb-4">
+              {/* <div className="flex items-center space-x-2 mb-4">
                 <Checkbox
                   id="anonymous"
                   checked={formData.isAnonymous}
@@ -680,7 +679,7 @@ const Complainant = () => {
                 >
                   Submit anonymously
                 </Label>
-              </div>
+              </div> */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label
@@ -1027,7 +1026,7 @@ const Complainant = () => {
               <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
                 Complainant Information
               </h3>
-              <div className="flex items-center space-x-2 mb-4">
+              {/* <div className="flex items-center space-x-2 mb-4">
                 <Checkbox
                   id="edit-anonymous"
                   checked={editFormData.isAnonymous}
@@ -1053,7 +1052,7 @@ const Complainant = () => {
                 >
                   Submit anonymously
                 </Label>
-              </div>
+              </div> */}
               <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label

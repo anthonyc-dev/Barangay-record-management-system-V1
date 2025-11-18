@@ -32,6 +32,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useUserProfile } from "@/contexts/UserProfileContext";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/services/api/config";
@@ -117,6 +125,107 @@ export default function Residents() {
   const openViewDialog = (resident: Resident) => {
     setSelectedResident(resident);
     setViewDialogOpen(true);
+  };
+
+  const handleStatusChange = async (residentId: number, newStatus: string) => {
+    try {
+      // Find the resident to update
+      const residentToUpdate = residents.find((r) => r.id === residentId);
+      if (!residentToUpdate) {
+        toast.error("Resident not found");
+        return;
+      }
+
+      console.log("Updating resident status:", {
+        residentId,
+        oldStatus: residentToUpdate.status,
+        newStatus,
+      });
+
+      // Update the status via API - only send the status field
+      const response = await residentService.update(residentId, {
+        status: newStatus,
+      });
+
+      console.log("Update response:", response);
+
+      // Update local state
+      setResidents((prevResidents) =>
+        prevResidents.map((resident) =>
+          resident.id === residentId
+            ? { ...resident, status: newStatus }
+            : resident
+        )
+      );
+
+      toast.success("Status updated successfully");
+    } catch (error: unknown) {
+      console.error("Status update error:", error);
+
+      // More detailed error handling
+      if (error && typeof error === "object") {
+        const apiError = error as {
+          message?: string;
+          errors?: Record<string, string[]>;
+          data?: { message?: string; errors?: Record<string, string[]> };
+        };
+
+        if (apiError.errors) {
+          // Validation errors
+          const errorMessages = Object.values(apiError.errors).flat().join(", ");
+          toast.error(`Validation error: ${errorMessages}`);
+        } else if (apiError.message) {
+          toast.error(apiError.message);
+        } else if (apiError.data?.message) {
+          toast.error(apiError.data.message);
+        } else {
+          toast.error("Failed to update status");
+        }
+      } else {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to update status";
+        toast.error(errorMessage);
+      }
+    }
+  };
+
+  // Map display values to API values (backend expects lowercase)
+  const getStatusDisplayText = (status: string | undefined): string => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return "Approved";
+      case "pending":
+        return "Pending";
+      case "reject":
+        return "Reject";
+      case "active":
+        return "Active";
+      case "inactive":
+        return "Inactive";
+      case "deceased":
+        return "Deceased";
+      default:
+        return status || "Pending";
+    }
+  };
+
+  const getStatusBadgeVariant = (
+    status: string | undefined
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status?.toLowerCase()) {
+      case "active":
+      case "approved":
+        return "default";
+      case "pending":
+        return "outline";
+      case "inactive":
+        return "secondary";
+      case "reject":
+      case "deceased":
+        return "destructive";
+      default:
+        return "outline";
+    }
   };
 
   // Calculate statistics
@@ -499,6 +608,9 @@ export default function Residents() {
                         Contact
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                         Actions
                       </th>
                     </tr>
@@ -526,7 +638,37 @@ export default function Residents() {
                         <td className="py-3 px-4">{resident.civil_status}</td>
                         <td className="py-3 px-4">{resident.occupation}</td>
                         <td className="py-3 px-4">{resident.contact_number}</td>
-
+                        <td className="py-3 px-4">
+                          <Select
+                            value={resident.status || "pending"}
+                            onValueChange={(value) =>
+                              handleStatusChange(resident.id!, value)
+                            }
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue>
+                                <Badge
+                                  variant={getStatusBadgeVariant(
+                                    resident.status
+                                  )}
+                                >
+                                  {getStatusDisplayText(resident.status)}
+                                </Badge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="approved">
+                                <Badge variant="default">Approved</Badge>
+                              </SelectItem>
+                              <SelectItem value="pending">
+                                <Badge variant="outline">Pending</Badge>
+                              </SelectItem>
+                              <SelectItem value="reject">
+                                <Badge variant="destructive">Reject</Badge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-2">
                             <Button

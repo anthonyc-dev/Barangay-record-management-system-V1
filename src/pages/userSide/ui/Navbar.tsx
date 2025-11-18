@@ -1,4 +1,4 @@
-import { Bell, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -48,12 +48,12 @@ export function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="relative">
+          {/* <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive text-xs">
               <span className="sr-only">Notifications</span>
             </span>
-          </Button>
+          </Button> */}
 
           {/* User Profile Dropdown */}
           <DropdownMenu>

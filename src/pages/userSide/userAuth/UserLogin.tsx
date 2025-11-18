@@ -58,10 +58,70 @@ const UserLogin = () => {
       });
 
       console.log("Login successful:", result);
-      toast.success("Login successful");
-      login(result.user_info, "user");
 
-      navigate("/resident", { replace: true });
+      // Check user status before allowing login
+      const userStatus = result?.user_info.status;
+      console.log("User account status:", userStatus);
+
+      if (userStatus === "pending") {
+        // Clear any stored authentication data
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_info");
+        localStorage.removeItem("user_type");
+
+        toast.warning(
+          "Your account is pending approval. Please wait for the admin to approve your registration before you can log in.",
+          {
+            duration: 5000,
+          }
+        );
+        setLoginError(
+          "Your account is pending approval. Please contact the barangay office for more information."
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (userStatus === "rejected") {
+        // Clear any stored authentication data
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_info");
+        localStorage.removeItem("user_type");
+
+        toast.error(
+          "Your account has been rejected. You are not recognized as a resident of this barangay. Please contact the barangay office if you believe this is an error.",
+          {
+            duration: 6000,
+          }
+        );
+        setLoginError(
+          "Your account has been rejected. Please contact the barangay office for assistance."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Only allow login if status is "approved"
+      if (userStatus === "approved") {
+        toast.success("Login successful! Welcome back.");
+        login(result.user_info, "user");
+        navigate("/resident", { replace: true });
+      } else {
+        // Handle unexpected status values - clear auth data
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_info");
+        localStorage.removeItem("user_type");
+
+        toast.error(
+          "Unable to verify account status. Please contact the barangay office.",
+          {
+            duration: 5000,
+          }
+        );
+        setLoginError(
+          "Unable to verify your account status. Please try again later or contact the barangay office."
+        );
+      }
     } catch (error: unknown) {
       console.error("Login error:", error);
 

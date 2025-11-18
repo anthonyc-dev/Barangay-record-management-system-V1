@@ -109,14 +109,28 @@ const folderService = {
     folderId: number,
     fileName: string
   ): Promise<Blob> => {
-    const response = await apiClient.post(
-      `/folders/downloadSingle/${folderId}`,
-      { file: fileName },
-      {
-        responseType: "blob",
-      }
-    );
-    return response.data;
+    console.log("Downloading file:", { folderId, fileName });
+
+    try {
+      const response = await apiClient.post(
+        `/folders/downloadSingle/${folderId}`,
+        { file: fileName },
+        {
+          responseType: "blob",
+        }
+      );
+
+      console.log("Download response:", {
+        status: response.status,
+        contentType: response.headers["content-type"],
+        size: response.data.size,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Download API error:", error);
+      throw error;
+    }
   },
 
   // Download multiple folders as one ZIP

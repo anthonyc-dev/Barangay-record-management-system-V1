@@ -52,12 +52,14 @@ export interface AdminRegisterRequest {
 
 export interface UserLoginResponse {
   response_code: number;
-  status: string;
+  status: string; // API response status
+  user_status?: string; // User account status: pending, approved, rejected
   message: string;
   user_info: {
     id: number;
     name: string;
     email: string;
+    status: string;
   };
   token: string;
   token_type: string;
@@ -145,11 +147,17 @@ export const authService = {
       // Ignore errors during logout - we're clearing the session anyway
       console.log("Logout request failed, clearing local session");
     } finally {
+      // Log what's in the cache before clearing
+      const profileCache = localStorage.getItem("user_profile_cache");
+      console.log("Clearing user_profile_cache:", profileCache);
+
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_info");
       localStorage.removeItem("user_type");
       localStorage.removeItem("user_profile_cache"); // Clear profile cache
       localStorage.removeItem("user_details_cache"); // Clear profile
+
+      console.log("User session cleared successfully");
     }
   },
 
@@ -197,10 +205,16 @@ export const authService = {
       // Ignore errors during logout - we're clearing the session anyway
       console.log("Logout request failed, clearing local session");
     } finally {
+      // Log what's in the cache before clearing
+      const profileCache = localStorage.getItem("user_profile_cache");
+      console.log("Clearing user_profile_cache (admin):", profileCache);
+
       localStorage.removeItem("auth_token");
       localStorage.removeItem("admin_info");
       localStorage.removeItem("user_type");
       localStorage.removeItem("user_profile_cache"); // Clear profile cache
+
+      console.log("Admin session cleared successfully");
     }
   },
 

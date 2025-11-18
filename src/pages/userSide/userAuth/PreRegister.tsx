@@ -189,6 +189,7 @@ const PreRegister = () => {
       formData.append("name", data.fullName);
       formData.append("email", data.email);
       formData.append("password", data.password);
+      formData.append("status", "pending");
 
       // Add all resident fields - ensure all required fields are included
       formData.append("first_name", data.firstName);

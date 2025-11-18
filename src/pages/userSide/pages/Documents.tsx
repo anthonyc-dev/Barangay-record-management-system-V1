@@ -583,13 +583,7 @@ const Documents = () => {
                           </Button>
                         )}
                         {request.status === "ready" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="whitespace-nowrap"
-                          >
-                            Claim
-                          </Button>
+                          <p className="whitespace-nowrap">Claim</p>
                         )}
                       </div>
                     </div>
