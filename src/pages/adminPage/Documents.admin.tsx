@@ -33,7 +33,6 @@ import {
   Download,
   FileText,
   Calendar,
-  DollarSign,
   Eye,
   Printer,
   Trash2,
@@ -45,36 +44,36 @@ import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
 import { sendContactEmail } from "@/services/api/emailSend";
 
-const documentTypes = [
-  {
-    name: "Barangay Clearance",
-    description: "Certification for employment, travel, and other purposes",
-    fee: "₱50.00",
-    icon: FileText,
-    color: "bg-primary",
-  },
-  {
-    name: "Certificate of Indigency",
-    description: "For qualified residents needing assistance",
-    fee: "Free",
-    icon: FileText,
-    color: "bg-green-500",
-  },
-  {
-    name: "Certificate of Residency",
-    description: "Proof of residence in the barangay",
-    fee: "₱30.00",
-    icon: FileText,
-    color: "bg-yellow-500",
-  },
-  {
-    name: "Business Permit",
-    description: "Local business registration and permits",
-    fee: "₱100.00",
-    icon: DollarSign,
-    color: "bg-destructive",
-  },
-];
+// const documentTypes = [
+//   {
+//     name: "Barangay Clearance",
+//     description: "Certification for employment, travel, and other purposes",
+//     fee: "₱50.00",
+//     icon: FileText,
+//     color: "bg-primary",
+//   },
+//   {
+//     name: "Certificate of Indigency",
+//     description: "For qualified residents needing assistance",
+//     fee: "Free",
+//     icon: FileText,
+//     color: "bg-green-500",
+//   },
+//   {
+//     name: "Certificate of Residency",
+//     description: "Proof of residence in the barangay",
+//     fee: "₱30.00",
+//     icon: FileText,
+//     color: "bg-yellow-500",
+//   },
+//   {
+//     name: "Business Permit",
+//     description: "Local business registration and permits",
+//     fee: "₱100.00",
+//     icon: DollarSign,
+//     color: "bg-destructive",
+//   },
+// ];
 
 export default function Documents() {
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
@@ -211,131 +210,223 @@ export default function Documents() {
       return;
     }
 
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Document Request - ${
-            document.reference_number || "N/A"
-          }</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              border-bottom: 2px solid #333;
-              padding-bottom: 20px;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 24px;
-            }
-            .header p {
-              margin: 5px 0;
-              color: #666;
-            }
-            .content {
-              margin: 20px 0;
-            }
-            .field {
-              margin: 15px 0;
-              display: flex;
-              border-bottom: 1px solid #eee;
-              padding: 10px 0;
-            }
-            .field-label {
-              font-weight: bold;
-              width: 200px;
-              color: #333;
-            }
-            .field-value {
-              flex: 1;
-              color: #666;
-            }
-            .status {
-              display: inline-block;
-              padding: 5px 15px;
-              border-radius: 5px;
-              font-weight: bold;
-              text-transform: uppercase;
-            }
-            .status-pending {
-              background-color: #fff3cd;
-              color: #856404;
-            }
-            .status-ready {
-              background-color: #d4edda;
-              color: #155724;
-            }
-            @media print {
-              body {
-                padding: 20px;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Barangay Document Request</h1>
-            <p>Document Management System</p>
-          </div>
-          <div class="content">
-            <div class="field">
-              <div class="field-label">Reference Number:</div>
-              <div class="field-value">${
-                document.reference_number || "N/A"
-              }</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Document Type:</div>
-              <div class="field-value">${document.document_type}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Full Name:</div>
-              <div class="field-value">${document.full_name}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Email:</div>
-              <div class="field-value">${document.email}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Contact Number:</div>
-              <div class="field-value">${document.contact_number}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Purpose:</div>
-              <div class="field-value">${document.purpose}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Status:</div>
-              <div class="field-value">
-                <span class="status status-${document.status || "pending"}">
-                  ${document.status || "pending"}
-                </span>
+    // Determine which template to use based on document type
+    const isClearance = document.document_type.toLowerCase().includes("clearance");
+
+    // Generate random age between 21 and 38
+    const randomAge = Math.floor(Math.random() * (38 - 21 + 1)) + 21;
+
+    // Generate random purok between 1 and 10
+    const randomPurok = Math.floor(Math.random() * 10) + 1;
+
+    // Common styles
+    const commonStyles = `
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        padding: 60px 80px;
+        max-width: 850px;
+        margin: 0 auto;
+        line-height: 1.8;
+      }
+      .header-container {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 40px;
+        position: relative;
+      }
+      .logo {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+      }
+      .letterhead {
+        flex: 1;
+        text-align: center;
+      }
+      .letterhead p {
+        margin: 2px 0;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .office-title {
+        margin: 20px 0;
+        font-size: 13px;
+        letter-spacing: 2px;
+      }
+      .document-title {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        margin: 30px 0;
+        text-decoration: underline;
+      }
+      .salutation {
+        font-weight: bold;
+        margin: 30px 0 20px 0;
+      }
+      .content-text {
+        text-align: justify;
+        text-indent: 50px;
+        margin: 20px 0;
+        font-size: 14px;
+      }
+      .signature-section {
+        margin-top: 60px;
+        text-align: right;
+      }
+      .signature-name {
+        font-weight: bold;
+        text-decoration: underline;
+        margin-top: 40px;
+      }
+      .signature-title {
+        font-style: italic;
+      }
+      .footer-info {
+        margin-top: 60px;
+        font-size: 12px;
+      }
+      @media print {
+        body {
+          padding: 40px;
+        }
+      }
+    `;
+
+    let printContent = "";
+
+    if (isClearance) {
+      // Clearance Certification Template
+      printContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Clearance Certification - ${document.reference_number || "N/A"}</title>
+            <style>
+              ${commonStyles}
+            </style>
+          </head>
+          <body>
+            <div class="header-container">
+              <img src="/image/2s.png" alt="Barangay Logo" class="logo" />
+              <div class="letterhead">
+                <p>REPUBLIC OF THE PHILIPPINES</p>
+                <p>REGION 10</p>
+                <p>PROVINCE OF LANAO DEL NORTE</p>
+                <p>MUNICIPALITY OF LALA</p>
+                <p>BARANGAY SIMPAK</p>
+                <p class="office-title">OFFICE OF THE PUNONG BARANGAY</p>
               </div>
             </div>
-            <div class="field">
-              <div class="field-label">Request Date:</div>
-              <div class="field-value">${
-                document.created_at
-                  ? new Date(document.created_at).toLocaleDateString()
-                  : "N/A"
-              }</div>
+
+            <div class="document-title">CLEARANCE CERTIFICATION</div>
+
+            <div class="content-text">
+              This is to certify that <strong>${document.full_name}</strong>, ${randomAge} years of age, Filipino,
+              resident of Purok ${randomPurok}, Simpak, Lala, Lanao del Norte is a bona fide member of this Barangay.
             </div>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-            }
-          </script>
-        </body>
-      </html>
-    `;
+
+            <div class="content-text">
+              This certifies further that, as per record, the above-named person has never been involved in any
+              unlawful act nor has any pending case for violation of any laws or ordinances promulgated by
+              this office. As such, he/she is a person of good moral character and a law abiding citizen.
+            </div>
+
+            <div class="content-text">
+              This certification is issued upon the request of the aforementioned name for <strong>${document.purpose.toUpperCase()}</strong>
+              and for any legal purpose it may serve best.
+            </div>
+
+            <div class="content-text">
+              Issued this ${document.created_at ? new Date(document.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '_____ day of _____ 2025'}
+              at the Barangay Local Government Center of Simpak, Lala, Lanao del Norte.
+            </div>
+
+            <div class="signature-section">
+              <div class="signature-name">HON. EMILYN N. CABASIS</div>
+              <div class="signature-title">Punong Barangay</div>
+            </div>
+
+            <div class="footer-info">
+              <p>________________________</p>
+              <p>Signature over printed Name</p>
+              <p style="margin-top: 20px;">Issued on: ${document.created_at ? new Date(document.created_at).toLocaleDateString() : '_______'}</p>
+              <p>Issued at: Barangay Simpak</p>
+              <p>Control No. ${document.reference_number || '_______'}</p>
+              <p style="margin-top: 20px;">Brgy. Dry-Seal</p>
+            </div>
+
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
+          </body>
+        </html>
+      `;
+    } else {
+      // Certification (Residency) Template
+      printContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Certification - ${document.reference_number || "N/A"}</title>
+            <style>
+              ${commonStyles}
+            </style>
+          </head>
+          <body>
+            <div class="header-container">
+              <img src="/image/2s.png" alt="Barangay Logo" class="logo" />
+              <div class="letterhead">
+                <p>REPUBLIC OF THE PHILIPPINES</p>
+                <p>PROVINCE OF LANAO DEL NORTE</p>
+                <p>MUNICIPALITY OF LALA</p>
+                <p>BARANGAY SIMPAK</p>
+                <p class="office-title">OFFICE OF THE PUNONG BARANGAY</p>
+              </div>
+            </div>
+
+            <div class="document-title">CERTIFICATION</div>
+
+            <div class="salutation">TO WHOM IT MAY CONCERN</div>
+
+            <div class="content-text">
+              This is to certify that <strong>${document.full_name}</strong>, ${randomAge} years of age,
+              is a bonafide resident of Purok ${randomPurok}, Simpak, Lala, Lanao del Norte.
+            </div>
+
+            <div class="content-text">
+              As per record, this certification is issued for the purpose of <strong>${document.purpose}</strong>.
+            </div>
+
+            <div class="content-text">
+              This certification is issued upon their request for any legal purpose it may serve them best.
+            </div>
+
+            <div class="content-text">
+              Given this ${document.created_at ? new Date(document.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '_____ day of _____ 2025'}
+              at the Barangay Local Government Center of Simpak, Lala, Lanao del Norte.
+            </div>
+
+            <div class="signature-section">
+              <div class="signature-name">HON. EMILYN N. CABASIS</div>
+              <div class="signature-title">Punong Barangay</div>
+              <p style="margin-top: 60px;">Barangay Seal</p>
+            </div>
+
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
+          </body>
+        </html>
+      `;
+    }
 
     printWindow.document.write(printContent);
     printWindow.document.close();
@@ -415,7 +506,7 @@ export default function Documents() {
       </div>
 
       {/* Document Types Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {documentTypes.map((docType) => {
           const Icon = docType.icon;
           return (
@@ -444,7 +535,7 @@ export default function Documents() {
             </Card>
           );
         })}
-      </div>
+      </div> */}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">

@@ -70,11 +70,11 @@ const EditFolderDialog = ({
       if (folder.original_files) {
         if (Array.isArray(folder.original_files)) {
           files = folder.original_files;
-        } else if (typeof folder.original_files === 'string') {
+        } else if (typeof folder.original_files === "string") {
           try {
             files = JSON.parse(folder.original_files);
           } catch (e) {
-            console.error('Failed to parse original_files:', e);
+            console.error("Failed to parse original_files:", e);
             files = [];
           }
         }

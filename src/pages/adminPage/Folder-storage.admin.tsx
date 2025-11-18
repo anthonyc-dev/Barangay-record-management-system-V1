@@ -130,11 +130,11 @@ const FolderStorage = () => {
 
     if (Array.isArray(files)) {
       return files;
-    } else if (typeof files === 'string') {
+    } else if (typeof files === "string") {
       try {
         return JSON.parse(files);
       } catch (e) {
-        console.error('Failed to parse files:', e);
+        console.error("Failed to parse files:", e);
         return [];
       }
     }
@@ -144,7 +144,7 @@ const FolderStorage = () => {
   const calculateFolderSize = (files?: string[] | string) => {
     const fileArray = parseFiles(files);
     if (fileArray.length === 0) return "0 files";
-    return `${fileArray.length} file${fileArray.length > 1 ? 's' : ''}`;
+    return `${fileArray.length} file${fileArray.length > 1 ? "s" : ""}`;
   };
 
   return (

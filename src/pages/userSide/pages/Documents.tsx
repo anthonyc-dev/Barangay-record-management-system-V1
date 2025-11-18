@@ -611,18 +611,6 @@ const Documents = () => {
                 <div className="flex items-start gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
                   <p className="flex-1">
-                    Processing time: 3-5 business days for most documents
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
-                  <p className="flex-1">
-                    Bring valid ID when claiming documents
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 sm:mt-2 flex-shrink-0"></div>
-                  <p className="flex-1">
                     Office hours: Monday-Friday, 8:00 AM - 5:00 PM
                   </p>
                 </div>

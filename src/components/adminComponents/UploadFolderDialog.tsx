@@ -78,7 +78,10 @@ const UploadFolderDialog = ({
       filesArray.forEach((file) => {
         if (file.size > MAX_FILE_SIZE) {
           invalidFiles.push(`${file.name} (exceeds 50MB)`);
-        } else if (!ACCEPTED_FILE_TYPES.includes(file.type) && !file.type.startsWith("text/")) {
+        } else if (
+          !ACCEPTED_FILE_TYPES.includes(file.type) &&
+          !file.type.startsWith("text/")
+        ) {
           invalidFiles.push(`${file.name} (unsupported file type)`);
         } else {
           validFiles.push(file);
@@ -102,7 +105,7 @@ const UploadFolderDialog = ({
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   const onSubmit = async (data: FormValues) => {
@@ -123,10 +126,21 @@ const UploadFolderDialog = ({
       // Append all files - backend expects "folder[]"
       selectedFiles.forEach((file, index) => {
         formData.append("folder[]", file);
-        console.log(`File ${index}:`, file.name, file.type, `${formatFileSize(file.size)}`);
+        console.log(
+          `File ${index}:`,
+          file.name,
+          file.type,
+          `${formatFileSize(file.size)}`
+        );
       });
 
-      console.log("Uploading folder:", data.folder_name, "with", selectedFiles.length, "files");
+      console.log(
+        "Uploading folder:",
+        data.folder_name,
+        "with",
+        selectedFiles.length,
+        "files"
+      );
 
       const response = await folderService.create(formData);
 
@@ -201,7 +215,8 @@ const UploadFolderDialog = ({
         <DialogHeader>
           <DialogTitle>Upload Folder</DialogTitle>
           <DialogDescription>
-            Upload multiple files to create a new folder. All files will be zipped together.
+            Upload multiple files to create a new folder. All files will be
+            zipped together.
           </DialogDescription>
         </DialogHeader>
 
@@ -253,7 +268,10 @@ const UploadFolderDialog = ({
                     <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
                       Click to upload
                     </span>
-                    <span className="text-sm text-gray-500"> or drag and drop</span>
+                    <span className="text-sm text-gray-500">
+                      {" "}
+                      or drag and drop
+                    </span>
                   </label>
                   <Input
                     id="file-upload"
@@ -266,7 +284,8 @@ const UploadFolderDialog = ({
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF, ZIP, TXT (Max 50MB per file)
+                  PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF, ZIP, TXT (Max 50MB
+                  per file)
                 </p>
               </div>
 

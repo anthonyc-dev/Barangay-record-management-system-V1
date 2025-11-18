@@ -25,7 +25,9 @@ const SelectFilesDownloadDialog = ({
   onOpenChange,
   folder,
 }: SelectFilesDownloadDialogProps) => {
-  const [downloadingSingleFile, setDownloadingSingleFile] = useState<string | null>(null);
+  const [downloadingSingleFile, setDownloadingSingleFile] = useState<
+    string | null
+  >(null);
 
   // Helper function to parse original_files (handles both array and JSON string)
   const parseFiles = (files?: string[] | string): string[] => {
@@ -33,11 +35,11 @@ const SelectFilesDownloadDialog = ({
 
     if (Array.isArray(files)) {
       return files;
-    } else if (typeof files === 'string') {
+    } else if (typeof files === "string") {
       try {
         return JSON.parse(files);
       } catch (e) {
-        console.error('Failed to parse original_files:', e);
+        console.error("Failed to parse original_files:", e);
         return [];
       }
     }
@@ -70,7 +72,8 @@ const SelectFilesDownloadDialog = ({
       // Don't close dialog - let user download more files
     } catch (error) {
       console.error("Download error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to download file";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to download file";
       toast.error(errorMessage);
     } finally {
       setDownloadingSingleFile(null);
@@ -107,7 +110,9 @@ const SelectFilesDownloadDialog = ({
                   >
                     <div className="flex items-center flex-1 min-w-0">
                       <FileText className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
-                      <span className="text-sm text-gray-900 truncate">{file}</span>
+                      <span className="text-sm text-gray-900 truncate">
+                        {file}
+                      </span>
                     </div>
                     <Button
                       type="button"
@@ -143,7 +148,8 @@ const SelectFilesDownloadDialog = ({
           {/* Download Info */}
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-sm text-blue-800 font-medium">
-              Download files one at a time. Click the "Download" button next to each file.
+              Download files one at a time. Click the "Download" button next to
+              each file.
             </p>
           </div>
         </div>
