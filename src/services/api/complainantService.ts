@@ -122,12 +122,39 @@ export const complainantService = {
 
   /**
    * Delete a complaint (if allowed by backend)
-   * DELETE /api/complainant/{id}
+   * DELETE /api/complainant-delete/{id}
    */
   deleteComplaint: async (
     id: number
   ): Promise<{ response_code: number; status: string; message: string }> => {
-    const response = await apiClient.delete(`/complainant/${id}`);
+    const response = await apiClient.delete(`/complainant-delete/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Get all complaints history (Admin only)
+   * GET /api/complainant-history
+   * Note: Backend returns array directly, not wrapped in response object
+   */
+  getAllComplaints: async (): Promise<Complaint[] | GetComplaintsResponse> => {
+    const response = await apiClient.get<Complaint[] | GetComplaintsResponse>(
+      "/complainant-history"
+    );
+    return response.data;
+  },
+
+  /**
+   * Update complaint status (Admin only)
+   * PUT /api/complainant-update/{id}
+   */
+  updateComplaintStatus: async (
+    id: number,
+    status: ComplaintStatus
+  ): Promise<CreateComplaintResponse> => {
+    const response = await apiClient.put<CreateComplaintResponse>(
+      `/complainant-update/${id}`,
+      { status }
+    );
     return response.data;
   },
 };

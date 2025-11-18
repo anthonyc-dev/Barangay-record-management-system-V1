@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
+import { sendContactEmail } from "@/services/api/emailSend";
 
 const documentTypes = [
   {
@@ -86,7 +87,8 @@ export default function Documents() {
   const [documentToDelete, setDocumentToDelete] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<DocumentRequest | null>(null);
+  const [selectedDocument, setSelectedDocument] =
+    useState<DocumentRequest | null>(null);
 
   // Fetch all documents on component mount
   useEffect(() => {
@@ -132,6 +134,9 @@ export default function Documents() {
       setUpdatingStatus(documentId);
       await documentService.updateRequest(documentId, { status: newStatus });
 
+      // Find the document being updated
+      const document = documents.find((doc) => doc.id === documentId);
+
       // Update local state
       setDocuments((prev) =>
         prev.map((doc) =>
@@ -140,6 +145,28 @@ export default function Documents() {
       );
 
       toast.success(`Document status updated to ${newStatus}`);
+
+      // Send email notification when status is updated to "ready"
+      if (newStatus === "ready" && document) {
+        try {
+          const emailResponse = await sendContactEmail({
+            to_email: document.email,
+            resident_name: document.full_name,
+            reference_id: document.reference_number || `DOC-${documentId}`,
+            document_type: document.document_type,
+            pickup_location: "Barangay Simpak, Main Office", // Replace with actual pickup location
+          });
+
+          if (emailResponse.success) {
+            toast.success("Email notification sent to resident");
+          } else {
+            toast.warning("Document updated but email notification failed");
+          }
+        } catch (emailError) {
+          console.error("Error sending email notification:", emailError);
+          toast.warning("Document updated but email notification failed");
+        }
+      }
     } catch (error) {
       console.error("Error updating document status:", error);
       toast.error("Failed to update document status. Please try again.");
@@ -188,7 +215,9 @@ export default function Documents() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Document Request - ${document.reference_number || "N/A"}</title>
+          <title>Document Request - ${
+            document.reference_number || "N/A"
+          }</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -258,7 +287,9 @@ export default function Documents() {
           <div class="content">
             <div class="field">
               <div class="field-label">Reference Number:</div>
-              <div class="field-value">${document.reference_number || "N/A"}</div>
+              <div class="field-value">${
+                document.reference_number || "N/A"
+              }</div>
             </div>
             <div class="field">
               <div class="field-label">Document Type:</div>
@@ -290,7 +321,11 @@ export default function Documents() {
             </div>
             <div class="field">
               <div class="field-label">Request Date:</div>
-              <div class="field-value">${document.created_at ? new Date(document.created_at).toLocaleDateString() : "N/A"}</div>
+              <div class="field-value">${
+                document.created_at
+                  ? new Date(document.created_at).toLocaleDateString()
+                  : "N/A"
+              }</div>
             </div>
           </div>
           <script>
@@ -314,10 +349,10 @@ export default function Documents() {
         "Reference Number": doc.reference_number || "N/A",
         "Document Type": doc.document_type,
         "Full Name": doc.full_name,
-        "Email": doc.email,
+        Email: doc.email,
         "Contact Number": doc.contact_number,
-        "Purpose": doc.purpose,
-        "Status": doc.status || "pending",
+        Purpose: doc.purpose,
+        Status: doc.status || "pending",
         "Request Date": doc.created_at
           ? new Date(doc.created_at).toLocaleDateString()
           : "N/A",
@@ -346,7 +381,9 @@ export default function Documents() {
       XLSX.utils.book_append_sheet(wb, ws, "Document Requests");
 
       // Generate filename with current date
-      const fileName = `Document_Requests_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const fileName = `Document_Requests_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
 
       // Save file
       XLSX.writeFile(wb, fileName);
@@ -716,7 +753,9 @@ export default function Documents() {
                     <p className="text-sm font-medium text-muted-foreground">
                       Document Type
                     </p>
-                    <p className="text-base">{selectedDocument.document_type}</p>
+                    <p className="text-base">
+                      {selectedDocument.document_type}
+                    </p>
                   </div>
 
                   <div>
@@ -749,7 +788,9 @@ export default function Documents() {
                     <p className="text-sm font-medium text-muted-foreground">
                       Contact Number
                     </p>
-                    <p className="text-base">{selectedDocument.contact_number}</p>
+                    <p className="text-base">
+                      {selectedDocument.contact_number}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -763,14 +804,13 @@ export default function Documents() {
                         Request Date
                       </p>
                       <p className="text-base">
-                        {new Date(selectedDocument.created_at).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          }
-                        )}
+                        {new Date(
+                          selectedDocument.created_at
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
                       </p>
                     </div>
                   </div>
