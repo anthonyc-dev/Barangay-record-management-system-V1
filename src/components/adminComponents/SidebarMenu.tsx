@@ -9,7 +9,6 @@ import {
   User,
   FileChartLine,
   CheckCheck,
-  UserCheck,
   UserRoundCog,
 } from "lucide-react";
 import { useMemo } from "react";
@@ -50,12 +49,12 @@ const allNavigation = [
     allowedRoles: ["admin", "official"],
   },
 
-  {
-    name: "Pre Register",
-    href: "/admin/preRegisterAdmin",
-    icon: UserCheck,
-    allowedRoles: ["admin"],
-  },
+  // {
+  //   name: "Pre Register",
+  //   href: "/admin/preRegisterAdmin",
+  //   icon: UserCheck,
+  //   allowedRoles: ["admin"],
+  // },
   {
     name: "Residents",
     href: "/admin/residents",

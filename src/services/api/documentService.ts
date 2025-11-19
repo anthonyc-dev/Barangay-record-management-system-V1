@@ -13,6 +13,8 @@ export interface DocumentRequest {
   reference_number?: string;
   status?: "pending" | "ready";
   price?: number; // Document price in pesos
+  claimed?: boolean; // Whether document has been claimed/picked up
+  claimed_at?: string; // When document was claimed
   created_at?: string;
   updated_at?: string;
 }

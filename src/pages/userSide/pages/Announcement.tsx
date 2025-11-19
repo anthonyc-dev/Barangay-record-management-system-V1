@@ -5,7 +5,6 @@ import { Calendar, Megaphone, Search } from "lucide-react";
 import { eventService } from "@/services/api/eventService";
 import type { Event } from "@/services/api/eventService";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import GeneralLoading from "@/components/GeneralLoading";
 
 const Announcement = () => {
@@ -117,9 +116,9 @@ const Announcement = () => {
                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>{formatDate(announcement.date)}</span>
                     </span>
-                    <Badge variant="default">
+                    {/* <Badge variant="default">
                       By {announcement.posted_by || "Admin"}
-                    </Badge>
+                    </Badge> */}
                   </div>
                 </div>
               </CardHeader>

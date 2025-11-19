@@ -168,9 +168,9 @@ const UserLogin = () => {
     navigate("/preRegister");
   };
 
-  const handleForgotPassword = () => {
-    navigate("/forgot-password");
-  };
+  // const handleForgotPassword = () => {
+  //   navigate("/forgot-password");
+  // };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center py-8 px-4">
@@ -232,7 +232,7 @@ const UserLogin = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center justify-between">
                     <FormLabel>Password</FormLabel>
                     <Button
                       type="button"
@@ -244,7 +244,7 @@ const UserLogin = () => {
                     >
                       Forgot password?
                     </Button>
-                  </div>
+                  </div> */}
                   <FormControl>
                     <div className="relative">
                       <Input
