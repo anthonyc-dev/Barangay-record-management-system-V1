@@ -4,13 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Search,
   Download,
   FileText,
@@ -49,16 +42,18 @@ const Report = () => {
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Fetch all documents on component mount
   useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Filter documents when search query or status filter changes
+  // Filter documents when search query changes - only show "ready" status
   useEffect(() => {
     let filtered = documents;
+
+    // Only show documents with "ready" status
+    filtered = filtered.filter((doc) => doc.status === "ready");
 
     // Apply search filter
     if (searchQuery.trim() !== "") {
@@ -72,13 +67,8 @@ const Report = () => {
       );
     }
 
-    // Apply status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((doc) => doc.status === statusFilter);
-    }
-
     setFilteredDocuments(filtered);
-  }, [searchQuery, statusFilter, documents]);
+  }, [searchQuery, documents]);
 
   const fetchDocuments = async () => {
     try {
@@ -280,6 +270,26 @@ const Report = () => {
 
       {/* Document Type Breakdown */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Card for Total Ready Revenue */}
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Ready Revenue
+                </p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  ₱{stats.filteredRevenue.toLocaleString()}.00
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Document Type Breakdown */}
         {Object.entries(documentsByType).map(([type, data]) => (
           <Card key={type}>
             <CardHeader className="pb-3">
@@ -318,17 +328,9 @@ const Report = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="ready">Ready</SelectItem>
-                  <SelectItem value="reject">Reject</SelectItem>
-                </SelectContent>
-              </Select>
+              <Badge variant="outline" className="px-4 py-2">
+                Showing Ready Documents Only
+              </Badge>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -348,8 +350,8 @@ const Report = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Document Requests Details</CardTitle>
-            {statusFilter !== "all" || searchQuery ? (
+            <CardTitle>Document Requests Details (Ready Documents)</CardTitle>
+            {searchQuery ? (
               <Badge variant="secondary" className="text-sm">
                 Filtered Revenue: ₱{stats.filteredRevenue.toLocaleString()}.00
               </Badge>
@@ -365,9 +367,9 @@ const Report = () => {
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                {searchQuery || statusFilter !== "all"
-                  ? "No documents found matching your filters."
-                  : "No document requests yet."}
+                {searchQuery
+                  ? "No ready documents found matching your search."
+                  : "No ready document requests yet."}
               </p>
             </div>
           ) : (

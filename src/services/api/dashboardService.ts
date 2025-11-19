@@ -16,6 +16,8 @@ export interface DashboardStats {
   activeCases: number;
   clearingOfficers: number;
   documentsIssued: number;
+  readyDocuments: number;
+  readyDocumentsRevenue: number;
   revenueThisMonth: number;
   growthRate: number;
 }
@@ -141,6 +143,26 @@ export const dashboardService = {
 };
 
 /**
+ * Helper function to get document price based on type
+ */
+function getDocumentPrice(documentType: string): number {
+  const type = documentType.toLowerCase();
+
+  // Clearance Certification - ₱40
+  if (type.includes("clearance")) {
+    return 40;
+  }
+
+  // Certification (Residency, Indigency, etc.) - ₱30
+  if (type.includes("certification") || type.includes("certificate")) {
+    return 30;
+  }
+
+  // Default price
+  return 30;
+}
+
+/**
  * Calculate dashboard statistics from raw data
  */
 function calculateStats(
@@ -173,6 +195,17 @@ function calculateStats(
       docDate.getFullYear() === currentYear
     );
   }).length;
+
+  // Ready documents (for transparency - documents ready for pickup/claim)
+  const readyDocuments = documents.filter((d) => d.status === "ready").length;
+
+  // Calculate revenue from ready documents only (for resident transparency)
+  const readyDocumentsRevenue = documents
+    .filter((d) => d.status === "ready")
+    .reduce((sum, doc) => {
+      const price = doc.price || getDocumentPrice(doc.document_type);
+      return sum + price;
+    }, 0);
 
   // Revenue this month (from document prices)
   const revenueThisMonth = documents
@@ -215,6 +248,8 @@ function calculateStats(
     activeCases,
     clearingOfficers,
     documentsIssued,
+    readyDocuments,
+    readyDocumentsRevenue,
     revenueThisMonth,
     growthRate,
   };

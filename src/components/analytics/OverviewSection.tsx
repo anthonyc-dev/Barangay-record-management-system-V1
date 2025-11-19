@@ -9,6 +9,7 @@ import {
   DollarSign,
   TrendingUp,
   Loader2,
+  FileCheck,
 } from "lucide-react";
 import { dashboardService } from "@/services/api/dashboardService";
 import type { DashboardAnalytics } from "@/services/api/dashboardService";
@@ -107,6 +108,14 @@ export function OverviewSection() {
       trend: "up" as const,
       icon: FileText,
       color: "accent" as const,
+    },
+    {
+      title: "Ready Documents",
+      value: analytics.stats.readyDocuments.toString(),
+      change: `₱${analytics.stats.readyDocumentsRevenue.toLocaleString()} total revenue`,
+      trend: "up" as const,
+      icon: FileCheck,
+      color: "success" as const,
     },
     {
       title: "Revenue This Month",
