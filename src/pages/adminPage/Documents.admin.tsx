@@ -147,7 +147,8 @@ export default function Documents() {
             resident_name: document.full_name,
             reference_id: document.reference_number || `DOC-${documentId}`,
             document_type: document.document_type,
-            pickup_location: "Barangay Simpak, Main Office", // Replace with actual pickup location
+            pickup_location: "Barangay Simpak, Main Office",
+            amount: getDocumentPrice(document.document_type).toString(),
           });
 
           if (emailResponse.success) {

@@ -18,6 +18,7 @@ interface EmailParams {
   reference_id: string;
   document_type?: string;
   pickup_location?: string;
+  amount: string;
   [key: string]: string | undefined; // Allow additional custom parameters
 }
 
@@ -126,6 +127,7 @@ export const sendContactEmail = async (contactData: {
   reference_id: string;
   document_type?: string;
   pickup_location?: string;
+  amount: string;
 }): Promise<EmailResponse> => {
   const emailParams: EmailParams = {
     to_email: contactData.to_email,
@@ -133,6 +135,7 @@ export const sendContactEmail = async (contactData: {
     reference_id: contactData.reference_id,
     document_type: contactData.document_type,
     pickup_location: contactData.pickup_location,
+    amount: contactData.amount,
   };
 
   return sendEmail(emailParams);
