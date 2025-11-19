@@ -24,6 +24,7 @@ export default function AddResident() {
       formData.append("name", data.name);
       formData.append("email", data.email);
       formData.append("password", data.password);
+      formData.append("status", "pending");
 
       // Add all resident fields
       formData.append("first_name", data.firstName);
@@ -63,7 +64,6 @@ export default function AddResident() {
               data.uploadDate.toTimeString().split(" ")[0]
           : ""
       );
-      formData.append("status", "Active");
 
       // Add valid ID file if uploaded
       if (data.validIdFile instanceof File) {

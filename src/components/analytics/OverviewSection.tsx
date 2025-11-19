@@ -1,61 +1,126 @@
+import { useEffect, useState } from "react";
 import { StatsCard } from "@/components/analytics/StatsCard";
 import { ChartCard } from "@/components/analytics/ChartCard";
 import {
   Users,
-  Heart,
+  UserCheck,
   Shield,
   FileText,
   DollarSign,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
+import { dashboardService } from "@/services/api/dashboardService";
+import type { DashboardAnalytics } from "@/services/api/dashboardService";
+import { useToast } from "@/hooks/use-toast";
 
 export function OverviewSection() {
+  const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        const data = await dashboardService.getDashboardAnalytics();
+        setAnalytics(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard analytics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard analytics. Please try again.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        Failed to load dashboard data.
+      </div>
+    );
+  }
+
+  // Calculate trends
+  const activeCasesTrend: "up" | "down" =
+    analytics.stats.activeCases < 10 ? "down" : "up";
+  const revenueTrend: "up" | "down" =
+    analytics.stats.growthRate >= 0 ? "up" : "down";
+  const growthTrend: "up" | "down" =
+    analytics.stats.growthRate >= 0 ? "up" : "down";
+
+  // Format growth rate for display
+  const growthRateDisplay =
+    analytics.stats.growthRate >= 0
+      ? `+${analytics.stats.growthRate.toFixed(1)}%`
+      : `${analytics.stats.growthRate.toFixed(1)}%`;
+
   const statsData = [
     {
       title: "Total Population",
-      value: "4,512",
-      change: "+2.3%",
+      value: analytics.stats.totalPopulation.toLocaleString(),
+      change: `${analytics.residents.length} residents`,
       trend: "up" as const,
       icon: Users,
       color: "primary" as const,
     },
     {
       title: "Active Cases",
-      value: "23",
-      change: "-15%",
-      trend: "down" as const,
+      value: analytics.stats.activeCases.toString(),
+      change:
+        analytics.complaints.length > 0
+          ? `${(
+              (analytics.stats.activeCases / analytics.complaints.length) *
+              100
+            ).toFixed(1)}%`
+          : "0%",
+      trend: activeCasesTrend,
       icon: Shield,
       color: "warning" as const,
     },
     {
-      title: "Services Rendered",
-      value: "342",
-      change: "+8.5%",
+      title: "Clearing Officers",
+      value: analytics.stats.clearingOfficers.toString(),
+      change: `${analytics.officials.length} officers`,
       trend: "up" as const,
-      icon: Heart,
+      icon: UserCheck,
       color: "success" as const,
     },
     {
       title: "Documents Issued",
-      value: "156",
-      change: "+12%",
+      value: analytics.stats.documentsIssued.toString(),
+      change: "this month",
       trend: "up" as const,
       icon: FileText,
       color: "accent" as const,
     },
     {
       title: "Revenue This Month",
-      value: "₱45,280",
-      change: "+18%",
-      trend: "up" as const,
+      value: `₱${analytics.stats.revenueThisMonth.toLocaleString()}`,
+      change: growthRateDisplay,
+      trend: revenueTrend,
       icon: DollarSign,
       color: "primary" as const,
     },
     {
       title: "Growth Rate",
-      value: "3.2%",
-      change: "+0.5%",
-      trend: "up" as const,
+      value: `${analytics.stats.growthRate.toFixed(1)}%`,
+      change: "revenue growth",
+      trend: growthTrend,
       icon: TrendingUp,
       color: "success" as const,
     },
@@ -81,27 +146,13 @@ export function OverviewSection() {
         <ChartCard
           title="Population Growth Trend"
           type="line"
-          data={[
-            { month: "Jan", population: 4200 },
-            { month: "Feb", population: 4280 },
-            { month: "Mar", population: 4350 },
-            { month: "Apr", population: 4420 },
-            { month: "May", population: 4485 },
-            { month: "Jun", population: 4512 },
-          ]}
+          data={analytics.populationGrowth}
         />
 
         <ChartCard
           title="Monthly Service Requests"
           type="bar"
-          data={[
-            { month: "Jan", requests: 120 },
-            { month: "Feb", requests: 145 },
-            { month: "Mar", requests: 132 },
-            { month: "Apr", requests: 167 },
-            { month: "May", requests: 189 },
-            { month: "Jun", requests: 156 },
-          ]}
+          data={analytics.serviceRequests}
         />
       </div>
     </div>
