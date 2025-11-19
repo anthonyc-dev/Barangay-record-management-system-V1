@@ -121,7 +121,7 @@ export default function Documents() {
 
   const handleStatusUpdate = async (
     documentId: number,
-    newStatus: "pending" | "ready"
+    newStatus: "pending" | "ready" | "reject"
   ) => {
     try {
       setUpdatingStatus(documentId);
@@ -734,9 +734,9 @@ export default function Documents() {
                         <td className="py-3 px-4">
                           <Select
                             value={document.status || "pending"}
-                            onValueChange={(value: "pending" | "ready") =>
-                              handleStatusUpdate(document.id!, value)
-                            }
+                            onValueChange={(
+                              value: "pending" | "ready" | "reject"
+                            ) => handleStatusUpdate(document.id!, value)}
                             disabled={updatingStatus === document.id}
                           >
                             <SelectTrigger className="w-32">
@@ -757,6 +757,14 @@ export default function Documents() {
                                   className="bg-success/10 text-success"
                                 >
                                   Ready
+                                </Badge>
+                              </SelectItem>
+                              <SelectItem value="reject">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-destructive/10 text-destructive"
+                                >
+                                  Reject
                                 </Badge>
                               </SelectItem>
                             </SelectContent>
@@ -863,6 +871,8 @@ export default function Documents() {
                     className={
                       selectedDocument.status === "ready"
                         ? "bg-success/10 text-success"
+                        : selectedDocument.status === "reject"
+                        ? "bg-destructive/10 text-destructive"
                         : "bg-warning/10 text-warning"
                     }
                   >

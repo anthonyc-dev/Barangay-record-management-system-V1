@@ -82,7 +82,7 @@ const UserLogin = () => {
         return;
       }
 
-      if (userStatus === "rejected") {
+      if (userStatus === "reject") {
         // Clear any stored authentication data
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_info");

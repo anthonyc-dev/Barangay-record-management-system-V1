@@ -11,7 +11,7 @@ export interface DocumentRequest {
   email: string;
   purpose: string;
   reference_number?: string;
-  status?: "pending" | "ready";
+  status?: "pending" | "ready" | "reject";
   price?: number; // Document price in pesos
   claimed?: boolean; // Whether document has been claimed/picked up
   claimed_at?: string; // When document was claimed
@@ -28,7 +28,7 @@ export interface CreateDocumentRequest {
   contact_number: string;
   email: string;
   purpose: string;
-  status?: "pending" | "ready";
+  status?: "pending" | "ready" | "reject";
   reference_number?: string;
 }
 

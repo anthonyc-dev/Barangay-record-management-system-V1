@@ -255,7 +255,7 @@ const PreRegister = () => {
 
           // Redirect to login page after 2 seconds
           setTimeout(() => {
-            navigate("/");
+            navigate("/registerConfirm");
           }, 2000);
         } else {
           // Handle validation errors

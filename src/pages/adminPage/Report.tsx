@@ -326,6 +326,7 @@ const Report = () => {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="ready">Ready</SelectItem>
+                  <SelectItem value="reject">Reject</SelectItem>
                 </SelectContent>
               </Select>
             </div>

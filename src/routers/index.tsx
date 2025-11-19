@@ -34,6 +34,7 @@ import EditOfficial from "@/pages/adminPage/functions/EditOfficial";
 import ComplainantAdmin from "@/pages/adminPage/Complainant.admin";
 import Report from "@/pages/adminPage/Report";
 import PreRegisterAdmin from "@/pages/adminPage/pre-register";
+import RegisterConfirm from "@/pages/userSide/ui/preRegisterConfirm";
 
 export default function AppRoutes() {
   return (
@@ -101,6 +102,7 @@ export default function AppRoutes() {
       <Route path="documentReq" element={<DocumentRequest />} />
       <Route path="signin" element={<Signin />} />
       <Route path="signup" element={<Signup />} />
+      <Route path="registerConfirm" element={<RegisterConfirm />} />
     </Routes>
   );
 }
