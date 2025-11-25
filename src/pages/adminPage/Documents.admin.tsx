@@ -37,7 +37,6 @@ import {
   Calendar,
   Eye,
   Printer,
-  Trash2,
   Loader2,
   Edit,
 } from "lucide-react";
@@ -208,10 +207,10 @@ export default function Documents() {
     }
   };
 
-  const handleDeleteClick = (documentId: number) => {
-    setDocumentToDelete(documentId);
-    setDeleteDialogOpen(true);
-  };
+  // const handleDeleteClick = (documentId: number) => {
+  //   setDocumentToDelete(documentId);
+  //   setDeleteDialogOpen(true);
+  // };
 
   const handleDeleteConfirm = async () => {
     if (documentToDelete === null) return;
@@ -901,7 +900,7 @@ export default function Documents() {
                             >
                               <Printer className="h-4 w-4" />
                             </Button>
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteClick(document.id!)}
@@ -909,7 +908,7 @@ export default function Documents() {
                               className="text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </td>
                       </tr>
