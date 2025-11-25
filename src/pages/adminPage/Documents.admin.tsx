@@ -44,7 +44,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
-import { sendContactEmail } from "@/services/api/emailSend";
+import { apiClient } from "@/services/api";
 
 // Helper function to get document price based on type
 const getDocumentPrice = (documentType: string): number => {
@@ -160,45 +160,46 @@ export default function Documents() {
       // Send email notification when status is updated to "ready"
       if (newStatus === "ready" && document) {
         try {
-          const emailResponse = await sendContactEmail({
-            to_email: document.email,
-            resident_name: document.full_name,
-            reference_id: document.reference_number || `DOC-${documentId}`,
-            document_type: document.document_type,
-            pickup_location: "Barangay Simpak, Main Office",
+          // Update status, amount, and pickup_location as per requirement
+          await apiClient.put(`/document-request-email/${documentId}/status`, {
+            status: newStatus,
             amount: getDocumentPrice(document.document_type).toString(),
+            pickup_location: "Barangay Simpak, Main Office",
           });
 
-          if (emailResponse.success) {
-            toast.success("Email notification sent to resident");
-          } else {
-            toast.warning("Document updated but email notification failed");
-          }
-        } catch (emailError) {
-          console.error("Error sending email notification:", emailError);
-          toast.warning("Document updated but email notification failed");
+          // You may keep the email code if you still want to notify residents,
+          // or remove/comment it if not needed.
+          // Example: sendContactEmail could still be called here, if sending emails is needed
+
+          toast.success(
+            "Document marked as ready, amount, and pickup location updated."
+          );
+        } catch (error) {
+          console.error("Error updating document status and details:", error);
+          toast.warning("Failed to update document details.");
         }
       }
 
       // //send email for rejection
-      // if (newStatus === "reject" && document) {
-      //   try {
-      //     const emailResponse = await sendRegistrationRejected({
-      //       user_name: document.full_name,
-      //       rejection_reason: "Your has been Reject",
-      //       to_email: document.email,
-      //     });
+      if (newStatus === "ready" && document) {
+        try {
+          // Update status, amount, and pickup_location as per requirement
+          await apiClient.put(`/document-reject-email/${documentId}/status`, {
+            status: newStatus,
+            // amount: getDocumentPrice(document.document_type).toString(),
+            // pickup_location: "Barangay Simpak, Main Office",
+          });
 
-      //     if (emailResponse.success) {
-      //       toast.success("Email notification sent to resident");
-      //     } else {
-      //       toast.warning("Document updated but email notification failed");
-      //     }
-      //   } catch (emailError) {
-      //     console.error("Error sending email notification:", emailError);
-      //     toast.warning("Document updated but email notification failed");
-      //   }
-      // }
+          // You may keep the email code if you still want to notify residents,
+          // or remove/comment it if not needed.
+          // Example: sendContactEmail could still be called here, if sending emails is needed
+
+          toast.success("Document marked as Reject.");
+        } catch (error) {
+          console.error("Error updating document status and details:", error);
+          toast.warning("Failed to update document details.");
+        }
+      }
     } catch (error) {
       console.error("Error updating document status:", error);
       toast.error("Failed to update document status. Please try again.");

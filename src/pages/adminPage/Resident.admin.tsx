@@ -45,7 +45,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { useUserProfile } from "@/contexts/UserProfileContext";
 import { toast } from "sonner";
-import { API_BASE_URL } from "@/services/api/config";
+import apiClient, { API_BASE_URL } from "@/services/api/config";
 
 // Helper function to format date string to YYYY-MM-DD
 const formatDate = (dateString: string | null | undefined): string => {
@@ -165,6 +165,34 @@ export default function Residents() {
       );
 
       toast.success("Status updated successfully");
+
+      if (newStatus === "approved" && document) {
+        try {
+          // Update status, amount, and pickup_location as per requirement
+          await apiClient.put(`/document-approve-email/${residentId}/status`, {
+            status: newStatus,
+          });
+
+          toast.success("Resident Pre-registration was Approved.");
+        } catch (error) {
+          console.error("Error updating document status and details:", error);
+          toast.warning("Failed to update document details.");
+        }
+      }
+
+      if (newStatus === "reject" && document) {
+        try {
+          // Update status, amount, and pickup_location as per requirement
+          await apiClient.put(`/document-reject-email/${residentId}/status`, {
+            status: newStatus,
+          });
+
+          toast.success("Resident Pre-registration was Rejected.");
+        } catch (error) {
+          console.error("Error updating document status and details:", error);
+          toast.warning("Failed to update document details.");
+        }
+      }
     } catch (error: unknown) {
       console.error("Status update error:", error);
 
