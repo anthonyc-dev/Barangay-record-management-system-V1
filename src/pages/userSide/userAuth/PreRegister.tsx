@@ -250,7 +250,7 @@ const PreRegister = () => {
           registrationResult.id
         ) {
           toast.success(
-            "Your account has been created successfully. You can now login."
+            "Thank you for registering! Your account is awaiting admin approval. Once approved, you will be able to log in."
           );
 
           // Redirect to login page after 2 seconds
@@ -437,9 +437,6 @@ const PreRegister = () => {
                 {/* Account Information Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 font-semibold">1</span>
-                    </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Account Information
                     </h3>
@@ -447,7 +444,6 @@ const PreRegister = () => {
                       Required
                     </Badge>
                   </div>
-                  <Separator />
 
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                     <FormField
@@ -572,9 +568,6 @@ const PreRegister = () => {
                 {/* Valid ID Upload Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-semibold">2</span>
-                    </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Valid ID Upload
                     </h3>
@@ -582,7 +575,6 @@ const PreRegister = () => {
                       Required
                     </Badge>
                   </div>
-                  <Separator />
 
                   <FormField
                     control={form.control}
@@ -627,9 +619,9 @@ const PreRegister = () => {
                                       Accepted formats: JPEG, JPG, PNG, GIF,
                                       WebP, PDF (Max 10MB)
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-2">
-                                      Examples: Driver's License, Passport,
-                                      National ID, PRC ID
+                                    <p className="text-xs text-green-400 mt-2">
+                                      Upload a clear image of any Valid ID. If
+                                      you don't have one, Use Purok Clearance.
                                     </p>
                                   </div>
                                 </label>
@@ -752,9 +744,6 @@ const PreRegister = () => {
                 {/* Personal Information Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">3</span>
-                    </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Personal Information
                     </h3>
@@ -762,7 +751,6 @@ const PreRegister = () => {
                       Required
                     </Badge>
                   </div>
-                  <Separator />
 
                   {/* Name fields */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1030,9 +1018,6 @@ const PreRegister = () => {
                 {/* Address Information Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 font-semibold">4</span>
-                    </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Address Information
                     </h3>
@@ -1040,7 +1025,6 @@ const PreRegister = () => {
                       Required
                     </Badge>
                   </div>
-                  <Separator />
 
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     <FormField
@@ -1149,9 +1133,6 @@ const PreRegister = () => {
                 {/* Contact Information Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                      <span className="text-teal-600 font-semibold">5</span>
-                    </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Contact Information
                     </h3>
@@ -1159,7 +1140,6 @@ const PreRegister = () => {
                       Required
                     </Badge>
                   </div>
-                  <Separator />
 
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                     <FormField
@@ -1188,9 +1168,6 @@ const PreRegister = () => {
                 {/* Parents Information Section */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <span className="text-indigo-600 font-semibold">6</span>
-                    </div>
                     <h3 className="text-xl font-semibold text-gray-800">
                       Parents Information
                     </h3>
@@ -1198,12 +1175,10 @@ const PreRegister = () => {
                       Required
                     </Badge>
                   </div>
-                  <Separator />
 
                   {/* Father's Information */}
                   <div className="space-y-4">
                     <h4 className="font-medium text-gray-700 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
                       Father's Information
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1273,7 +1248,6 @@ const PreRegister = () => {
                   {/* Mother's Information */}
                   <div className="space-y-4">
                     <h4 className="font-medium text-gray-700 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
                       Mother's Information
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

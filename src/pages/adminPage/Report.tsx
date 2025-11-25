@@ -361,7 +361,7 @@ const Report = () => {
                         Requestor
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                        Purpose
+                        Purpose/Tumong/Rason
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                         Price

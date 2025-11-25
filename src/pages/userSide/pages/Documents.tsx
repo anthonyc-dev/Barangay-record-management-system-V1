@@ -73,7 +73,10 @@ const Documents = () => {
 
   console.log("...", requests, referenceCounter);
 
-  const documentTypes = ["Clearance Certification", "Certification"];
+  const documentTypes = [
+    { label: "Clearance Certification", price: 40 },
+    { label: " Certification", price: 30 },
+  ];
 
   // Auto-fill user information on mount
   useEffect(() => {
@@ -440,8 +443,8 @@ const Documents = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {documentTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
+                        <SelectItem key={type.label} value={type.label}>
+                          {type.label} - ₱{type.price}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -449,7 +452,7 @@ const Documents = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="purpose">Purpose *</Label>
+                  <Label htmlFor="purpose">Purpose/Tumong/Rason *</Label>
                   <Textarea
                     id="purpose"
                     placeholder="e.g., Employment, School Requirements, Government Transaction"
@@ -738,8 +741,8 @@ const Documents = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {documentTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
+                        <SelectItem key={type.label} value={type.label}>
+                          {type.label} - ₱{type.price}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -747,7 +750,7 @@ const Documents = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-purpose">Purpose *</Label>
+                  <Label htmlFor="edit-purpose"> Purpose/Tumong/Rason *</Label>
                   <Textarea
                     id="edit-purpose"
                     placeholder="e.g., Employment, School Requirements, Government Transaction"

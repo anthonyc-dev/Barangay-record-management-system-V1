@@ -152,7 +152,7 @@ const FolderStorage = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Folder Storage</h1>
+          <h1 className="text-2xl font-bold text-gray-900">File Storage</h1>
           <p className="text-gray-600">
             Manage and organize barangay documents and files
           </p>
@@ -163,7 +163,7 @@ const FolderStorage = () => {
             className="flex items-center space-x-2"
           >
             <FolderPlus className="h-4 w-4" />
-            <span>Upload Folder</span>
+            <span>Upload File</span>
           </Button>
         </div>
       </div>

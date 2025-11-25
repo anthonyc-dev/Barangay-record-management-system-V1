@@ -785,7 +785,7 @@ export default function Documents() {
                         Requestor
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                        Purpose
+                        Purpose/Tumong/Rason
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                         Price
@@ -1016,7 +1016,7 @@ export default function Documents() {
 
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
-                      Purpose
+                      Purpose/Tumong/Rason
                     </p>
                     <p className="text-base">{selectedDocument.purpose}</p>
                   </div>
@@ -1197,7 +1197,7 @@ export default function Documents() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-purpose">Purpose</Label>
+                <Label htmlFor="edit-purpose"> Purpose/Tumong/Rason</Label>
                 <Textarea
                   id="edit-purpose"
                   value={editFormData.purpose || ""}

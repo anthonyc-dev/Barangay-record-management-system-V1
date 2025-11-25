@@ -93,7 +93,7 @@ const allNavigation = [
     allowedRoles: ["admin", "official", "capitan"],
   },
   {
-    name: "Folder Storage",
+    name: "File Storage",
     href: "/admin/folder-storage",
     icon: Folder,
     allowedRoles: ["admin"],
