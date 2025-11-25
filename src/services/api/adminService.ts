@@ -94,7 +94,9 @@ export const adminService = {
 
   // Get admin by ID
   getAdminById: async (id: number): Promise<GetAdminByIdResponse> => {
-    const response = await apiClient.get<GetAdminByIdResponse>(`/getById/${id}`);
+    const response = await apiClient.get<GetAdminByIdResponse>(
+      `/getById/${id}`
+    );
 
     // Update local storage with the fetched data
     if (response.data) {

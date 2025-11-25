@@ -28,7 +28,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().optional().or(z.literal("")),
-  role: z.enum(["Admin", "Official"], "Please select a role"),
+  role: z.enum(["Admin", "Official", "Capitan"], "Please select a role"),
 });
 
 export type FormData = z.infer<typeof formSchema>;
@@ -41,11 +41,14 @@ interface EditOfficialFormProps {
 }
 
 // Helper function to normalize role
-const normalizeRole = (role: string | undefined): "Admin" | "Official" => {
+const normalizeRole = (
+  role: string | undefined
+): "Admin" | "Official" | "Capitan" => {
   if (!role) return "Official";
   const roleLower = role.toLowerCase();
   if (roleLower === "admin") return "Admin";
   if (roleLower === "official") return "Official";
+  if (roleLower === "capitan") return "Capitan";
   return "Official";
 };
 
@@ -161,6 +164,7 @@ export function EditOfficialForm({
                     <SelectContent>
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="Official">Official</SelectItem>
+                      <SelectItem value="Capitan">Capitan</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

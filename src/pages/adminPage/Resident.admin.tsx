@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import {
   Plus,
   Search,
-  Filter,
   Download,
   Eye,
   Edit,
   Trash2,
   Users,
   Loader2,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { residentService, type Resident } from "@/services/api/residentService";
@@ -40,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+
 import { useUserProfile } from "@/contexts/UserProfileContext";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/services/api/config";
@@ -68,6 +71,8 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 };
 
+type StatusFilter = "approved" | "pending" | "reject";
+
 export default function Residents() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +83,7 @@ export default function Residents() {
   const [selectedResident, setSelectedResident] = useState<Resident | null>(
     null
   );
+  const [activeTab, setActiveTab] = useState<StatusFilter>("approved");
   const navigate = useNavigate();
   const { userProfile } = useUserProfile();
 
@@ -172,7 +178,9 @@ export default function Residents() {
 
         if (apiError.errors) {
           // Validation errors
-          const errorMessages = Object.values(apiError.errors).flat().join(", ");
+          const errorMessages = Object.values(apiError.errors)
+            .flat()
+            .join(", ");
           toast.error(`Validation error: ${errorMessages}`);
         } else if (apiError.message) {
           toast.error(apiError.message);
@@ -197,7 +205,7 @@ export default function Residents() {
       case "pending":
         return "Pending";
       case "reject":
-        return "Reject";
+        return "Rejected";
       case "active":
         return "Active";
       case "inactive":
@@ -229,11 +237,28 @@ export default function Residents() {
   };
 
   // Calculate statistics
-  const totalResidents = residents.length;
-  const maleCount = residents.filter((r) => r.gender === "Male").length;
-  const femaleCount = residents.filter((r) => r.gender === "Female").length;
+  const approvedCount = residents.filter(
+    (r) => r.status?.toLowerCase() === "approved"
+  ).length;
+  const pendingCount = residents.filter(
+    (r) => r.status?.toLowerCase() === "pending"
+  ).length;
+  const rejectCount = residents.filter(
+    (r) => r.status?.toLowerCase() === "reject"
+  ).length;
 
-  // Filter residents based on search
+  // Total residents only counts approved residents
+  const totalResidents = approvedCount;
+
+  // Male and Female counts only for approved residents
+  const maleCount = residents.filter(
+    (r) => r.gender === "Male" && r.status?.toLowerCase() === "approved"
+  ).length;
+  const femaleCount = residents.filter(
+    (r) => r.gender === "Female" && r.status?.toLowerCase() === "approved"
+  ).length;
+
+  // Filter residents based on search and status
   const filteredResidents = residents.filter((resident) => {
     const searchLower = searchQuery.toLowerCase();
     const fullName = `${resident.first_name || ""} ${
@@ -244,12 +269,15 @@ export default function Residents() {
     }`.toLowerCase();
     const contact = resident.contact_number?.toLowerCase() || "";
 
-    return (
+    const matchesSearch =
       fullName.includes(searchLower) ||
       address.includes(searchLower) ||
       contact.includes(searchLower) ||
-      resident.email?.toLowerCase().includes(searchLower)
-    );
+      resident.email?.toLowerCase().includes(searchLower);
+
+    const matchesStatus = resident.status?.toLowerCase() === activeTab;
+
+    return matchesSearch && matchesStatus;
   });
 
   // Export to Excel function
@@ -478,6 +506,31 @@ export default function Residents() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Breadcrumb Navigation */}
+      {/* <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin">Dashboard</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/resident">Resident Management</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>
+              {activeTab === "approved" && "Approved"}
+              {activeTab === "pending" && "Pending"}
+              {activeTab === "reject" && "Rejected"}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb> */}
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -495,7 +548,7 @@ export default function Residents() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -541,6 +594,54 @@ export default function Residents() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Approved
+                </p>
+                <p className="text-2xl font-bold">{approvedCount}</p>
+              </div>
+              <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Pending
+                </p>
+                <p className="text-2xl font-bold">{pendingCount}</p>
+              </div>
+              <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                <Clock className="h-4 w-4 text-yellow-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Rejected
+                </p>
+                <p className="text-2xl font-bold">{rejectCount}</p>
+              </div>
+              <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                <XCircle className="h-4 w-4 text-red-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search and Filters */}
@@ -557,10 +658,6 @@ export default function Residents() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" onClick={handleExportToExcel}>
@@ -572,10 +669,42 @@ export default function Residents() {
         </CardContent>
       </Card>
 
+      {/* Status Navigation with Breadcrumb Style */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          variant={activeTab === "approved" ? "default" : "outline"}
+          onClick={() => setActiveTab("approved")}
+          className="gap-2"
+        >
+          <CheckCircle className="h-4 w-4" />
+          Approved ({approvedCount})
+        </Button>
+        <Button
+          variant={activeTab === "pending" ? "default" : "outline"}
+          onClick={() => setActiveTab("pending")}
+          className="gap-2"
+        >
+          <Clock className="h-4 w-4" />
+          Pending ({pendingCount})
+        </Button>
+        <Button
+          variant={activeTab === "reject" ? "default" : "outline"}
+          onClick={() => setActiveTab("reject")}
+          className="gap-2"
+        >
+          <XCircle className="h-4 w-4" />
+          Rejected ({rejectCount})
+        </Button>
+      </div>
+
       {/* Residents Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Registered Residents</CardTitle>
+          <CardTitle>
+            {activeTab === "approved" && "Approved Residents"}
+            {activeTab === "pending" && "Pending Residents"}
+            {activeTab === "reject" && "Rejected Residents"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (

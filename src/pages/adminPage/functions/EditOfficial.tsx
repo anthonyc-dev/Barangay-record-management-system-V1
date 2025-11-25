@@ -124,7 +124,9 @@ export default function EditOfficial() {
       // Ensure role is explicitly set and valid
       if (
         !officialData.role ||
-        (officialData.role !== "admin" && officialData.role !== "official")
+        (officialData.role !== "admin" &&
+          officialData.role !== "official" &&
+          officialData.role !== "capitan")
       ) {
         console.error(
           "Role is missing or invalid in officialData!",

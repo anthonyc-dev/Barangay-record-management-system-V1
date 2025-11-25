@@ -161,6 +161,26 @@ export default function Documents() {
           toast.warning("Document updated but email notification failed");
         }
       }
+
+      // //send email for rejection
+      // if (newStatus === "reject" && document) {
+      //   try {
+      //     const emailResponse = await sendRegistrationRejected({
+      //       user_name: document.full_name,
+      //       rejection_reason: "Your has been Reject",
+      //       to_email: document.email,
+      //     });
+
+      //     if (emailResponse.success) {
+      //       toast.success("Email notification sent to resident");
+      //     } else {
+      //       toast.warning("Document updated but email notification failed");
+      //     }
+      //   } catch (emailError) {
+      //     console.error("Error sending email notification:", emailError);
+      //     toast.warning("Document updated but email notification failed");
+      //   }
+      // }
     } catch (error) {
       console.error("Error updating document status:", error);
       toast.error("Failed to update document status. Please try again.");

@@ -7,7 +7,6 @@ import {
   Shield,
   FileText,
   DollarSign,
-  TrendingUp,
   Loader2,
   FileCheck,
 } from "lucide-react";
@@ -61,8 +60,6 @@ export function OverviewSection() {
     analytics.stats.activeCases < 10 ? "down" : "up";
   const revenueTrend: "up" | "down" =
     analytics.stats.growthRate >= 0 ? "up" : "down";
-  const growthTrend: "up" | "down" =
-    analytics.stats.growthRate >= 0 ? "up" : "down";
 
   // Format growth rate for display
   const growthRateDisplay =
@@ -70,11 +67,16 @@ export function OverviewSection() {
       ? `+${analytics.stats.growthRate.toFixed(1)}%`
       : `${analytics.stats.growthRate.toFixed(1)}%`;
 
+  // Count approved residents
+  const approvedResidentsCount = analytics.residents.filter(
+    (r) => r.status?.toLowerCase() === "approved"
+  ).length;
+
   const statsData = [
     {
       title: "Total Population",
       value: analytics.stats.totalPopulation.toLocaleString(),
-      change: `${analytics.residents.length} residents`,
+      change: `${approvedResidentsCount} Population`,
       trend: "up" as const,
       icon: Users,
       color: "primary" as const,
@@ -118,20 +120,12 @@ export function OverviewSection() {
       color: "success" as const,
     },
     {
-      title: "Revenue This Month",
-      value: `₱${analytics.stats.revenueThisMonth.toLocaleString()}`,
+      title: "Total Revenue",
+      value: `₱${analytics.stats.totalRevenue.toLocaleString()}`,
       change: growthRateDisplay,
       trend: revenueTrend,
       icon: DollarSign,
       color: "primary" as const,
-    },
-    {
-      title: "Growth Rate",
-      value: `${analytics.stats.growthRate.toFixed(1)}%`,
-      change: "revenue growth",
-      trend: growthTrend,
-      icon: TrendingUp,
-      color: "success" as const,
     },
   ];
 

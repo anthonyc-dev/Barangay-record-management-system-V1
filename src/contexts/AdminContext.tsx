@@ -8,7 +8,7 @@ import {
 import { useAuth } from "./AuthContext";
 import { authService, adminService } from "@/services/api";
 
-export type AdminRole = "admin" | "official";
+export type AdminRole = "admin" | "official" | "capitan";
 
 export interface AdminInfo {
   id: number;
@@ -38,6 +38,7 @@ interface AdminContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isOfficial: boolean;
+  isCapitan: boolean;
   hasRole: (role: AdminRole | AdminRole[]) => boolean;
   login: (credentials: AdminLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
@@ -68,6 +69,9 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   // Check if user has official role
   const isOfficial = adminInfo?.role === "official";
+
+  // Check if user has capitan role
+  const isCapitan = adminInfo?.role === "capitan";
 
   // Check if user has specific role(s)
   const hasRole = (role: AdminRole | AdminRole[]): boolean => {
@@ -111,7 +115,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       const response = await authService.adminLogin(credentials);
 
       // Validate role
-      if (response.role !== "admin" && response.role !== "official") {
+      if (
+        response.role !== "admin" &&
+        response.role !== "official" &&
+        response.role !== "capitan"
+      ) {
         throw new Error("Invalid role received from server");
       }
 
@@ -173,6 +181,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     isAdmin,
     isOfficial,
+    isCapitan,
     hasRole,
     login,
     logout,

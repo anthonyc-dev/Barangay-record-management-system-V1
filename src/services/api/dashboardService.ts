@@ -1,7 +1,7 @@
 import { residentService } from "./residentService";
 import type { Resident } from "./residentService";
 import { complainantService } from "./complainantService";
-import type { Complaint } from "./complainantService";
+import type { Complaint, GetComplaintsResponse } from "./complainantService";
 import { documentService } from "./documentService";
 import type { DocumentRequest } from "./documentService";
 import { eventService } from "./eventService";
@@ -18,7 +18,7 @@ export interface DashboardStats {
   documentsIssued: number;
   readyDocuments: number;
   readyDocumentsRevenue: number;
-  revenueThisMonth: number;
+  totalRevenue: number;
   growthRate: number;
 }
 
@@ -62,9 +62,7 @@ export const dashboardService = {
 
       // Extract data from responses
       const residents = residentsData.data || [];
-      const complaints = Array.isArray(complaintsData)
-        ? complaintsData
-        : (complaintsData as any).data || [];
+      const complaints = normalizeComplaintsResponse(complaintsData);
       const documents = documentsData.data || [];
       const events = eventsData || [];
       const folders = foldersData || [];
@@ -99,19 +97,18 @@ export const dashboardService = {
    */
   getDashboardStats: async (): Promise<DashboardStats> => {
     try {
-      const [residentsData, complaintsData, documentsData, officialsData] = await Promise.all([
-        residentService.getAll().catch(() => ({ data: [] as Resident[] })),
-        complainantService.getAllComplaints().catch(() => [] as Complaint[]),
-        documentService
-          .getAllDocuments()
-          .catch(() => ({ data: [] as DocumentRequest[] })),
-        officialService.getAll().catch(() => ({ data: [] as Official[] })),
-      ]);
+      const [residentsData, complaintsData, documentsData, officialsData] =
+        await Promise.all([
+          residentService.getAll().catch(() => ({ data: [] as Resident[] })),
+          complainantService.getAllComplaints().catch(() => [] as Complaint[]),
+          documentService
+            .getAllDocuments()
+            .catch(() => ({ data: [] as DocumentRequest[] })),
+          officialService.getAll().catch(() => ({ data: [] as Official[] })),
+        ]);
 
       const residents = residentsData.data || [];
-      const complaints = Array.isArray(complaintsData)
-        ? complaintsData
-        : (complaintsData as any).data || [];
+      const complaints = normalizeComplaintsResponse(complaintsData);
       const documents = documentsData.data || [];
       const officials = officialsData.data || [];
 
@@ -142,6 +139,16 @@ export const dashboardService = {
   },
 };
 
+function normalizeComplaintsResponse(
+  complaints: Complaint[] | GetComplaintsResponse
+): Complaint[] {
+  if (Array.isArray(complaints)) {
+    return complaints;
+  }
+
+  return complaints.data || [];
+}
+
 /**
  * Helper function to get document price based on type
  */
@@ -171,8 +178,10 @@ function calculateStats(
   documents: DocumentRequest[],
   officials: Official[]
 ): DashboardStats {
-  // Total population
-  const totalPopulation = residents.length;
+  // Total population - only count approved residents
+  const totalPopulation = residents.filter(
+    (r) => r.status?.toLowerCase() === "approved"
+  ).length;
 
   // Active cases (pending or under investigation)
   const activeCases = complaints.filter(
@@ -207,7 +216,13 @@ function calculateStats(
       return sum + price;
     }, 0);
 
-  // Revenue this month (from document prices)
+  // Total revenue (from all document prices)
+  const totalRevenue = documents.reduce((sum, doc) => {
+    const price = doc.price || getDocumentPrice(doc.document_type);
+    return sum + price;
+  }, 0);
+
+  // Revenue this month (for growth rate calculation)
   const revenueThisMonth = documents
     .filter((d) => {
       if (!d.created_at) return false;
@@ -217,7 +232,10 @@ function calculateStats(
         docDate.getFullYear() === currentYear
       );
     })
-    .reduce((sum, doc) => sum + (doc.price || 0), 0);
+    .reduce((sum, doc) => {
+      const price = doc.price || getDocumentPrice(doc.document_type);
+      return sum + price;
+    }, 0);
 
   // Revenue last month (for growth rate calculation)
   const lastMonth = currentMonth - 1;
@@ -233,7 +251,10 @@ function calculateStats(
         docDate.getFullYear() === lastMonthYear
       );
     })
-    .reduce((sum, doc) => sum + (doc.price || 0), 0);
+    .reduce((sum, doc) => {
+      const price = doc.price || getDocumentPrice(doc.document_type);
+      return sum + price;
+    }, 0);
 
   // Growth rate (revenue growth compared to last month)
   const growthRate =
@@ -250,7 +271,7 @@ function calculateStats(
     documentsIssued,
     readyDocuments,
     readyDocumentsRevenue,
-    revenueThisMonth,
+    totalRevenue,
     growthRate,
   };
 }
@@ -284,9 +305,9 @@ function calculatePopulationGrowth(
     const monthIndex = targetDate.getMonth();
     const year = targetDate.getFullYear();
 
-    // Count residents registered up to this month
+    // Count approved residents registered up to this month
     const population = residents.filter((r) => {
-      if (!r.created_at) return false;
+      if (!r.created_at || r.status?.toLowerCase() !== "approved") return false;
       const resDate = new Date(r.created_at);
       return resDate <= new Date(year, monthIndex + 1, 0); // End of month
     }).length;

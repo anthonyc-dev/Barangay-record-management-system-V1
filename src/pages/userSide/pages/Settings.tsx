@@ -371,7 +371,7 @@ const Settings = () => {
                     })
                   }
                   placeholder="Enter your full name"
-                  required
+                  disabled
                 />
               </div>
 

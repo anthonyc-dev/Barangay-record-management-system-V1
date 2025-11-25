@@ -46,7 +46,7 @@ const allNavigation = [
     name: "Dashboard",
     href: "/admin/home",
     icon: Home,
-    allowedRoles: ["admin", "official"],
+    allowedRoles: ["admin", "official", "capitan"],
   },
 
   // {
@@ -90,7 +90,7 @@ const allNavigation = [
     name: "Announcements",
     href: "/admin/announcement",
     icon: Megaphone,
-    allowedRoles: ["admin", "official"],
+    allowedRoles: ["admin", "official", "capitan"],
   },
   {
     name: "Folder Storage",
@@ -102,27 +102,34 @@ const allNavigation = [
     name: "Settings",
     href: "/admin/settings",
     icon: Settings,
-    allowedRoles: ["admin", "official"],
+    allowedRoles: ["admin", "official", "capitan"],
   },
 ];
 
 export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
-  const { adminInfo, isAdmin, isOfficial } = useAdmin();
+  const { adminInfo, isAdmin, isOfficial, isCapitan } = useAdmin();
 
   // Role-filtered navigation
   const navigation = useMemo(() => {
-    const userRole = isAdmin ? "admin" : isOfficial ? "official" : null;
+    const userRole = isAdmin
+      ? "admin"
+      : isOfficial
+      ? "official"
+      : isCapitan
+      ? "capitan"
+      : null;
     if (!userRole) return [];
 
     return allNavigation.filter((item) =>
       item.allowedRoles?.includes(userRole)
     );
-  }, [isAdmin, isOfficial]);
+  }, [isAdmin, isOfficial, isCapitan]);
 
   const getRoleLabel = () => {
     if (isAdmin) return "Administrator";
     if (isOfficial) return "Official";
+    if (isCapitan) return "Capitan";
     return "Admin";
   };
 

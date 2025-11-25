@@ -165,5 +165,19 @@ export const isEmailJSConfigured = (): boolean => {
   );
 };
 
+interface RejectEmail {
+  user_name: string;
+  rejection_reason: string;
+}
+
+const SERVICE_ID = "service_xxxx";
+
+export const sendRegistrationRejected = (data: RejectEmail) => {
+  return emailjs.send(SERVICE_ID, "template_reject_registration", {
+    user_name: data.user_name,
+    rejection_reason: data.rejection_reason,
+  });
+};
+
 // Initialize EmailJS on module load
 initEmailJS();

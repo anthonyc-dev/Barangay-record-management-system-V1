@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import {
   Plus,
   Search,
-  Filter,
   Download,
   Eye,
   Edit,
@@ -331,10 +330,6 @@ export default function Officials() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" onClick={handleExportToExcel}>
@@ -401,14 +396,22 @@ export default function Officials() {
                         <td className="py-3 px-4">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              official.role === "Admin"
+                              official.role === "admin"
                                 ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                                : official.role === "Official"
+                                : official.role === "capitan"
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                : official.role === "official"
                                 ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                                 : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
                             }`}
                           >
-                            {official.role}
+                            {official.role === "admin"
+                              ? "Admin"
+                              : official.role === "official"
+                              ? "Official"
+                              : official.role === "capitan"
+                              ? "Capitan"
+                              : null}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -478,12 +481,12 @@ export default function Officials() {
                   Basic Information
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  {/* <div>
                     <p className="text-sm text-muted-foreground">ID</p>
                     <p className="font-medium">
                       {selectedOfficial.id || "N/A"}
                     </p>
-                  </div>
+                  </div> */}
                   <div>
                     <p className="text-sm text-muted-foreground">Name</p>
                     <p className="font-medium">
@@ -501,14 +504,22 @@ export default function Officials() {
                     <p className="font-medium">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          selectedOfficial.role === "Admin"
+                          selectedOfficial.role === "admin"
                             ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                            : selectedOfficial.role === "Official"
+                            : selectedOfficial.role === "capitan"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            : selectedOfficial.role === "official"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
                         }`}
                       >
-                        {selectedOfficial.role || "N/A"}
+                        {selectedOfficial.role === "admin"
+                          ? "Admin"
+                          : selectedOfficial.role === "official"
+                          ? "Official"
+                          : selectedOfficial.role === "capitan"
+                          ? "Capitan"
+                          : null}
                       </span>
                     </p>
                   </div>
