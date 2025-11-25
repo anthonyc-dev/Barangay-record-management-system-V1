@@ -410,7 +410,7 @@ export default function Officials() {
                               : official.role === "official"
                               ? "Official"
                               : official.role === "capitan"
-                              ? "Capitan"
+                              ? "Barangay Captain"
                               : null}
                           </span>
                         </td>
@@ -518,7 +518,7 @@ export default function Officials() {
                           : selectedOfficial.role === "official"
                           ? "Official"
                           : selectedOfficial.role === "capitan"
-                          ? "Capitan"
+                          ? "Barangay Captain"
                           : null}
                       </span>
                     </p>

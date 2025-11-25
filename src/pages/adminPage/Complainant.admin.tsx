@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Search,
-  Filter,
   Download,
   Eye,
   Trash2,
@@ -12,6 +11,8 @@ import {
   Clock,
   XCircle,
   Loader2,
+  Plus,
+  Edit,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
@@ -47,6 +48,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 // Helper function to format datetime
 const formatDateTime = (dateString: string | null | undefined): string => {
@@ -111,6 +113,21 @@ const getStatusColor = (
 //   return urgency.charAt(0).toUpperCase() + urgency.slice(1).toLowerCase();
 // };
 
+type ComplaintFormData = {
+  report_type: string;
+  title: string;
+  description: string;
+  location: string;
+  date_time: string;
+  complainant_name: string;
+  contact_number: string;
+  email: string;
+  witnesses: string;
+  additional_info: string;
+  status: ComplaintStatus;
+  is_anonymous: boolean;
+};
+
 export default function ComplainantAdmin() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,6 +146,27 @@ export default function ComplainantAdmin() {
   );
   const [newStatus, setNewStatus] = useState<ComplaintStatus>("pending");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Form dialog state
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(
+    null
+  );
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formData, setFormData] = useState<ComplaintFormData>({
+    report_type: "",
+    title: "",
+    description: "",
+    location: "",
+    date_time: "",
+    complainant_name: "",
+    contact_number: "",
+    email: "",
+    witnesses: "",
+    additional_info: "",
+    status: "pending",
+    is_anonymous: false,
+  });
 
   const fetchComplaints = useCallback(async () => {
     try {
@@ -234,6 +272,208 @@ export default function ComplainantAdmin() {
     setStatusDialogOpen(true);
   };
 
+  // Form handlers
+  const openAddDialog = () => {
+    setEditingComplaint(null);
+    setFormData({
+      report_type: "",
+      title: "",
+      description: "",
+      location: "",
+      date_time: "",
+      complainant_name: "",
+      contact_number: "",
+      email: "",
+      witnesses: "",
+      additional_info: "",
+      status: "pending",
+      is_anonymous: false,
+    });
+    setFormDialogOpen(true);
+  };
+
+  const openEditDialog = (complaint: Complaint) => {
+    setEditingComplaint(complaint);
+
+    // Format date_time for datetime-local input (YYYY-MM-DDTHH:mm)
+    let formattedDateTime = "";
+    if (complaint.date_time) {
+      try {
+        const date = new Date(complaint.date_time);
+        if (!isNaN(date.getTime())) {
+          // Format to YYYY-MM-DDTHH:mm (required format for datetime-local)
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+      } catch (error) {
+        console.error("Error formatting date:", error);
+      }
+    }
+
+    setFormData({
+      report_type: complaint.report_type || "",
+      title: complaint.title || "",
+      description: complaint.description || "",
+      location: complaint.location || "",
+      date_time: formattedDateTime,
+      complainant_name: complaint.complainant_name || "",
+      contact_number: complaint.contact_number || "",
+      email: complaint.email || "",
+      witnesses: complaint.witnesses || "",
+      additional_info: complaint.additional_info || "",
+      status: complaint.status || "pending",
+      is_anonymous: complaint.is_anonymous ?? false,
+    });
+    setFormDialogOpen(true);
+  };
+
+  const handleFormSubmit = async () => {
+    // Validate required fields
+    if (
+      !formData.report_type ||
+      !formData.title ||
+      !formData.description ||
+      !formData.location
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate date_time is provided
+    if (!formData.date_time) {
+      toast.error("Please select the date and time");
+      return;
+    }
+
+    // Validate complainant info if not anonymous
+    if (!formData.is_anonymous) {
+      if (!formData.complainant_name.trim()) {
+        toast.error("Please enter complainant name");
+        return;
+      }
+      if (!formData.contact_number.trim()) {
+        toast.error("Please enter contact number");
+        return;
+      }
+      // Basic phone number validation (Philippine format)
+      const phoneRegex = /^(09|\+639)\d{9}$/;
+      if (!phoneRegex.test(formData.contact_number.replace(/\s|-/g, ""))) {
+        toast.error(
+          "Please enter a valid Philippine mobile number (e.g., 09123456789)"
+        );
+        return;
+      }
+      // Email validation if provided
+      if (
+        formData.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+    }
+
+    try {
+      setFormSubmitting(true);
+
+      const trimmedName = formData.complainant_name.trim();
+      const trimmedContact = formData.contact_number.trim();
+      const trimmedEmail = formData.email.trim();
+      const trimmedWitnesses = formData.witnesses.trim();
+      const trimmedAdditionalInfo = formData.additional_info.trim();
+
+      // Convert datetime-local format to MySQL datetime format
+      const dateTimeFormatted = formData.date_time.replace("T", " ") + ":00";
+
+      // IMPORTANT: Backend automatically sets user_id = auth()->id() from the token
+      // The admin's ID (1) from token doesn't exist in users table
+      // FIX: Create a user with ID 1 in the users table OR modify backend to use payload user_id
+      const complaintPayload = {
+        report_type: formData.report_type,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        date_time: dateTimeFormatted,
+        complainant_name:
+          formData.is_anonymous || !trimmedName ? null : trimmedName,
+        contact_number:
+          formData.is_anonymous || !trimmedContact ? null : trimmedContact,
+        email: formData.is_anonymous || !trimmedEmail ? null : trimmedEmail,
+        is_anonymous: formData.is_anonymous,
+        witnesses: trimmedWitnesses || null,
+        additional_info: trimmedAdditionalInfo || null,
+        status: formData.status,
+      };
+
+      console.log(
+        "Sending complaint payload (backend will add user_id from auth token):",
+        complaintPayload
+      );
+
+      if (editingComplaint) {
+        // Update existing complaint
+        await complainantService.updateComplaint(
+          editingComplaint.id,
+          complaintPayload
+        );
+        toast.success("Complaint updated successfully");
+      } else {
+        // Create new complaint
+        await complainantService.adminCreateComplaint(complaintPayload);
+        toast.success("Complaint created successfully");
+      }
+
+      fetchComplaints(); // Refresh the list
+      setFormDialogOpen(false);
+      setEditingComplaint(null);
+    } catch (error: unknown) {
+      console.error("Error submitting complaint:", error);
+
+      // Handle API error format from our interceptor
+      if (error && typeof error === "object") {
+        const apiError = error as {
+          message?: string;
+          errors?: Record<string, string[]>;
+        };
+
+        // Handle validation errors from backend
+        if (apiError.errors) {
+          const errorMessages = Object.values(apiError.errors)
+            .flat()
+            .join(", ");
+          toast.error(errorMessages);
+        } else if (apiError.message) {
+          toast.error(apiError.message);
+        } else {
+          toast.error(
+            editingComplaint
+              ? "Failed to update complaint"
+              : "Failed to create complaint"
+          );
+        }
+      } else {
+        toast.error(
+          editingComplaint
+            ? "Failed to update complaint. Please try again."
+            : "Failed to create complaint. Please try again."
+        );
+      }
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const handleFormChange = <K extends keyof ComplaintFormData>(
+    field: K,
+    value: ComplaintFormData[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   // Calculate statistics
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
   const totalComplaints = safeComplaints.length;
@@ -319,6 +559,10 @@ export default function ComplainantAdmin() {
             Manage and track all complaints and incident reports
           </p>
         </div>
+        <Button className="shadow-primary" onClick={openAddDialog}>
+          <Plus className="h-4 w-4" />
+          Add Complaint
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -394,10 +638,6 @@ export default function ComplainantAdmin() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" onClick={handleExportToExcel}>
@@ -440,6 +680,9 @@ export default function ComplainantAdmin() {
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                         Date & Time
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Witnesses
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                         Status
@@ -492,11 +735,21 @@ export default function ComplainantAdmin() {
                               {formatDateTime(complaint.date_time)}
                             </p>
                           </td>
-
+                          <td className="py-3 px-4">
+                            <p className="text-sm">{complaint.witnesses}</p>
+                          </td>
                           <td className="py-3 px-4">
                             <Badge variant={variant} className="gap-1">
                               <StatusIcon className="h-3 w-3" />
-                              {complaint.status.replace("_", " ")}
+                              {complaint.status === "pending"
+                                ? "Pending"
+                                : complaint.status === "rejected"
+                                ? "Rejected"
+                                : complaint.status === "resolved"
+                                ? "Resolved"
+                                : complaint.status === "under_investigation"
+                                ? "Under Investigation"
+                                : ""}
                             </Badge>
                           </td>
 
@@ -509,6 +762,14 @@ export default function ComplainantAdmin() {
                                 title="View Details"
                               >
                                 <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(complaint)}
+                                title="Edit Complaint"
+                              >
+                                <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -740,6 +1001,264 @@ export default function ComplainantAdmin() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add/Edit Form Dialog */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingComplaint ? "Edit Complaint" : "Add New Complaint"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingComplaint
+                ? "Update the complaint information"
+                : "Fill in the details to create a new complaint"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="report_type">
+                  Report Type <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.report_type}
+                  onValueChange={(value) =>
+                    handleFormChange("report_type", value)
+                  }
+                >
+                  <SelectTrigger id="report_type">
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Noise Complaint">
+                      Noise Complaint
+                    </SelectItem>
+                    <SelectItem value="Traffic Accident">
+                      Traffic Accident
+                    </SelectItem>
+                    <SelectItem value="Theft/Robbery">Theft/Robbery</SelectItem>
+                    <SelectItem value="Public Disturbance">
+                      Public Disturbance
+                    </SelectItem>
+                    <SelectItem value="Property Damage">
+                      Property Damage
+                    </SelectItem>
+                    <SelectItem value="Environmental Issue">
+                      Environmental Issue
+                    </SelectItem>
+                    <SelectItem value="Animal-related Issue">
+                      Animal-related Issue
+                    </SelectItem>
+                    <SelectItem value="Infrastructure Problem">
+                      Infrastructure Problem
+                    </SelectItem>
+                    <SelectItem value="Violence/Assault">
+                      Violence/Assault
+                    </SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">
+                  Location <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => handleFormChange("location", e.target.value)}
+                  placeholder="Incident location"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">
+                Title <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => handleFormChange("title", e.target.value)}
+                placeholder="Brief title of the complaint"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) =>
+                  handleFormChange("description", e.target.value)
+                }
+                placeholder="Detailed description of the complaint"
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date_time">
+                  Date & Time <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="date_time"
+                  type="datetime-local"
+                  value={formData.date_time}
+                  onChange={(e) =>
+                    handleFormChange("date_time", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    handleFormChange("status", value as ComplaintStatus)
+                  }
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="under_investigation">
+                      Under Investigation
+                    </SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* <div className="flex items-start justify-between rounded-md border p-4">
+              <div>
+                <Label
+                  htmlFor="is_anonymous"
+                  className="text-base font-semibold"
+                >
+                  Submit as Anonymous
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Hide the complainant&apos;s identity and contact details
+                </p>
+              </div>
+              <Switch
+                id="is_anonymous"
+                checked={formData.is_anonymous}
+                onCheckedChange={(checked) =>
+                  handleFormChange("is_anonymous", checked)
+                }
+                aria-label="Toggle anonymous complaint"
+              />
+            </div> */}
+
+            <div className="border-t pt-4">
+              <h4 className="font-semibold mb-4">Complainant Information</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="complainant_name">Complainant Name</Label>
+                  <Input
+                    id="complainant_name"
+                    value={formData.complainant_name}
+                    onChange={(e) =>
+                      handleFormChange("complainant_name", e.target.value)
+                    }
+                    placeholder={
+                      formData.is_anonymous
+                        ? "Hidden for anonymous reports"
+                        : "Name of complainant"
+                    }
+                    disabled={formData.is_anonymous}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact_number">Contact Number</Label>
+                  <Input
+                    id="contact_number"
+                    value={formData.contact_number}
+                    onChange={(e) =>
+                      handleFormChange("contact_number", e.target.value)
+                    }
+                    placeholder={
+                      formData.is_anonymous
+                        ? "Hidden for anonymous reports"
+                        : "Phone number"
+                    }
+                    disabled={formData.is_anonymous}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleFormChange("email", e.target.value)}
+                    placeholder={
+                      formData.is_anonymous
+                        ? "Hidden for anonymous reports"
+                        : "Email address"
+                    }
+                    disabled={formData.is_anonymous}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="witnesses">Witnesses</Label>
+              <Textarea
+                id="witnesses"
+                value={formData.witnesses}
+                onChange={(e) => handleFormChange("witnesses", e.target.value)}
+                placeholder="Names and details of witnesses"
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="additional_info">Additional Information</Label>
+              <Textarea
+                id="additional_info"
+                value={formData.additional_info}
+                onChange={(e) =>
+                  handleFormChange("additional_info", e.target.value)
+                }
+                placeholder="Any other relevant information"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setFormDialogOpen(false)}
+                disabled={formSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleFormSubmit} disabled={formSubmitting}>
+                {formSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {editingComplaint ? "Update" : "Create"} Complaint
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

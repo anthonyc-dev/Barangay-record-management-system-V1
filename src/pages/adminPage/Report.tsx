@@ -202,7 +202,7 @@ const Report = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -248,24 +248,6 @@ const Report = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Revenue
-                </p>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                  ₱{stats.totalRevenue.toLocaleString()}.00
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Document Type Breakdown */}
@@ -301,12 +283,6 @@ const Report = () => {
                   <p className="text-sm text-muted-foreground">Requests</p>
                   <p className="text-2xl font-bold">{data.count}</p>
                 </div>
-                <div className="space-y-1 text-right">
-                  <p className="text-sm text-muted-foreground">Revenue</p>
-                  <p className="text-xl font-bold text-green-600">
-                    ₱{data.revenue.toLocaleString()}.00
-                  </p>
-                </div>
                 <TrendingUp className="h-8 w-8 text-blue-500" />
               </div>
             </CardContent>
@@ -328,9 +304,6 @@ const Report = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Badge variant="outline" className="px-4 py-2">
-                Showing Ready Documents Only
-              </Badge>
             </div>
             <div className="flex items-center space-x-2">
               <Button

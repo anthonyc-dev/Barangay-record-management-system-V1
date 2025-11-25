@@ -138,7 +138,7 @@ export function AddOfficialForm({
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="official">Official</SelectItem>
-                      <SelectItem value="capitan">Capitan</SelectItem>
+                      <SelectItem value="capitan">Barangay Captain</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

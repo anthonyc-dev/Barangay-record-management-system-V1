@@ -189,7 +189,9 @@ export function AddResidentForm({
                   className="w-full"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Upload a clear image of valid ID. Max file size: 5MB.
+                  Upload a clear image of any valid ID. If you do not have a{" "}
+                  <br />
+                  valid ID, you may upload Purok clearance. Max file size: 5MB.
                 </p>
               </div>
             </div>

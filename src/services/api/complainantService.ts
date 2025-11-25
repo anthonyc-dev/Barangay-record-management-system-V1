@@ -10,7 +10,7 @@ export type ComplaintStatus =
 
 // Type for creating a new complaint
 export interface CreateComplaintRequest {
-  userId: number;
+  userId?: number;
   report_type: string;
   title: string;
   description: string;
@@ -85,6 +85,21 @@ export const complainantService = {
   },
 
   /**
+   * Admin: Create a new complaint
+   * POST /api/complainant
+   * Note: Backend automatically sets user_id from auth token
+   */
+  adminCreateComplaint: async (
+    complaintData: Omit<CreateComplaintRequest, "userId">
+  ): Promise<CreateComplaintResponse> => {
+    const response = await apiClient.post<CreateComplaintResponse>(
+      "/complainant",
+      complaintData
+    );
+    return response.data;
+  },
+
+  /**
    * Get all complaints for the authenticated user
    * GET /api/complainant
    */
@@ -98,9 +113,7 @@ export const complainantService = {
    * GET /api/complainant-get/{id}
    */
   getComplaintById: async (id: number): Promise<Complaint[]> => {
-    const response = await apiClient.get<Complaint[]>(
-      `/complainant-get/${id}`
-    );
+    const response = await apiClient.get<Complaint[]>(`/complainant-get/${id}`);
     return response.data;
   },
 
@@ -118,7 +131,6 @@ export const complainantService = {
     );
     return response.data;
   },
-
 
   /**
    * Delete a complaint (if allowed by backend)

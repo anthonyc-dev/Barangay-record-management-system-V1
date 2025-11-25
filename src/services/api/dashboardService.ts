@@ -191,13 +191,13 @@ function calculateStats(
   // Clearing Officers (count of all officials/admins)
   const clearingOfficers = officials.length;
 
-  // Documents issued this month
+  // Documents issued this month - only count documents with "ready" status
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
   const documentsIssued = documents.filter((d) => {
-    if (!d.created_at) return false;
+    if (!d.created_at || d.status !== "ready") return false;
     const docDate = new Date(d.created_at);
     return (
       docDate.getMonth() === currentMonth &&
@@ -216,16 +216,18 @@ function calculateStats(
       return sum + price;
     }, 0);
 
-  // Total revenue (from all document prices)
-  const totalRevenue = documents.reduce((sum, doc) => {
-    const price = doc.price || getDocumentPrice(doc.document_type);
-    return sum + price;
-  }, 0);
+  // Total revenue - only count documents with "ready" status
+  const totalRevenue = documents
+    .filter((d) => d.status === "ready")
+    .reduce((sum, doc) => {
+      const price = doc.price || getDocumentPrice(doc.document_type);
+      return sum + price;
+    }, 0);
 
-  // Revenue this month (for growth rate calculation)
+  // Revenue this month (for growth rate calculation) - only count "ready" documents
   const revenueThisMonth = documents
     .filter((d) => {
-      if (!d.created_at) return false;
+      if (!d.created_at || d.status !== "ready") return false;
       const docDate = new Date(d.created_at);
       return (
         docDate.getMonth() === currentMonth &&
@@ -237,14 +239,14 @@ function calculateStats(
       return sum + price;
     }, 0);
 
-  // Revenue last month (for growth rate calculation)
+  // Revenue last month (for growth rate calculation) - only count "ready" documents
   const lastMonth = currentMonth - 1;
   const lastMonthYear = lastMonth < 0 ? currentYear - 1 : currentYear;
   const lastMonthIndex = lastMonth < 0 ? 11 : lastMonth;
 
   const revenueLastMonth = documents
     .filter((d) => {
-      if (!d.created_at) return false;
+      if (!d.created_at || d.status !== "ready") return false;
       const docDate = new Date(d.created_at);
       return (
         docDate.getMonth() === lastMonthIndex &&

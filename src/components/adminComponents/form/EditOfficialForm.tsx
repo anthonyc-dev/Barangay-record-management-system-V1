@@ -164,7 +164,7 @@ export function EditOfficialForm({
                     <SelectContent>
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="Official">Official</SelectItem>
-                      <SelectItem value="Capitan">Capitan</SelectItem>
+                      <SelectItem value="Capitan">Barangay Captain</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -21,7 +21,6 @@ import {
 import {
   Plus,
   Search,
-  Filter,
   Edit3,
   Trash2,
   Calendar,
@@ -211,16 +210,6 @@ const Announcement = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
-            </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="mr-2 h-4 w-4" />
-                Date Range
-              </Button>
             </div>
           </div>
         </CardContent>

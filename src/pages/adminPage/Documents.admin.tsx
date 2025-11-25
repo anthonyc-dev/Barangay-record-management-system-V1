@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,9 +29,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import {
   Search,
-  Filter,
   Download,
   FileText,
   Calendar,
@@ -37,6 +39,7 @@ import {
   Printer,
   Trash2,
   Loader2,
+  Edit,
 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -62,6 +65,8 @@ const getDocumentPrice = (documentType: string): number => {
   return 30;
 };
 
+type StatusFilter = "ready" | "pending" | "reject";
+
 export default function Documents() {
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>(
@@ -69,25 +74,39 @@ export default function Documents() {
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeStatus, setActiveStatus] = useState<StatusFilter>("ready");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<number | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] =
     useState<DocumentRequest | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingDocument, setEditingDocument] =
+    useState<DocumentRequest | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<DocumentRequest>>(
+    {}
+  );
+  const [isUpdatingDocument, setIsUpdatingDocument] = useState(false);
 
   // Fetch all documents on component mount
   useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Filter documents when search query changes
+  // Filter documents by status and search query
   useEffect(() => {
+    // First filter by status
+    const statusFiltered = documents.filter(
+      (doc) => doc.status === activeStatus
+    );
+
+    // Then filter by search query
     if (searchQuery.trim() === "") {
-      setFilteredDocuments(documents);
+      setFilteredDocuments(statusFiltered);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = documents.filter(
+      const filtered = statusFiltered.filter(
         (doc) =>
           doc.reference_number?.toLowerCase().includes(query) ||
           doc.full_name.toLowerCase().includes(query) ||
@@ -96,7 +115,7 @@ export default function Documents() {
       );
       setFilteredDocuments(filtered);
     }
-  }, [searchQuery, documents]);
+  }, [searchQuery, documents, activeStatus]);
 
   const fetchDocuments = async () => {
     try {
@@ -215,6 +234,53 @@ export default function Documents() {
   const handleViewDocument = (document: DocumentRequest) => {
     setSelectedDocument(document);
     setViewDialogOpen(true);
+  };
+
+  const handleEditDocument = (document: DocumentRequest) => {
+    setEditingDocument(document);
+    setEditFormData({
+      document_type: document.document_type,
+      full_name: document.full_name,
+      address: document.address,
+      contact_number: document.contact_number,
+      email: document.email,
+      purpose: document.purpose,
+      status: document.status,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditFormChange = (
+    field: keyof DocumentRequest,
+    value: string
+  ) => {
+    setEditFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleUpdateDocument = async () => {
+    if (!editingDocument?.id) return;
+
+    try {
+      setIsUpdatingDocument(true);
+      await documentService.updateRequest(editingDocument.id, editFormData);
+
+      // Update local state
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === editingDocument.id ? { ...doc, ...editFormData } : doc
+        )
+      );
+
+      toast.success("Document updated successfully");
+      setEditDialogOpen(false);
+      setEditingDocument(null);
+      setEditFormData({});
+    } catch (error) {
+      console.error("Error updating document:", error);
+      toast.error("Failed to update document. Please try again.");
+    } finally {
+      setIsUpdatingDocument(false);
+    }
   };
 
   const handlePrintDocument = (document: DocumentRequest) => {
@@ -647,10 +713,6 @@ export default function Documents() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -665,6 +727,28 @@ export default function Documents() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Status Navigation Buttons */}
+      <div className="flex gap-2">
+        <Button
+          variant={activeStatus === "ready" ? "default" : "outline"}
+          onClick={() => setActiveStatus("ready")}
+        >
+          Ready ({stats.ready})
+        </Button>
+        <Button
+          variant={activeStatus === "pending" ? "default" : "outline"}
+          onClick={() => setActiveStatus("pending")}
+        >
+          Pending ({stats.pending})
+        </Button>
+        <Button
+          variant={activeStatus === "reject" ? "default" : "outline"}
+          onClick={() => setActiveStatus("reject")}
+        >
+          Rejected ({documents.filter((doc) => doc.status === "reject").length})
+        </Button>
+      </div>
 
       {/* Documents Table */}
       <Card>
@@ -785,7 +869,7 @@ export default function Documents() {
                                   variant="secondary"
                                   className="bg-destructive/10 text-destructive"
                                 >
-                                  Reject
+                                  Rejected
                                 </Badge>
                               </SelectItem>
                             </SelectContent>
@@ -800,6 +884,14 @@ export default function Documents() {
                               onClick={() => handleViewDocument(document)}
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Edit"
+                              onClick={() => handleEditDocument(document)}
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -892,12 +984,20 @@ export default function Documents() {
                     className={
                       selectedDocument.status === "ready"
                         ? "bg-success/10 text-success"
+                        : selectedDocument.status === "pending"
+                        ? "bg-warning/10 text-warning"
                         : selectedDocument.status === "reject"
                         ? "bg-destructive/10 text-destructive"
-                        : "bg-warning/10 text-warning"
+                        : ""
                     }
                   >
-                    {selectedDocument.status || "pending"}
+                    {selectedDocument.status === "reject"
+                      ? "Rejected"
+                      : selectedDocument.status === "ready"
+                      ? "Ready"
+                      : selectedDocument.status === "pending"
+                      ? "Pending"
+                      : ""}
                   </Badge>
                 </div>
               </div>
@@ -986,6 +1086,149 @@ export default function Documents() {
                   onClick={() => setViewDialogOpen(false)}
                 >
                   Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Document Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Document Request</DialogTitle>
+            <DialogDescription>
+              Update the document request information
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingDocument && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-document-type">Document Type</Label>
+                  <Select
+                    value={editFormData.document_type || ""}
+                    onValueChange={(value) =>
+                      handleEditFormChange("document_type", value)
+                    }
+                  >
+                    <SelectTrigger id="edit-document-type">
+                      <SelectValue placeholder="Select document type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Barangay Clearance">
+                        Clearance Certification
+                      </SelectItem>
+                      <SelectItem value="Certificate of Residency">
+                        Certification
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select
+                    value={editFormData.status || "pending"}
+                    onValueChange={(value) =>
+                      handleEditFormChange("status", value)
+                    }
+                  >
+                    <SelectTrigger id="edit-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="ready">Ready</SelectItem>
+                      <SelectItem value="reject">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-full-name">Full Name</Label>
+                <Input
+                  id="edit-full-name"
+                  value={editFormData.full_name || ""}
+                  onChange={(e) =>
+                    handleEditFormChange("full_name", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-address">Address</Label>
+                <Textarea
+                  id="edit-address"
+                  value={editFormData.address || ""}
+                  onChange={(e) =>
+                    handleEditFormChange("address", e.target.value)
+                  }
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editFormData.email || ""}
+                    onChange={(e) =>
+                      handleEditFormChange("email", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-contact">Contact Number</Label>
+                  <Input
+                    id="edit-contact"
+                    value={editFormData.contact_number || ""}
+                    onChange={(e) =>
+                      handleEditFormChange("contact_number", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-purpose">Purpose</Label>
+                <Textarea
+                  id="edit-purpose"
+                  value={editFormData.purpose || ""}
+                  onChange={(e) =>
+                    handleEditFormChange("purpose", e.target.value)
+                  }
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditDialogOpen(false)}
+                  disabled={isUpdatingDocument}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={handleUpdateDocument}
+                  disabled={isUpdatingDocument}
+                >
+                  {isUpdatingDocument ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Document"
+                  )}
                 </Button>
               </div>
             </div>
