@@ -167,10 +167,6 @@ export default function Documents() {
             pickup_location: "Barangay Simpak, Main Office",
           });
 
-          // You may keep the email code if you still want to notify residents,
-          // or remove/comment it if not needed.
-          // Example: sendContactEmail could still be called here, if sending emails is needed
-
           toast.success(
             "Document marked as ready, amount, and pickup location updated."
           );
@@ -180,24 +176,20 @@ export default function Documents() {
         }
       }
 
-      // //send email for rejection
-      if (newStatus === "ready" && document) {
+      // Send email for rejection
+      if (newStatus === "reject" && document) {
         try {
-          // Update status, amount, and pickup_location as per requirement
-          await apiClient.put(`/document-reject-email/${documentId}/status`, {
+          // Send rejection email notification using user_id instead of document_id
+          // Note: Backend may need to be updated to accept document_id
+
+          await apiClient.put(`/document-rejects-email/${documentId}/status`, {
             status: newStatus,
-            // amount: getDocumentPrice(document.document_type).toString(),
-            // pickup_location: "Barangay Simpak, Main Office",
           });
 
-          // You may keep the email code if you still want to notify residents,
-          // or remove/comment it if not needed.
-          // Example: sendContactEmail could still be called here, if sending emails is needed
-
-          toast.success("Document marked as Reject.");
+          toast.success("Document marked as Rejected and notification sent.");
         } catch (error) {
-          console.error("Error updating document status and details:", error);
-          toast.warning("Failed to update document details.");
+          console.error("Error sending rejection email:", error);
+          toast.warning("Document rejected but email notification failed.");
         }
       }
     } catch (error) {
