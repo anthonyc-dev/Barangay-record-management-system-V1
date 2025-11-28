@@ -440,7 +440,7 @@ const PreRegister = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       Account Information
                     </h3>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto text-red-600">
                       Required
                     </Badge>
                   </div>
@@ -452,7 +452,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Full Name *
+                            Full Name <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -473,7 +473,8 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Email Address *
+                            Email Address{" "}
+                            <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -497,7 +498,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Password *
+                            Password <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -532,7 +533,8 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Confirm Password *
+                            Confirm Password{" "}
+                            <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -571,7 +573,7 @@ const PreRegister = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       Valid ID Upload
                     </h3>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto text-red-600">
                       Required
                     </Badge>
                   </div>
@@ -582,7 +584,8 @@ const PreRegister = () => {
                     render={() => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">
-                          Upload Valid ID *
+                          Upload Valid ID{" "}
+                          <span className="text-red-600">*</span>
                         </FormLabel>
                         <FormControl>
                           <div className="space-y-4">
@@ -747,7 +750,7 @@ const PreRegister = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       Personal Information
                     </h3>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto text-red-600">
                       Required
                     </Badge>
                   </div>
@@ -760,7 +763,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            First Name *
+                            First Name <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -780,7 +783,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Middle Name *
+                            Middle Name <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -800,7 +803,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Last Name *
+                            Last Name <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -854,7 +857,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Birthdate *
+                            Birthdate <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -874,7 +877,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Gender *
+                            Gender <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Select
@@ -901,7 +904,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Civil Status *
+                            Civil Status <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Select
@@ -935,7 +938,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Nationality *
+                            Nationality <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -958,7 +961,8 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Place of Birth *
+                            Place of Birth{" "}
+                            <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -978,7 +982,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Religion *
+                            Religion <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -998,7 +1002,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Occupation *
+                            Occupation <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1021,7 +1025,7 @@ const PreRegister = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       Address Information
                     </h3>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto text-red-600">
                       Required
                     </Badge>
                   </div>
@@ -1033,7 +1037,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            House Number *
+                            House Number <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1053,7 +1057,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Street *
+                            Street <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1073,7 +1077,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Zone/Purok *
+                            Zone/Purok <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1093,7 +1097,8 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            City/Municipality *
+                            City/Municipality{" "}
+                            <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1113,7 +1118,7 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Province *
+                            Province <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1136,7 +1141,7 @@ const PreRegister = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       Contact Information
                     </h3>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto text-red-600">
                       Required
                     </Badge>
                   </div>
@@ -1148,7 +1153,8 @@ const PreRegister = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Contact Number *
+                            Contact Number{" "}
+                            <span className="text-red-600">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -1171,7 +1177,7 @@ const PreRegister = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       Parents Information
                     </h3>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto text-red-600">
                       Required
                     </Badge>
                   </div>
@@ -1188,7 +1194,8 @@ const PreRegister = () => {
                         render={({ field }) => (
                           <FormItem className="w-full">
                             <FormLabel className="text-sm font-medium text-gray-700">
-                              Father's First Name *
+                              Father's First Name{" "}
+                              <span className="text-red-600">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -1228,7 +1235,8 @@ const PreRegister = () => {
                         render={({ field }) => (
                           <FormItem className="w-full">
                             <FormLabel className="text-sm font-medium text-gray-700">
-                              Father's Last Name *
+                              Father's Last Name{" "}
+                              <span className="text-red-600">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -1257,7 +1265,8 @@ const PreRegister = () => {
                         render={({ field }) => (
                           <FormItem className="w-full">
                             <FormLabel className="text-sm font-medium text-gray-700">
-                              Mother's First Name *
+                              Mother's First Name{" "}
+                              <span className="text-red-600">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -1297,7 +1306,8 @@ const PreRegister = () => {
                         render={({ field }) => (
                           <FormItem className="w-full">
                             <FormLabel className="text-sm font-medium text-gray-700">
-                              Mother's Maiden Name *
+                              Mother's Maiden Name{" "}
+                              <span className="text-red-600">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input

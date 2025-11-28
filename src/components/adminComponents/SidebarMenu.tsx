@@ -99,7 +99,7 @@ const allNavigation = [
     allowedRoles: ["admin"],
   },
   {
-    name: "Settings",
+    name: "Manage Profile",
     href: "/admin/settings",
     icon: Settings,
     allowedRoles: ["admin", "official", "capitan"],

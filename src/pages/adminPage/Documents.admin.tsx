@@ -157,7 +157,6 @@ export default function Documents() {
 
       toast.success(`Document status updated to ${newStatus}`);
 
-      // Send email notification when status is updated to "ready"
       if (newStatus === "ready" && document) {
         try {
           // Update status, amount, and pickup_location as per requirement
@@ -179,9 +178,6 @@ export default function Documents() {
       // Send email for rejection
       if (newStatus === "reject" && document) {
         try {
-          // Send rejection email notification using user_id instead of document_id
-          // Note: Backend may need to be updated to accept document_id
-
           await apiClient.put(`/document-rejects-email/${documentId}/status`, {
             status: newStatus,
           });

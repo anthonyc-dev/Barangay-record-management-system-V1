@@ -162,7 +162,7 @@ const Settings = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <User className="h-8 w-8" />
-            Admin Settings
+            Manage Profile
           </h1>
           <p className="text-muted-foreground mt-2">
             Update your profile information
