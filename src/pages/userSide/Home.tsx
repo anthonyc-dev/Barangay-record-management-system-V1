@@ -1,11 +1,11 @@
-import { OverviewSection } from "@/components/analytics/OverviewSection";
+import { OverviewSectionResident } from "@/components/analytics/OverviewSectionResident";
 
 const HomePage = () => {
   return (
     <div>
       <div className="space-y-6 ">
         {/* Page Header */}
-        <OverviewSection />
+        <OverviewSectionResident />
         {/* Calendar and Updates */}
         {/* <div className="grid gap-6 lg:grid-cols-2">
           <Card>

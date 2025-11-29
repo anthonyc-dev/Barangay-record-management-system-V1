@@ -11,11 +11,22 @@ import {
   TrendingUp,
   Calendar,
   Loader2,
+  CalendarDays,
+  CalendarRange,
 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type TimePeriod = "all" | "daily" | "weekly" | "monthly" | "yearly";
 
 // Helper function to get document price based on type
 const getDocumentPrice = (documentType: string): number => {
@@ -35,6 +46,56 @@ const getDocumentPrice = (documentType: string): number => {
   return 30;
 };
 
+// Helper function to filter documents by time period
+const filterByTimePeriod = (
+  documents: DocumentRequest[],
+  period: TimePeriod
+): DocumentRequest[] => {
+  if (period === "all") return documents;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return documents.filter((doc) => {
+    if (!doc.created_at) return false;
+    const docDate = new Date(doc.created_at);
+
+    switch (period) {
+      case "daily": {
+        // Compare only year, month, and day (ignore time)
+        return (
+          docDate.getFullYear() === now.getFullYear() &&
+          docDate.getMonth() === now.getMonth() &&
+          docDate.getDate() === now.getDate()
+        );
+      }
+      case "weekly": {
+        // Last 7 days including today
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        // Reset time to start of day for proper comparison
+        const docDay = new Date(
+          docDate.getFullYear(),
+          docDate.getMonth(),
+          docDate.getDate()
+        );
+        return docDay >= weekAgo && docDay <= today;
+      }
+      case "monthly": {
+        return (
+          docDate.getMonth() === now.getMonth() &&
+          docDate.getFullYear() === now.getFullYear()
+        );
+      }
+      case "yearly": {
+        return docDate.getFullYear() === now.getFullYear();
+      }
+      default:
+        return true;
+    }
+  });
+};
+
 const Report = () => {
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>(
@@ -42,18 +103,22 @@ const Report = () => {
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
 
   // Fetch all documents on component mount
   useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Filter documents when search query changes - only show "ready" status
+  // Filter documents when search query or time period changes - only show "ready" status
   useEffect(() => {
     let filtered = documents;
 
     // Only show documents with "ready" status
     filtered = filtered.filter((doc) => doc.status === "ready");
+
+    // Apply time period filter
+    filtered = filterByTimePeriod(filtered, timePeriod);
 
     // Apply search filter
     if (searchQuery.trim() !== "") {
@@ -68,7 +133,7 @@ const Report = () => {
     }
 
     setFilteredDocuments(filtered);
-  }, [searchQuery, documents]);
+  }, [searchQuery, documents, timePeriod]);
 
   const fetchDocuments = async () => {
     try {
@@ -93,6 +158,15 @@ const Report = () => {
 
   const handleExportToExcel = () => {
     try {
+      // Get period label
+      const periodLabels: Record<TimePeriod, string> = {
+        all: "All Time",
+        daily: "Today",
+        weekly: "This Week",
+        monthly: "This Month",
+        yearly: "This Year",
+      };
+
       // Prepare data for Excel export
       const exportData: Array<Record<string, string>> = filteredDocuments.map(
         (doc) => ({
@@ -149,12 +223,56 @@ const Report = () => {
       ws["!cols"] = colWidths;
 
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Document Requests Report");
+      XLSX.utils.book_append_sheet(wb, ws, "Document Requests");
 
-      // Generate filename with current date
-      const fileName = `Document_Requests_Report_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
+      // Create summary sheet with time period stats
+      const summaryData = [
+        { Period: "Report Period", Value: periodLabels[timePeriod] },
+        { Period: "Report Generated", Value: new Date().toLocaleString() },
+        { Period: "", Value: "" },
+        { Period: "Time Period Breakdown", Value: "" },
+        {
+          Period: "Today",
+          Value: `${
+            stats.daily.count
+          } docs - ₱${stats.daily.revenue.toLocaleString()}.00`,
+        },
+        {
+          Period: "This Week",
+          Value: `${
+            stats.weekly.count
+          } docs - ₱${stats.weekly.revenue.toLocaleString()}.00`,
+        },
+        {
+          Period: "This Month",
+          Value: `${
+            stats.monthly.count
+          } docs - ₱${stats.monthly.revenue.toLocaleString()}.00`,
+        },
+        {
+          Period: "This Year",
+          Value: `${
+            stats.yearly.count
+          } docs - ₱${stats.yearly.revenue.toLocaleString()}.00`,
+        },
+        { Period: "", Value: "" },
+        {
+          Period: "Current Filter Total",
+          Value: `${
+            filteredDocuments.length
+          } docs - ₱${totalRevenue.toLocaleString()}.00`,
+        },
+      ];
+
+      const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+      summaryWs["!cols"] = [{ wch: 25 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
+
+      // Generate filename with current date and period
+      const fileName = `Document_Report_${periodLabels[timePeriod].replace(
+        /\s/g,
+        "_"
+      )}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
       // Save file
       XLSX.writeFile(wb, fileName);
@@ -166,16 +284,54 @@ const Report = () => {
     }
   };
 
-  // Calculate statistics
+  // Calculate statistics for different time periods
+  const readyDocuments = documents.filter((doc) => doc.status === "ready");
+
+  const dailyDocs = filterByTimePeriod(readyDocuments, "daily");
+  const weeklyDocs = filterByTimePeriod(readyDocuments, "weekly");
+  const monthlyDocs = filterByTimePeriod(readyDocuments, "monthly");
+  const yearlyDocs = filterByTimePeriod(readyDocuments, "yearly");
+
+  // Debug: Log the dates to console
+  console.log("Current date:", new Date());
+  console.log(
+    "Ready documents with dates:",
+    readyDocuments.map((doc) => ({
+      ref: doc.reference_number,
+      created_at: doc.created_at,
+      parsed: doc.created_at ? new Date(doc.created_at) : null,
+    }))
+  );
+  console.log("Daily docs:", dailyDocs.length);
+  console.log("Weekly docs:", weeklyDocs.length);
+  console.log("Monthly docs:", monthlyDocs.length);
+  console.log("Yearly docs:", yearlyDocs.length);
+
   const stats = {
     total: documents.length,
     pending: documents.filter((doc) => doc.status === "pending").length,
-    ready: documents.filter((doc) => doc.status === "ready").length,
+    ready: readyDocuments.length,
     totalRevenue: documents.reduce((sum, doc) => sum + (doc.price || 30), 0),
     filteredRevenue: filteredDocuments.reduce(
       (sum, doc) => sum + (doc.price || 30),
       0
     ),
+    daily: {
+      count: dailyDocs.length,
+      revenue: dailyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+    },
+    weekly: {
+      count: weeklyDocs.length,
+      revenue: weeklyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+    },
+    monthly: {
+      count: monthlyDocs.length,
+      revenue: monthlyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+    },
+    yearly: {
+      count: yearlyDocs.length,
+      revenue: yearlyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+    },
   };
 
   // Group by document type
@@ -202,7 +358,7 @@ const Report = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -248,7 +404,101 @@ const Report = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
+
+      {/* Time Period Revenue Reports */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue by Time Period (Ready Documents Only)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Daily Report */}
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Today
+                    </p>
+                    <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                    ₱{stats.daily.revenue.toLocaleString()}.00
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.daily.count} document
+                    {stats.daily.count !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Weekly Report */}
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      This Week
+                    </p>
+                    <CalendarRange className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                    ₱{stats.weekly.revenue.toLocaleString()}.00
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.weekly.count} document
+                    {stats.weekly.count !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Monthly Report */}
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      This Month
+                    </p>
+                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                    ₱{stats.monthly.revenue.toLocaleString()}.00
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.monthly.count} document
+                    {stats.monthly.count !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Yearly Report */}
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900">
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      This Year
+                    </p>
+                    <DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                    ₱{stats.yearly.revenue.toLocaleString()}.00
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.yearly.count} document
+                    {stats.yearly.count !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Document Type Breakdown */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -258,7 +508,7 @@ const Report = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Total Ready Revenue
+                  Total Record Revenue
                 </p>
                 <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                   ₱{stats.filteredRevenue.toLocaleString()}.00
@@ -293,27 +543,44 @@ const Report = () => {
       {/* Search and Filters */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-            <div className="flex flex-1 items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search by reference number, name, email..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+              <div className="flex flex-1 items-center space-x-4">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by reference number, name, email..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={handleExportToExcel}
-                disabled={filteredDocuments.length === 0}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Report to Excel
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Select
+                  value={timePeriod}
+                  onValueChange={(value: TimePeriod) => setTimePeriod(value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="daily">Today</SelectItem>
+                    <SelectItem value="weekly">This Week</SelectItem>
+                    <SelectItem value="monthly">This Month</SelectItem>
+                    <SelectItem value="yearly">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={handleExportToExcel}
+                  disabled={filteredDocuments.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Report to Excel
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -323,12 +590,25 @@ const Report = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Document Requests Details (Ready Documents)</CardTitle>
-            {searchQuery ? (
-              <Badge variant="secondary" className="text-sm">
-                Filtered Revenue: ₱{stats.filteredRevenue.toLocaleString()}.00
-              </Badge>
-            ) : null}
+            <CardTitle>
+              Document Requests Details (Ready Documents)
+              {timePeriod !== "all" && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  -{" "}
+                  {
+                    {
+                      daily: "Today",
+                      weekly: "This Week",
+                      monthly: "This Month",
+                      yearly: "This Year",
+                    }[timePeriod]
+                  }
+                </span>
+              )}
+            </CardTitle>
+            <Badge variant="secondary" className="text-sm">
+              Filtered Revenue: ₱{stats.filteredRevenue.toLocaleString()}.00
+            </Badge>
           </div>
         </CardHeader>
         <CardContent>

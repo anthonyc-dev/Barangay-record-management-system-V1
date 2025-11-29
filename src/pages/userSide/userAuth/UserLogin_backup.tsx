@@ -126,81 +126,39 @@ const UserLogin = () => {
       console.error("Login error:", error);
 
       let errorMessage = "Login failed. Please try again.";
-      let isEmailNotVerified = false;
 
-      if (error && typeof error === "object") {
-        // Check if it's an API error with status and data properties
-        if ("status" in error && "data" in error) {
-          const apiError = error as {
-            status?: number;
-            message?: string;
-            data?: {
-              response_code?: number;
-              status?: string;
-              message?: string;
-            };
-          };
-
-          // Check for email not verified error (403 status)
-          if (apiError.status === 403 || apiError.data?.response_code === 403) {
-            isEmailNotVerified = true;
-            errorMessage =
-              apiError.message ||
-              apiError.data?.message ||
-              "Please verify your email address before logging in.";
-
-            // Show error with resend email action button
-            toast.error(errorMessage);
-
-            setLoginError(errorMessage);
-            setLoading(false);
-            return; // Exit early
-          } else if (apiError.message) {
-            errorMessage = apiError.message;
-          } else if (apiError.data?.message) {
-            errorMessage = apiError.data.message;
-          }
-        }
-        // Handle standard axios error structure
-        else if ("response" in error) {
-          const axiosError = error as {
-            response?: { data?: Record<string, unknown> };
-          };
-          if (axiosError.response?.data) {
-            const result = axiosError.response.data;
-            if (result.message && typeof result.message === "string") {
-              errorMessage = result.message;
-            } else if (
-              result.errors &&
-              typeof result.errors === "object" &&
-              result.errors !== null
-            ) {
-              // Handle validation errors
-              const errors = result.errors as Record<string, string[]>;
-              const errorKeys = Object.keys(errors);
-              if (errorKeys.length > 0 && errors[errorKeys[0]][0]) {
-                errorMessage = errors[errorKeys[0]][0];
-              }
-            } else if (result.error && typeof result.error === "string") {
-              errorMessage = result.error;
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { data?: Record<string, unknown> };
+        };
+        if (axiosError.response?.data) {
+          const result = axiosError.response.data;
+          if (result.message && typeof result.message === "string") {
+            errorMessage = result.message;
+          } else if (
+            result.errors &&
+            typeof result.errors === "object" &&
+            result.errors !== null
+          ) {
+            // Handle validation errors
+            const errors = result.errors as Record<string, string[]>;
+            const errorKeys = Object.keys(errors);
+            if (errorKeys.length > 0 && errors[errorKeys[0]][0]) {
+              errorMessage = errors[errorKeys[0]][0];
             }
+          } else if (result.error && typeof result.error === "string") {
+            errorMessage = result.error;
           }
         }
-        // Handle Error instances
-        else if (error instanceof Error) {
-          errorMessage = error.message;
-        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       } else {
         errorMessage =
           "Unable to connect to server. Please check your internet connection.";
       }
 
       setLoginError(errorMessage);
-
-      // Only show toast if it's not an email verification error (already shown above with action button)
-      if (!isEmailNotVerified) {
-        toast.error(errorMessage);
-      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

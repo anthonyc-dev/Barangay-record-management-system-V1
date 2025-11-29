@@ -87,6 +87,8 @@ export default function Residents() {
   const navigate = useNavigate();
   const { userProfile } = useUserProfile();
 
+  console.log("lala", residents);
+
   const fetchResidents = useCallback(async () => {
     try {
       setLoading(true);
@@ -1108,7 +1110,6 @@ export default function Residents() {
                   <p className="text-sm text-muted-foreground mb-2">Valid ID</p>
                   <div className="border rounded-lg p-4 bg-muted/50">
                     {(() => {
-                      // Get the image URL - check both valid_id_path and valid_id_url
                       const imagePath =
                         selectedResident.valid_id_path ||
                         selectedResident.valid_id_url;
@@ -1144,16 +1145,58 @@ export default function Residents() {
                         imageUrl = `${imageUrl}${separator}t=${Date.now()}`;
                       }
 
+                      console.log("Attempting to load image from:", imageUrl);
+
                       return (
-                        <img
-                          src={imageUrl}
-                          alt="Valid ID"
-                          className="max-w-full h-auto rounded-lg object-contain max-h-96 mx-auto"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                          }}
-                        />
+                        <div className="relative">
+                          <img
+                            src={imageUrl}
+                            alt="Valid ID"
+                            className="max-w-full h-auto rounded-lg object-contain max-h-96 mx-auto"
+                            onLoad={() => {
+                              console.log(
+                                "✅ Image loaded successfully:",
+                                imageUrl
+                              );
+                            }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              console.error(
+                                "❌ Failed to load image:",
+                                imageUrl
+                              );
+
+                              // Replace with error message
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `
+                                  <div class="text-center py-8">
+                                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+                                      <svg class="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                      </svg>
+                                    </div>
+                                    <p class="text-sm font-semibold text-destructive mb-2">Image Failed to Load</p>
+                                    <p class="text-xs text-muted-foreground mb-4">The image file could not be loaded from the server.</p>
+                                    <div class="bg-muted rounded p-3 mb-4 max-w-md mx-auto">
+                                      <p class="text-xs font-medium text-muted-foreground mb-1">Attempted URL:</p>
+                                      <p class="text-xs font-mono break-all">${imageUrl}</p>
+                                    </div>
+                                    <div class="bg-blue-50 dark:bg-blue-950 rounded p-3 max-w-md mx-auto">
+                                      <p class="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">Possible Solutions:</p>
+                                      <ul class="text-xs text-left text-blue-600 dark:text-blue-400 space-y-1">
+                                        <li>• Ensure Laravel backend is running on port 8000</li>
+                                        <li>• Run: <code class="bg-blue-100 dark:bg-blue-900 px-1 rounded">composer install</code></li>
+                                        <li>• Run: <code class="bg-blue-100 dark:bg-blue-900 px-1 rounded">php artisan storage:link</code></li>
+                                        <li>• Check if file exists in storage/app/public/</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                `;
+                              }
+                            }}
+                          />
+                        </div>
                       );
                     })()}
                   </div>

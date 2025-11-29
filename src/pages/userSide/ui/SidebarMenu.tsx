@@ -38,7 +38,7 @@ const navigation = [
   { name: "Documents", href: "/resident/documents", icon: FileText },
   { name: "Complainant", href: "/resident/complainant", icon: AlertTriangle },
   { name: "Announcements", href: "/resident/announcement", icon: Megaphone },
-  { name: "Settings", href: "/resident/settings", icon: Settings },
+  { name: "Manage Profile", href: "/resident/settings", icon: Settings },
 ];
 
 export function Sidebar() {

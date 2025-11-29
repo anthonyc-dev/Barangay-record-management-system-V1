@@ -243,34 +243,17 @@ const PreRegister = () => {
 
       console.log("Registration response:", registrationResult);
 
-      if (residentResponse.ok) {
-        // Check if registration was successful
-        if (
-          registrationResult.message === "Successfully registered" ||
-          registrationResult.id
-        ) {
-          toast.success(
-            "Thank you for registering! Your account is awaiting admin approval. Once approved, you will be able to log in."
-          );
+      if (residentResponse.status === 201) {
+        // Success
+        toast.success(
+          "Thank you for registering! Your account is awaiting admin approval. Once approved, you will be able to log in."
+        );
 
-          // Redirect to login page after 2 seconds
-          setTimeout(() => {
-            navigate("/registerConfirm");
-          }, 2000);
-        } else {
-          // Handle validation errors
-          if (registrationResult.errors) {
-            const errorMessages = Object.values(registrationResult.errors)
-              .flat()
-              .join(", ");
-            throw new Error(errorMessages);
-          }
-          throw new Error(
-            registrationResult.message || "Failed to complete registration"
-          );
-        }
+        setTimeout(() => {
+          navigate("/registerConfirm");
+        }, 2000);
       } else {
-        // Handle HTTP errors
+        // Only handle errors here
         if (registrationResult.errors) {
           const errorMessages = Object.values(registrationResult.errors)
             .flat()

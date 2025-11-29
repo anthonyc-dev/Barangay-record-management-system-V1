@@ -11,6 +11,8 @@ import ComplaintForm from "@/pages/userPage/section/ComplaintForm";
 import DocumentRequest from "@/pages/userPage/section/DocumentRequest";
 import PreRegister from "@/pages/userSide/userAuth/PreRegister";
 import UserLogin from "@/pages/userSide/userAuth/UserLogin";
+import EmailVerification from "@/pages/userSide/userAuth/EmailVerification";
+import RegisterConfirmPage from "@/pages/userSide/userAuth/RegisterConfirm";
 import Home from "@/pages/userSide/Home";
 import Announcement from "@/pages/userSide/pages/Announcement";
 import Settings from "@/pages/userSide/pages/Settings";
@@ -34,7 +36,6 @@ import EditOfficial from "@/pages/adminPage/functions/EditOfficial";
 import ComplainantAdmin from "@/pages/adminPage/Complainant.admin";
 import Report from "@/pages/adminPage/Report";
 import PreRegisterAdmin from "@/pages/adminPage/pre-register";
-import RegisterConfirm from "@/pages/userSide/ui/preRegisterConfirm";
 
 export default function AppRoutes() {
   return (
@@ -98,11 +99,12 @@ export default function AppRoutes() {
       {/* general public routes */}
       <Route path="/" element={<UserLogin />} />
       <Route path="preRegister" element={<PreRegister />} />
+      <Route path="registerConfirm" element={<RegisterConfirmPage />} />
+      <Route path="email/verify/:id/:hash" element={<EmailVerification />} />
       <Route path="complaint" element={<ComplaintForm />} />
       <Route path="documentReq" element={<DocumentRequest />} />
       <Route path="signin" element={<Signin />} />
       <Route path="signup" element={<Signup />} />
-      <Route path="registerConfirm" element={<RegisterConfirm />} />
     </Routes>
   );
 }

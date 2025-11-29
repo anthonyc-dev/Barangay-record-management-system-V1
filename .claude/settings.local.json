@@ -1,22 +1,32 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir /s \"c:\\Users\\Hp\\Downloads\\GUI-20250813T054956Z-1-001\\barangay-record-management-system\" /B)",
+      "Bash(dir /s \"c:\\Users\\Hp\\Desktop\\Developer Files\\Personal Project\brms\barangay-record-management-systemsrc\" /B)",
       "Bash(findstr:*)",
       "Bash(npm install:*)",
       "Bash(node:*)",
       "Bash(npm:*)",
       "Bash(pnpm add:*)",
-      "Bash(dir /s \"c:\\Users\\Hp\\Downloads\\GUI-20250813T054956Z-1-001\\barangay-record-management-system\\src\\services\" /B)",
+      "Bash(dir /s \"c:\\Users\\Hp\\Desktop\\Developer Files\\Personal Project\brms\barangay-record-management-systemsrc\\src\\services\" /B)",
       "Bash(npx tsc:*)",
       "Bash(npx shadcn@latest add avatar)",
       "Bash(pnpm run dev)",
       "Bash(timeout /t 3 /nobreak)",
       "Bash(npx shadcn@latest add scroll-area)",
       "Bash(cat:*)",
-      "Bash(powershell -Command \"Get-Content ''C:\\Users\\Hp\\Downloads\\GUI-20250813T054956Z-1-001\\barangay-record-management-system\\src\\services\\api\\emailSend.ts''\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\Users\\Hp\\Desktop\\Developer Files\\Personal Project\\brms\\brms-api-main\\brms-api-main\\emailSend.ts''\")",
       "Bash(pnpm run build:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(curl -I http://localhost:8000)",
+      "Bash(curl:*)",
+      "Bash(powershell -Command:*)",
+      "Read(//c/Users/Hp/Desktop/Developer Files/Personal Project/brms/brms-api-main/brms-api-main/api/**)",
+      "Bash(php artisan:*)",
+      "Bash(composer dump-autoload:*)",
+      "Bash(move /Y:*)",
+      "Bash(dir:*)",
+      "Read(//c/Users/Hp/Desktop/Developer Files/Personal Project/brms/brms-api-main/brms-api-main/**)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

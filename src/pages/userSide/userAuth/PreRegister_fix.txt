@@ -1,0 +1,12 @@
+Line 249-250 should be changed from:
+          registrationResult.message === "Successfully registered" ||
+          registrationResult.id
+
+To:
+          registrationResult.status === "success" ||
+          registrationResult.response_code === 201
+
+And line 252-254 should be:
+          toast.success(
+            "Registration successful! Please check your email to verify your account."
+          );
