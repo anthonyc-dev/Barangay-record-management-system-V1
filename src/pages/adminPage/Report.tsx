@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Search,
@@ -96,6 +97,31 @@ const filterByTimePeriod = (
   });
 };
 
+// Helper function to filter documents by custom date range
+const filterByDateRange = (
+  documents: DocumentRequest[],
+  startDate: string,
+  endDate: string
+): DocumentRequest[] => {
+  if (!startDate || !endDate) return documents;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  // Set end date to end of day
+  end.setHours(23, 59, 59, 999);
+
+  return documents.filter((doc) => {
+    if (!doc.created_at) return false;
+    const docDate = new Date(doc.created_at);
+    const docDay = new Date(
+      docDate.getFullYear(),
+      docDate.getMonth(),
+      docDate.getDate()
+    );
+    return docDay >= start && docDay <= end;
+  });
+};
+
 const Report = () => {
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>(
@@ -104,6 +130,8 @@ const Report = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Fetch all documents on component mount
   useEffect(() => {
@@ -117,8 +145,13 @@ const Report = () => {
     // Only show documents with "ready" status
     filtered = filtered.filter((doc) => doc.status === "ready");
 
-    // Apply time period filter
+    // Apply time period filter first
     filtered = filterByTimePeriod(filtered, timePeriod);
+
+    // Apply custom date range filter if both dates are set
+    if (startDate && endDate) {
+      filtered = filterByDateRange(filtered, startDate, endDate);
+    }
 
     // Apply search filter
     if (searchQuery.trim() !== "") {
@@ -133,7 +166,7 @@ const Report = () => {
     }
 
     setFilteredDocuments(filtered);
-  }, [searchQuery, documents, timePeriod]);
+  }, [searchQuery, documents, timePeriod, startDate, endDate]);
 
   const fetchDocuments = async () => {
     try {
@@ -166,6 +199,12 @@ const Report = () => {
         monthly: "This Month",
         yearly: "This Year",
       };
+
+      // Add date range info if custom dates are set
+      let periodLabel = periodLabels[timePeriod];
+      if (startDate && endDate) {
+        periodLabel += ` (${startDate} to ${endDate})`;
+      }
 
       // Prepare data for Excel export
       const exportData: Array<Record<string, string>> = filteredDocuments.map(
@@ -227,7 +266,7 @@ const Report = () => {
 
       // Create summary sheet with time period stats
       const summaryData = [
-        { Period: "Report Period", Value: periodLabels[timePeriod] },
+        { Period: "Report Period", Value: periodLabel },
         { Period: "Report Generated", Value: new Date().toLocaleString() },
         { Period: "", Value: "" },
         { Period: "Time Period Breakdown", Value: "" },
@@ -269,10 +308,9 @@ const Report = () => {
       XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
 
       // Generate filename with current date and period
-      const fileName = `Document_Report_${periodLabels[timePeriod].replace(
-        /\s/g,
-        "_"
-      )}_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const fileName = `Document_Report_${periodLabel
+        .replace(/\s/g, "_")
+        .replace(/[()]/g, "")}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
       // Save file
       XLSX.writeFile(wb, fileName);
@@ -556,7 +594,7 @@ const Report = () => {
                   />
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={timePeriod}
                   onValueChange={(value: TimePeriod) => setTimePeriod(value)}
@@ -582,6 +620,59 @@ const Report = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Custom Date Range Inputs - Always Visible */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t">
+              <Label className="text-sm font-semibold">
+                Filter by Date Range:
+              </Label>
+              <div className="flex flex-col sm:flex-row items-center gap-3 flex-1">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Label
+                    htmlFor="start-date"
+                    className="text-sm whitespace-nowrap"
+                  >
+                    From:
+                  </Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full sm:w-auto"
+                  />
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Label
+                    htmlFor="end-date"
+                    className="text-sm whitespace-nowrap"
+                  >
+                    To:
+                  </Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full sm:w-auto"
+                    min={startDate}
+                  />
+                </div>
+                {startDate && endDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    Clear Dates
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -592,17 +683,18 @@ const Report = () => {
           <div className="flex items-center justify-between">
             <CardTitle>
               Document Requests Details (Ready Documents)
-              {timePeriod !== "all" && (
+              {(timePeriod !== "all" || (startDate && endDate)) && (
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   -{" "}
-                  {
+                  {timePeriod !== "all" &&
                     {
                       daily: "Today",
                       weekly: "This Week",
                       monthly: "This Month",
                       yearly: "This Year",
-                    }[timePeriod]
-                  }
+                    }[timePeriod]}
+                  {timePeriod !== "all" && startDate && endDate && " | "}
+                  {startDate && endDate && `${startDate} to ${endDate}`}
                 </span>
               )}
             </CardTitle>
