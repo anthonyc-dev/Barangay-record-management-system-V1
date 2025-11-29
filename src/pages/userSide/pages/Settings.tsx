@@ -361,20 +361,23 @@ const Settings = () => {
               {/* Name Field */}
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={profileData.name}
-                  onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder="Enter your full name"
-                  disabled
-                />
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="name"
+                    value={profileData.name}
+                    className="pl-10"
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="Enter your full name"
+                    disabled
+                  />
+                </div>
               </div>
-
               {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
@@ -392,7 +395,7 @@ const Settings = () => {
                       })
                     }
                     placeholder="Enter your email address"
-                    required
+                    disabled
                   />
                 </div>
               </div>
@@ -405,7 +408,7 @@ const Settings = () => {
                 >
                   <Save className="h-4 w-4" />
                   <span>
-                    {isUpdatingProfile ? "Updating..." : "Save Changes"}
+                    {isUpdatingProfile ? "Updating..." : "Save Profile"}
                   </span>
                 </Button>
               </div>

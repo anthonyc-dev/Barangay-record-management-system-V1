@@ -40,7 +40,6 @@ import {
   type DocumentRequest,
 } from "@/services/api/documentService";
 import { authService } from "@/services/api/authService";
-import { residentService } from "@/services/api/residentService";
 import { toast } from "sonner";
 import GeneralLoading from "@/components/GeneralLoading";
 
@@ -81,62 +80,14 @@ const Documents = () => {
 
   // Auto-fill user information on mount
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const userInfo = authService.getStoredUserInfo();
-        if (!userInfo?.id) return;
-
-        // Fetch all residents to get contact number and address
-        const response = await residentService.getAll();
-
-        // Find the current user's resident data
-        const resident = response.data.find(
-          (res) => res.id === userInfo.id || res.email === userInfo.email
-        );
-
-        if (!resident) {
-          // Fallback to basic user info if resident not found
-          setFormData((prev) => ({
-            ...prev,
-            fullName: userInfo.name || "",
-            email: userInfo.email || "",
-          }));
-          return;
-        }
-
-        // Build complete address from resident data
-        const addressParts = [
-          resident.house_number,
-          resident.street,
-          resident.zone,
-          resident.city,
-          resident.province,
-        ].filter(Boolean);
-
-        const completeAddress = addressParts.join(", ");
-
-        setFormData((prev) => ({
-          ...prev,
-          fullName: resident.name || userInfo.name || "",
-          email: resident.email || userInfo.email || "",
-          contactNumber: resident.contact_number || "",
-          address: completeAddress || "",
-        }));
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        // Fallback to basic user info if profile fetch fails
-        const userInfo = authService.getStoredUserInfo();
-        if (userInfo) {
-          setFormData((prev) => ({
-            ...prev,
-            fullName: userInfo.name || "",
-            email: userInfo.email || "",
-          }));
-        }
-      }
-    };
-
-    fetchUserProfile();
+    const userInfo = authService.getStoredUserInfo();
+    if (userInfo) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: "",
+        email: "",
+      }));
+    }
   }, []);
 
   const fetchDocumentRequests = useCallback(async () => {
@@ -225,12 +176,15 @@ const Documents = () => {
         response.message || "Document request submitted successfully!"
       );
 
-      // Reset form but keep user info (name, email, contact, address)
-      setFormData((prev) => ({
-        ...prev,
+      // Reset form
+      setFormData({
         documentType: "",
         purpose: "",
-      }));
+        fullName: "",
+        address: "",
+        contactNumber: "",
+        email: "",
+      });
 
       // Refresh requests list
       fetchDocumentRequests();
@@ -408,39 +362,37 @@ const Documents = () => {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+                  <Label htmlFor="fullName">Full Name *</Label>
                   <Input
                     id="fullName"
-                    placeholder="Loading..."
+                    placeholder="Enter your full name"
                     value={formData.fullName}
                     onChange={(e) =>
                       setFormData({ ...formData, fullName: e.target.value })
                     }
-                    disabled
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Email Address *</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Loading..."
+                    placeholder="your.email@example.com"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    disabled
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="contactNumber">Contact Number</Label>
+                  <Label htmlFor="contactNumber">Contact Number *</Label>
                   <Input
                     id="contactNumber"
-                    placeholder="Loading..."
+                    placeholder="09XXXXXXXXX"
                     value={formData.contactNumber}
                     onChange={(e) =>
                       setFormData({
@@ -448,21 +400,19 @@ const Documents = () => {
                         contactNumber: e.target.value,
                       })
                     }
-                    disabled
                     required
                   />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="address">Complete Address </Label>
+                  <Label htmlFor="address">Complete Address *</Label>
                   <Input
                     id="address"
-                    placeholder="Loading..."
+                    placeholder="House No., Street, Purok/Sitio, Barangay"
                     value={formData.address}
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
                     }
-                    disabled
                     required
                   />
                 </div>

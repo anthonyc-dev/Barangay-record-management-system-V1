@@ -49,6 +49,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 
 // Helper function to format datetime
 const formatDateTime = (dateString: string | null | undefined): string => {
@@ -857,25 +858,9 @@ export default function ComplainantAdmin() {
                 </div>
               </div>
 
-              {/* <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Urgency Level</Label>
-                  <Badge
-                    className={getUrgencyColor(selectedComplaint.urgency_level)}
-                  >
-                    {formatUrgencyText(selectedComplaint.urgency_level)}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Anonymous</Label>
-                  <p className="text-sm">
-                    {selectedComplaint.is_anonymous ? "Yes" : "No"}
-                  </p>
-                </div>
-              </div> */}
-
+              <Separator />
               {!selectedComplaint.is_anonymous && (
-                <div className="space-y-4 border-t pt-4">
+                <div className="space-y-4  pt-4">
                   <h4 className="font-semibold">Complainant Information</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -901,7 +886,7 @@ export default function ComplainantAdmin() {
                   </div>
                 </div>
               )}
-
+              <Separator />
               {selectedComplaint.witnesses && (
                 <div>
                   <Label className="text-muted-foreground">Witnesses</Label>
@@ -918,7 +903,7 @@ export default function ComplainantAdmin() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+              {/* <div className="grid grid-cols-2 gap-4 border-t pt-4">
                 <div>
                   <Label className="text-muted-foreground">Created At</Label>
                   <p className="text-sm">
@@ -931,7 +916,7 @@ export default function ComplainantAdmin() {
                     {formatDateTime(selectedComplaint.updated_at)}
                   </p>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
         </DialogContent>

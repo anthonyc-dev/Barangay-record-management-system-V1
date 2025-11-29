@@ -44,6 +44,7 @@ import complainantService, {
   type Complaint,
 } from "@/services/api/complainantService";
 import { authService } from "@/services/api";
+import { residentService } from "@/services/api/residentService";
 import GeneralLoading from "@/components/GeneralLoading";
 
 const Complainant = () => {
@@ -97,6 +98,54 @@ const Complainant = () => {
     "Violence/Assault",
     "Other",
   ];
+
+  // Auto-fill user information on mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userInfo = authService.getStoredUserInfo();
+        if (!userInfo?.id) return;
+
+        // Fetch all residents to get contact number
+        const response = await residentService.getAll();
+
+        // Find the current user's resident data
+        const resident = response.data.find(
+          (res) => res.id === userInfo.id || res.email === userInfo.email
+        );
+
+        if (!resident) {
+          // Fallback to basic user info if resident not found
+          setFormData((prev) => ({
+            ...prev,
+            complainantName: userInfo.name || "",
+            email: userInfo.email || "",
+          }));
+          return;
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          complainantName: resident.name || userInfo.name || "",
+          email: resident.email || userInfo.email || "",
+          contactNumber: resident.contact_number || "",
+        }));
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // Fallback to basic user info if profile fetch fails
+        const userInfo = authService.getStoredUserInfo();
+        if (userInfo) {
+          setFormData((prev) => ({
+            ...prev,
+            complainantName: userInfo.name || "",
+            email: userInfo.email || "",
+          }));
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   // Fetch user's complaints when the history tab is active
   useEffect(() => {
@@ -229,20 +278,17 @@ const Complainant = () => {
         response.message || "Your report has been submitted successfully!"
       );
 
-      // Reset form
-      setFormData({
+      // Reset form but keep user info (complainantName, email, contactNumber)
+      setFormData((prev) => ({
+        ...prev,
         reportType: "",
         title: "",
         description: "",
         location: "",
         dateTime: "",
-        complainantName: "",
-        contactNumber: "",
-        email: "",
-        isAnonymous: false,
         witnesses: "",
         additionalInfo: "",
-      });
+      }));
 
       // Optionally switch to history tab to show the new report
       setTimeout(() => {
@@ -553,6 +599,98 @@ const Complainant = () => {
       {/* File Report Tab */}
       {activeTab === "report" && (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Complainant Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <User className="h-5 w-5" />
+                <span>Complainant Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* <div className="flex items-center space-x-2 mb-4">
+                <Checkbox
+                  id="anonymous"
+                  checked={formData.isAnonymous}
+                  onCheckedChange={(checked) => {
+                    const newIsAnonymous = checked === true;
+                    setFormData({
+                      ...formData,
+                      isAnonymous: newIsAnonymous,
+                      // Clear complainant fields when switching to anonymous
+                      complainantName: newIsAnonymous
+                        ? ""
+                        : formData.complainantName,
+                      contactNumber: newIsAnonymous
+                        ? ""
+                        : formData.contactNumber,
+                      email: newIsAnonymous ? "" : formData.email,
+                    });
+                  }}
+                />
+                <Label
+                  htmlFor="anonymous"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Submit anonymously
+                </Label>
+              </div> */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="complainantName">Full Name </Label>
+                  <Input
+                    id="complainantName"
+                    name="complainantName"
+                    type="text"
+                    placeholder="Loading..."
+                    value={formData.complainantName}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        complainantName: e.target.value,
+                      });
+                    }}
+                    disabled
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactNumber">Contact Number </Label>
+                  <Input
+                    id="contactNumber"
+                    name="contactNumber"
+                    type="text"
+                    placeholder="Loading..."
+                    value={formData.contactNumber}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        contactNumber: e.target.value,
+                      });
+                    }}
+                    disabled
+                    required
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="email">Email Address </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Loading..."
+                    value={formData.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                    }}
+                    disabled
+                    required
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Report Details */}
           <Card>
             <CardHeader>
@@ -640,123 +778,6 @@ const Complainant = () => {
                   }
                   rows={2}
                 />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Complainant Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>Complainant Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* <div className="flex items-center space-x-2 mb-4">
-                <Checkbox
-                  id="anonymous"
-                  checked={formData.isAnonymous}
-                  onCheckedChange={(checked) => {
-                    const newIsAnonymous = checked === true;
-                    setFormData({
-                      ...formData,
-                      isAnonymous: newIsAnonymous,
-                      // Clear complainant fields when switching to anonymous
-                      complainantName: newIsAnonymous
-                        ? ""
-                        : formData.complainantName,
-                      contactNumber: newIsAnonymous
-                        ? ""
-                        : formData.contactNumber,
-                      email: newIsAnonymous ? "" : formData.email,
-                    });
-                  }}
-                />
-                <Label
-                  htmlFor="anonymous"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Submit anonymously
-                </Label>
-              </div> */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="complainantName"
-                    className={formData.isAnonymous ? "text-gray-400" : ""}
-                  >
-                    Full Name {!formData.isAnonymous && "*"}
-                  </Label>
-                  <Input
-                    id="complainantName"
-                    name="complainantName"
-                    type="text"
-                    placeholder={
-                      formData.isAnonymous
-                        ? "Anonymous"
-                        : "Enter your full name"
-                    }
-                    value={formData.complainantName}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        complainantName: e.target.value,
-                      });
-                    }}
-                    disabled={formData.isAnonymous}
-                    className={formData.isAnonymous ? "bg-gray-100" : ""}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="contactNumber"
-                    className={formData.isAnonymous ? "text-gray-400" : ""}
-                  >
-                    Contact Number {!formData.isAnonymous && "*"}
-                  </Label>
-                  <Input
-                    id="contactNumber"
-                    name="contactNumber"
-                    type="text"
-                    placeholder={
-                      formData.isAnonymous ? "Anonymous" : "09123456789"
-                    }
-                    value={formData.contactNumber}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        contactNumber: e.target.value,
-                      });
-                    }}
-                    disabled={formData.isAnonymous}
-                    className={formData.isAnonymous ? "bg-gray-100" : ""}
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label
-                    htmlFor="email"
-                    className={formData.isAnonymous ? "text-gray-400" : ""}
-                  >
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder={
-                      formData.isAnonymous
-                        ? "Anonymous"
-                        : "your.email@example.com"
-                    }
-                    value={formData.email}
-                    onChange={(e) => {
-                      setFormData({ ...formData, email: e.target.value });
-                    }}
-                    disabled={formData.isAnonymous}
-                    className={formData.isAnonymous ? "bg-gray-100" : ""}
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
