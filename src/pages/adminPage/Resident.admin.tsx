@@ -30,7 +30,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -43,7 +42,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-import { useUserProfile } from "@/contexts/UserProfileContext";
 import { toast } from "sonner";
 import apiClient, { API_BASE_URL } from "@/services/api/config";
 
@@ -85,7 +83,6 @@ export default function Residents() {
   );
   const [activeTab, setActiveTab] = useState<StatusFilter>("approved");
   const navigate = useNavigate();
-  const { userProfile } = useUserProfile();
 
   console.log("lala", residents);
 
@@ -875,330 +872,216 @@ export default function Residents() {
 
       {/* View Resident Modal */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-xl p-0 bg-white dark:bg-zinc-950 border-0 shadow-xl max-h-[85vh] overflow-y-auto"
+          style={{ maxHeight: "85vh" }}
+        >
           <DialogHeader>
-            <DialogTitle>Resident Details</DialogTitle>
-            <DialogDescription>
-              Complete information of the selected resident
-            </DialogDescription>
+            <DialogTitle className="pt-3 px-6">Resident Details</DialogTitle>
           </DialogHeader>
-
           {selectedResident && (
-            <div className="space-y-6">
-              {/* Personal Information */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 pb-2 border-b">
-                  Personal Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">First Name</p>
-                    <p className="font-medium">
-                      {selectedResident.first_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Middle Name</p>
-                    <p className="font-medium">
-                      {selectedResident.middle_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Last Name</p>
-                    <p className="font-medium">
-                      {selectedResident.last_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Suffix</p>
-                    <p className="font-medium">
-                      {selectedResident.suffix || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Birth Date</p>
-                    <p className="font-medium">
-                      {formatDate(selectedResident.birth_date)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted-foreground">Gender</p>
-                    <p className="font-medium">
-                      {selectedResident.gender || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Place of Birth
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.place_of_birth || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Civil Status
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.civil_status || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nationality</p>
-                    <p className="font-medium">
-                      {selectedResident.nationality || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Religion</p>
-                    <p className="font-medium">
-                      {selectedResident.religion || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Occupation</p>
-                    <p className="font-medium">
-                      {selectedResident.occupation || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 pb-2 border-b">
-                  Contact Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">
-                      {selectedResident.email || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Contact Number
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.contact_number || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Address Information */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 pb-2 border-b">
-                  Address Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      House Number
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.house_number || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Street</p>
-                    <p className="font-medium">
-                      {selectedResident.street || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Zone</p>
-                    <p className="font-medium">
-                      {selectedResident.zone || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">City</p>
-                    <p className="font-medium">
-                      {selectedResident.city || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Province</p>
-                    <p className="font-medium">
-                      {selectedResident.province || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Family Information */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 pb-2 border-b">
-                  Family Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Father's First Name
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.father_first_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Father's Middle Name
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.father_middle_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Father's Last Name
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.father_last_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Mother's First Name
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.mother_first_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Mother's Middle Name
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.mother_middle_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Mother's Maiden Name
-                    </p>
-                    <p className="font-medium">
-                      {selectedResident.mother_maiden_name || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Document Information */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 pb-2 border-b">
-                  Document Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Upload ID</p>
-                    <p className="font-medium">
-                      {userProfile?.profile_url || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Upload Date</p>
-                    <p className="font-medium">
-                      {formatDate(selectedResident.upload_date)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Valid ID</p>
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    {(() => {
-                      const imagePath =
-                        selectedResident.valid_id_path ||
-                        selectedResident.valid_id_url;
-
-                      if (!imagePath) {
-                        return (
-                          <p className="text-center text-muted-foreground py-8">
-                            No valid ID uploaded
-                          </p>
-                        );
-                      }
-
-                      // Convert relative path to full URL if needed
-                      let imageUrl = imagePath;
-                      if (
-                        !imagePath.startsWith("http://") &&
-                        !imagePath.startsWith("https://") &&
-                        !imagePath.startsWith("data:")
-                      ) {
-                        // It's a relative path, convert to full URL
-                        const cleanPath = imagePath.startsWith("/")
-                          ? imagePath.slice(1)
-                          : imagePath;
-                        // Add cache-busting parameter
-                        const cacheBuster = `?t=${Date.now()}`;
-                        imageUrl = `${API_BASE_URL}/storage/${cleanPath}${cacheBuster}`;
-                      } else if (
-                        imagePath.startsWith("http://") ||
-                        imagePath.startsWith("https://")
-                      ) {
-                        // Add cache-busting to existing URLs
-                        const separator = imageUrl.includes("?") ? "&" : "?";
-                        imageUrl = `${imageUrl}${separator}t=${Date.now()}`;
-                      }
-
-                      console.log("Attempting to load image from:", imageUrl);
-
+            <div className="pt-3 pb-6 px-0">
+              {/* Valid ID Preview first */}
+              <div className="w-full flex flex-col items-center space-y-2 px-6">
+                <span className="text-xs text-muted-foreground text-left w-full mb-1 flex-shrink-0">
+                  Valid ID Preview
+                </span>
+                <div className="border rounded-lg bg-muted/50 w-full flex justify-center items-center min-h-24 max-h-60 overflow-hidden mb-1">
+                  {(() => {
+                    const imagePath =
+                      selectedResident.valid_id_path ||
+                      selectedResident.valid_id_url;
+                    if (!imagePath) {
                       return (
-                        <div className="relative">
-                          <img
-                            src={imageUrl}
-                            alt="Valid ID"
-                            className="max-w-full h-auto rounded-lg object-contain max-h-96 mx-auto"
-                            onLoad={() => {
-                              console.log(
-                                "✅ Image loaded successfully:",
-                                imageUrl
-                              );
-                            }}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              console.error(
-                                "❌ Failed to load image:",
-                                imageUrl
-                              );
-
-                              // Replace with error message
-                              const parent = target.parentElement;
-                              if (parent) {
-                                parent.innerHTML = `
-                                  <div class="text-center py-8">
-                                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
-                                      <svg class="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                      </svg>
-                                    </div>
-                                    <p class="text-sm font-semibold text-destructive mb-2">Image Failed to Load</p>
-                                    <p class="text-xs text-muted-foreground mb-4">The image file could not be loaded from the server.</p>
-                                    <div class="bg-muted rounded p-3 mb-4 max-w-md mx-auto">
-                                      <p class="text-xs font-medium text-muted-foreground mb-1">Attempted URL:</p>
-                                      <p class="text-xs font-mono break-all">${imageUrl}</p>
-                                    </div>
-                                    <div class="bg-blue-50 dark:bg-blue-950 rounded p-3 max-w-md mx-auto">
-                                      <p class="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">Possible Solutions:</p>
-                                      <ul class="text-xs text-left text-blue-600 dark:text-blue-400 space-y-1">
-                                        <li>• Ensure Laravel backend is running on port 8000</li>
-                                        <li>• Run: <code class="bg-blue-100 dark:bg-blue-900 px-1 rounded">composer install</code></li>
-                                        <li>• Run: <code class="bg-blue-100 dark:bg-blue-900 px-1 rounded">php artisan storage:link</code></li>
-                                        <li>• Check if file exists in storage/app/public/</li>
-                                      </ul>
-                                    </div>
-                                  </div>
-                                `;
-                              }
-                            }}
-                          />
-                        </div>
+                        <span className="text-muted-foreground text-xs py-8 block text-center w-full">
+                          No ID uploaded
+                        </span>
                       );
-                    })()}
+                    }
+                    let imageUrl = imagePath;
+                    if (
+                      !imagePath.startsWith("http://") &&
+                      !imagePath.startsWith("https://") &&
+                      !imagePath.startsWith("data:")
+                    ) {
+                      const cleanPath = imagePath.startsWith("/")
+                        ? imagePath.slice(1)
+                        : imagePath;
+                      const cacheBuster = `?t=${Date.now()}`;
+                      imageUrl = `${API_BASE_URL}/storage/${cleanPath}${cacheBuster}`;
+                    } else if (
+                      imagePath.startsWith("http://") ||
+                      imagePath.startsWith("https://")
+                    ) {
+                      const separator = imageUrl.includes("?") ? "&" : "?";
+                      imageUrl = `${imageUrl}${separator}t=${Date.now()}`;
+                    }
+                    return (
+                      <img
+                        src={imageUrl}
+                        alt="Valid ID"
+                        className="max-h-52 rounded mx-auto object-contain"
+                        style={{ minWidth: "120px", maxWidth: "100%" }}
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML += `<div class='text-xs py-8 text-muted-foreground text-center w-full'>Failed to load image</div>`;
+                          }
+                        }}
+                      />
+                    );
+                  })()}
+                </div>
+                <div className="text-[11px] text-muted-foreground w-full text-right pt-1">
+                  Uploaded:{" "}
+                  {selectedResident.upload_date
+                    ? formatDate(selectedResident.upload_date)
+                    : "N/A"}
+                </div>
+              </div>
+
+              {/* Resident Details */}
+              <div className="w-full px-6 pt-4 pb-1">
+                {/* Name */}
+                {/* <div className="font-semibold text-xl text-gray-800 dark:text-gray-100 mb-2 text-center">
+                  {selectedResident.first_name}{" "}
+                  {selectedResident.middle_name
+                    ? selectedResident.middle_name.charAt(0) + "."
+                    : ""}{" "}
+                  {selectedResident.last_name}
+                  {selectedResident.suffix
+                    ? `, ${selectedResident.suffix}`
+                    : ""}
+                </div> */}
+                {/* Occupation below name */}
+                {/* <div className="text-xs text-muted-foreground text-center mb-4">
+                  {selectedResident.occupation ?? "Unemployed"}
+                </div> */}
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-2 text-[13px] sm:text-sm">
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Full name
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.first_name ?? "—"}{" "}
+                      {selectedResident.last_name ?? "—"}
+                    </span>
+                    <div>
+                      <span className="block font-medium text-gray-900 dark:text-gray-200 space-y-2">
+                        Occupation
+                      </span>
+                      <span className="text-gray-500">
+                        {selectedResident.occupation ?? "—"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Birthdate
+                    </span>
+                    <span className="text-gray-500">
+                      {formatDate(selectedResident.birth_date)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Gender
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.gender ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Civil Status
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.civil_status ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Nationality
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.nationality ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Religion
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.religion ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Contact
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.contact_number ?? "—"}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Email
+                    </span>
+                    <span className="text-gray-500">
+                      {selectedResident.email ?? "—"}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block font-medium text-gray-900 dark:text-gray-200">
+                      Address
+                    </span>
+                    <span className="text-gray-500">
+                      {[
+                        selectedResident.house_number,
+                        selectedResident.street,
+                        selectedResident.zone,
+                        selectedResident.city,
+                        selectedResident.province,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "—"}
+                    </span>
+                  </div>
+                </div>
+                {/* Family (collapsible minimalist) */}
+                <div className="w-full mt-4 mb-2">
+                  <span className="text-xs text-muted-foreground cursor-pointer py-1 hover:underline">
+                    Show family information
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 text-[13px] mt-2 border-t pt-2">
+                    <div>
+                      <span className="block text-gray-500">Father's Name</span>
+                      <span className="block font-medium">
+                        {[
+                          selectedResident.father_first_name,
+                          selectedResident.father_middle_name,
+                          selectedResident.father_last_name,
+                        ]
+                          .filter(Boolean)
+                          .join(" ") || "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500">Mother's Name</span>
+                      <span className="block font-medium">
+                        {[
+                          selectedResident.mother_first_name,
+                          selectedResident.mother_middle_name,
+                          selectedResident.mother_maiden_name,
+                        ]
+                          .filter(Boolean)
+                          .join(" ") || "—"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
