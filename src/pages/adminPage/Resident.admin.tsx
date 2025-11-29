@@ -566,10 +566,10 @@ export default function Residents() {
             Manage and track all registered residents in your barangay
           </p>
         </div>
-        <Link to="/admin/addResident">
+        <Link to="/admin/admin-preRegister">
           <Button className="shadow-primary">
             <Plus className="h-4 w-4" />
-            Add New Resident
+            Register Resident
           </Button>
         </Link>
       </div>

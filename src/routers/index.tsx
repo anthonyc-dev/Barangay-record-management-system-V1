@@ -36,6 +36,7 @@ import EditOfficial from "@/pages/adminPage/functions/EditOfficial";
 import ComplainantAdmin from "@/pages/adminPage/Complainant.admin";
 import Report from "@/pages/adminPage/Report";
 import PreRegisterAdmin from "@/pages/adminPage/pre-register";
+import AdminPreRegister from "@/pages/adminPage/Admin-PreReg";
 
 export default function AppRoutes() {
   return (
@@ -65,6 +66,8 @@ export default function AppRoutes() {
         <Route path="complainantAdmin" element={<ComplainantAdmin />} />
         <Route path="report" element={<Report />} />
         <Route path="preRegisterAdmin" element={<PreRegisterAdmin />} />
+        <Route path="admin-preRegister" element={<AdminPreRegister />} />
+
         {/* analytics */}
         <Route path="analytics" element={<OverviewSection />} />
         <Route path="analytics/population" element={<PopulationAnalytics />} />
