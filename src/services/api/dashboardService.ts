@@ -4,6 +4,8 @@ import { complainantService } from "./complainantService";
 import type { Complaint, GetComplaintsResponse } from "./complainantService";
 import { documentService } from "./documentService";
 import type { DocumentRequest } from "./documentService";
+import { reportService } from "./reportService";
+import type { ReportEntry } from "./reportService";
 import { eventService } from "./eventService";
 import type { Event } from "./eventService";
 import { folderService } from "./folderService";
@@ -46,6 +48,7 @@ export const dashboardService = {
         residentsData,
         complaintsData,
         documentsData,
+        reportsData,
         eventsData,
         foldersData,
         officialsData,
@@ -55,6 +58,7 @@ export const dashboardService = {
         documentService
           .getAllDocuments()
           .catch(() => ({ data: [] as DocumentRequest[] })),
+        reportService.getReportDisplay().catch(() => [] as ReportEntry[]),
         eventService.getAll().catch(() => [] as Event[]),
         folderService.getAll().catch(() => [] as Folder[]),
         officialService.getAll().catch(() => ({ data: [] as Official[] })),
@@ -64,12 +68,13 @@ export const dashboardService = {
       const residents = residentsData.data || [];
       const complaints = normalizeComplaintsResponse(complaintsData);
       const documents = documentsData.data || [];
+      const reports = reportsData || [];
       const events = eventsData || [];
       const folders = foldersData || [];
       const officials = officialsData.data || [];
 
-      // Calculate statistics
-      const stats = calculateStats(residents, complaints, documents, officials);
+      // Calculate statistics (now using reports for revenue)
+      const stats = calculateStats(residents, complaints, documents, reports, officials);
 
       // Calculate trends
       const populationGrowth = calculatePopulationGrowth(residents);
@@ -97,22 +102,24 @@ export const dashboardService = {
    */
   getDashboardStats: async (): Promise<DashboardStats> => {
     try {
-      const [residentsData, complaintsData, documentsData, officialsData] =
+      const [residentsData, complaintsData, documentsData, reportsData, officialsData] =
         await Promise.all([
           residentService.getAll().catch(() => ({ data: [] as Resident[] })),
           complainantService.getAllComplaints().catch(() => [] as Complaint[]),
           documentService
             .getAllDocuments()
             .catch(() => ({ data: [] as DocumentRequest[] })),
+          reportService.getReportDisplay().catch(() => [] as ReportEntry[]),
           officialService.getAll().catch(() => ({ data: [] as Official[] })),
         ]);
 
       const residents = residentsData.data || [];
       const complaints = normalizeComplaintsResponse(complaintsData);
       const documents = documentsData.data || [];
+      const reports = reportsData || [];
       const officials = officialsData.data || [];
 
-      return calculateStats(residents, complaints, documents, officials);
+      return calculateStats(residents, complaints, documents, reports, officials);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       throw error;
@@ -150,23 +157,12 @@ function normalizeComplaintsResponse(
 }
 
 /**
- * Helper function to get document price based on type
+ * Helper function to parse price from string to number
  */
-function getDocumentPrice(documentType: string): number {
-  const type = documentType.toLowerCase();
-
-  // Clearance Certification - ₱40
-  if (type.includes("clearance")) {
-    return 40;
-  }
-
-  // Certification (Residency, Indigency, etc.) - ₱30
-  if (type.includes("certification") || type.includes("certificate")) {
-    return 30;
-  }
-
-  // Default price
-  return 30;
+function parsePrice(price: string | undefined): number {
+  if (!price) return 30;
+  const parsed = parseFloat(price);
+  return isNaN(parsed) ? 30 : parsed;
 }
 
 /**
@@ -176,6 +172,7 @@ function calculateStats(
   residents: Resident[],
   complaints: Complaint[],
   documents: DocumentRequest[],
+  reports: ReportEntry[],
   officials: Official[]
 ): DashboardStats {
   // Total population - only count approved residents
@@ -208,54 +205,52 @@ function calculateStats(
   // Ready documents (for transparency - documents ready for pickup/claim)
   const readyDocuments = documents.filter((d) => d.status === "ready").length;
 
-  // Calculate revenue from ready documents only (for resident transparency)
-  const readyDocumentsRevenue = documents
-    .filter((d) => d.status === "ready")
-    .reduce((sum, doc) => {
-      const price = doc.price || getDocumentPrice(doc.document_type);
-      return sum + price;
-    }, 0);
+  // Calculate revenue from ready status reports only (using report entries)
+  const readyReports = reports.filter((r) => r.status === "ready");
 
-  // Total revenue - only count documents with "ready" status
-  const totalRevenue = documents
-    .filter((d) => d.status === "ready")
-    .reduce((sum, doc) => {
-      const price = doc.price || getDocumentPrice(doc.document_type);
-      return sum + price;
-    }, 0);
+  const readyDocumentsRevenue = readyReports.reduce((sum, report) => {
+    return sum + parsePrice(report.price);
+  }, 0);
 
-  // Revenue this month (for growth rate calculation) - only count "ready" documents
-  const revenueThisMonth = documents
-    .filter((d) => {
-      if (!d.created_at || d.status !== "ready") return false;
-      const docDate = new Date(d.created_at);
+  // Total revenue - only count reports with "ready" status
+  const totalRevenue = readyReports.reduce((sum, report) => {
+    return sum + parsePrice(report.price);
+  }, 0);
+
+  // Revenue this month (for growth rate calculation) - only count "ready" reports
+  const revenueThisMonth = reports
+    .filter((r) => {
+      if (r.status !== "ready") return false;
+      const reportDate = r.request_date || r.created_at;
+      if (!reportDate) return false;
+      const docDate = new Date(reportDate);
       return (
         docDate.getMonth() === currentMonth &&
         docDate.getFullYear() === currentYear
       );
     })
-    .reduce((sum, doc) => {
-      const price = doc.price || getDocumentPrice(doc.document_type);
-      return sum + price;
+    .reduce((sum, report) => {
+      return sum + parsePrice(report.price);
     }, 0);
 
-  // Revenue last month (for growth rate calculation) - only count "ready" documents
+  // Revenue last month (for growth rate calculation) - only count "ready" reports
   const lastMonth = currentMonth - 1;
   const lastMonthYear = lastMonth < 0 ? currentYear - 1 : currentYear;
   const lastMonthIndex = lastMonth < 0 ? 11 : lastMonth;
 
-  const revenueLastMonth = documents
-    .filter((d) => {
-      if (!d.created_at || d.status !== "ready") return false;
-      const docDate = new Date(d.created_at);
+  const revenueLastMonth = reports
+    .filter((r) => {
+      if (r.status !== "ready") return false;
+      const reportDate = r.request_date || r.created_at;
+      if (!reportDate) return false;
+      const docDate = new Date(reportDate);
       return (
         docDate.getMonth() === lastMonthIndex &&
         docDate.getFullYear() === lastMonthYear
       );
     })
-    .reduce((sum, doc) => {
-      const price = doc.price || getDocumentPrice(doc.document_type);
-      return sum + price;
+    .reduce((sum, report) => {
+      return sum + parsePrice(report.price);
     }, 0);
 
   // Growth rate (revenue growth compared to last month)

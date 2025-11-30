@@ -17,8 +17,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import documentService from "@/services/api/documentService";
-import type { DocumentRequest } from "@/services/api/documentService";
+import reportService from "@/services/api/reportService";
+import type { ReportEntry } from "@/services/api/reportService";
 import {
   Select,
   SelectContent,
@@ -47,11 +47,18 @@ const getDocumentPrice = (documentType: string): number => {
   return 30;
 };
 
+// Helper function to parse price from string to number
+const parsePrice = (price: string | undefined): number => {
+  if (!price) return 30;
+  const parsed = parseFloat(price);
+  return isNaN(parsed) ? 30 : parsed;
+};
+
 // Helper function to filter documents by time period
 const filterByTimePeriod = (
-  documents: DocumentRequest[],
+  documents: ReportEntry[],
   period: TimePeriod
-): DocumentRequest[] => {
+): ReportEntry[] => {
   if (period === "all") return documents;
 
   const now = new Date();
@@ -99,10 +106,10 @@ const filterByTimePeriod = (
 
 // Helper function to filter documents by custom date range
 const filterByDateRange = (
-  documents: DocumentRequest[],
+  documents: ReportEntry[],
   startDate: string,
   endDate: string
-): DocumentRequest[] => {
+): ReportEntry[] => {
   if (!startDate || !endDate) return documents;
 
   const start = new Date(startDate);
@@ -123,32 +130,30 @@ const filterByDateRange = (
 };
 
 const Report = () => {
-  const [documents, setDocuments] = useState<DocumentRequest[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>(
-    []
-  );
+  const [documents, setDocuments] = useState<ReportEntry[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<ReportEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  console.log("documents", documents);
+  console.log("filteredDocuments", filteredDocuments);
+
   // Fetch all documents on component mount
   useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Filter documents when search query or time period changes - only show "ready" status
+  // Filter documents when search query or time period changes
   useEffect(() => {
     let filtered = documents;
 
-    // Only show documents with "ready" status
-    filtered = filtered.filter((doc) => doc.status === "ready");
-
-    // Apply time period filter first
+    // Apply time period filter
     filtered = filterByTimePeriod(filtered, timePeriod);
 
-    // Apply custom date range filter if both dates are set
+    // Apply custom date range filter if both dates are provided
     if (startDate && endDate) {
       filtered = filterByDateRange(filtered, startDate, endDate);
     }
@@ -158,10 +163,10 @@ const Report = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (doc) =>
-          doc.reference_number?.toLowerCase().includes(query) ||
-          doc.full_name.toLowerCase().includes(query) ||
+          doc.reference_no?.toLowerCase().includes(query) ||
+          doc.requestor.toLowerCase().includes(query) ||
           doc.document_type.toLowerCase().includes(query) ||
-          doc.email.toLowerCase().includes(query)
+          doc.purpose.toLowerCase().includes(query)
       );
     }
 
@@ -171,19 +176,30 @@ const Report = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const response = await documentService.getAllDocuments();
+      const response = await reportService.getReportDisplay();
 
-      // Add price to each document based on type
-      const documentsWithPrice = response.data.map((doc) => ({
+      // Check if response is an array
+      if (!response || !Array.isArray(response)) {
+        console.error("Invalid response structure:", response);
+        toast.error("Invalid data received from server.");
+        setDocuments([]);
+        setFilteredDocuments([]);
+        return;
+      }
+
+      // Add price to each report entry based on type
+      const reportsWithPrice = response.map((doc) => ({
         ...doc,
-        price: doc.price || getDocumentPrice(doc.document_type),
+        price: doc.price || getDocumentPrice(doc.document_type).toString(),
       }));
 
-      setDocuments(documentsWithPrice);
-      setFilteredDocuments(documentsWithPrice);
+      setDocuments(reportsWithPrice);
+      setFilteredDocuments(reportsWithPrice);
     } catch (error) {
-      console.error("Error fetching documents:", error);
-      toast.error("Failed to load documents. Please try again.");
+      console.error("Error fetching reports:", error);
+      toast.error("Failed to load reports. Please try again.");
+      setDocuments([]);
+      setFilteredDocuments([]);
     } finally {
       setLoading(false);
     }
@@ -200,41 +216,40 @@ const Report = () => {
         yearly: "This Year",
       };
 
-      // Add date range info if custom dates are set
-      let periodLabel = periodLabels[timePeriod];
+      // Build filter description
+      let filterDescription = periodLabels[timePeriod];
       if (startDate && endDate) {
-        periodLabel += ` (${startDate} to ${endDate})`;
+        filterDescription += ` (${startDate} to ${endDate})`;
       }
 
       // Prepare data for Excel export
       const exportData: Array<Record<string, string>> = filteredDocuments.map(
         (doc) => ({
-          "Reference Number": doc.reference_number || "N/A",
+          "Reference Number": doc.reference_no || "N/A",
           "Document Type": doc.document_type,
-          "Full Name": doc.full_name,
-          Email: doc.email,
-          "Contact Number": doc.contact_number,
+          Requestor: doc.requestor,
           Purpose: doc.purpose,
-          Price: `₱${doc.price || 30}.00`,
+          Price: `₱${parsePrice(doc.price)}.00`,
           Status: doc.status || "pending",
-          "Request Date": doc.created_at
-            ? new Date(doc.created_at).toLocaleDateString()
-            : "N/A",
+          "Request Date":
+            doc.request_date || doc.created_at
+              ? new Date(
+                  doc.request_date || doc.created_at || ""
+                ).toLocaleDateString()
+              : "N/A",
         })
       );
 
       // Add summary row
       const totalRevenue = filteredDocuments.reduce(
-        (sum, doc) => sum + (doc.price || 30),
+        (sum, doc) => sum + parsePrice(doc.price),
         0
       );
 
       exportData.push({
         "Reference Number": "",
         "Document Type": "",
-        "Full Name": "",
-        Email: "",
-        "Contact Number": "",
+        Requestor: "",
         Purpose: "TOTAL REVENUE",
         Price: `₱${totalRevenue}.00`,
         Status: "",
@@ -251,10 +266,8 @@ const Report = () => {
       const colWidths = [
         { wch: 18 }, // Reference Number
         { wch: 25 }, // Document Type
-        { wch: 20 }, // Full Name
-        { wch: 25 }, // Email
-        { wch: 15 }, // Contact Number
-        { wch: 30 }, // Purpose
+        { wch: 25 }, // Requestor
+        { wch: 40 }, // Purpose
         { wch: 12 }, // Price
         { wch: 10 }, // Status
         { wch: 15 }, // Request Date
@@ -266,7 +279,7 @@ const Report = () => {
 
       // Create summary sheet with time period stats
       const summaryData = [
-        { Period: "Report Period", Value: periodLabel },
+        { Period: "Report Period", Value: filterDescription },
         { Period: "Report Generated", Value: new Date().toLocaleString() },
         { Period: "", Value: "" },
         { Period: "Time Period Breakdown", Value: "" },
@@ -308,9 +321,10 @@ const Report = () => {
       XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
 
       // Generate filename with current date and period
-      const fileName = `Document_Report_${periodLabel
-        .replace(/\s/g, "_")
-        .replace(/[()]/g, "")}_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const fileName = `Document_Report_${filterDescription.replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      )}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
       // Save file
       XLSX.writeFile(wb, fileName);
@@ -323,21 +337,23 @@ const Report = () => {
   };
 
   // Calculate statistics for different time periods
-  const readyDocuments = documents.filter((doc) => doc.status === "ready");
-
-  const dailyDocs = filterByTimePeriod(readyDocuments, "daily");
-  const weeklyDocs = filterByTimePeriod(readyDocuments, "weekly");
-  const monthlyDocs = filterByTimePeriod(readyDocuments, "monthly");
-  const yearlyDocs = filterByTimePeriod(readyDocuments, "yearly");
+  const dailyDocs = filterByTimePeriod(documents, "daily");
+  const weeklyDocs = filterByTimePeriod(documents, "weekly");
+  const monthlyDocs = filterByTimePeriod(documents, "monthly");
+  const yearlyDocs = filterByTimePeriod(documents, "yearly");
 
   // Debug: Log the dates to console
   console.log("Current date:", new Date());
   console.log(
-    "Ready documents with dates:",
-    readyDocuments.map((doc) => ({
-      ref: doc.reference_number,
+    "All documents with dates:",
+    documents.map((doc) => ({
+      ref: doc.reference_no,
       created_at: doc.created_at,
-      parsed: doc.created_at ? new Date(doc.created_at) : null,
+      request_date: doc.request_date,
+      parsed:
+        doc.request_date || doc.created_at
+          ? new Date(doc.request_date || doc.created_at || "")
+          : null,
     }))
   );
   console.log("Daily docs:", dailyDocs.length);
@@ -348,27 +364,30 @@ const Report = () => {
   const stats = {
     total: documents.length,
     pending: documents.filter((doc) => doc.status === "pending").length,
-    ready: readyDocuments.length,
-    totalRevenue: documents.reduce((sum, doc) => sum + (doc.price || 30), 0),
+    ready: documents.filter((doc) => doc.status === "ready").length,
+    totalRevenue: documents.reduce(
+      (sum, doc) => sum + parsePrice(doc.price),
+      0
+    ),
     filteredRevenue: filteredDocuments.reduce(
-      (sum, doc) => sum + (doc.price || 30),
+      (sum, doc) => sum + parsePrice(doc.price),
       0
     ),
     daily: {
       count: dailyDocs.length,
-      revenue: dailyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+      revenue: dailyDocs.reduce((sum, doc) => sum + parsePrice(doc.price), 0),
     },
     weekly: {
       count: weeklyDocs.length,
-      revenue: weeklyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+      revenue: weeklyDocs.reduce((sum, doc) => sum + parsePrice(doc.price), 0),
     },
     monthly: {
       count: monthlyDocs.length,
-      revenue: monthlyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+      revenue: monthlyDocs.reduce((sum, doc) => sum + parsePrice(doc.price), 0),
     },
     yearly: {
       count: yearlyDocs.length,
-      revenue: yearlyDocs.reduce((sum, doc) => sum + (doc.price || 30), 0),
+      revenue: yearlyDocs.reduce((sum, doc) => sum + parsePrice(doc.price), 0),
     },
   };
 
@@ -379,7 +398,7 @@ const Report = () => {
       acc[type] = { count: 0, revenue: 0 };
     }
     acc[type].count += 1;
-    acc[type].revenue += doc.price || 30;
+    acc[type].revenue += parsePrice(doc.price);
     return acc;
   }, {} as Record<string, { count: number; revenue: number }>);
 
@@ -447,7 +466,7 @@ const Report = () => {
       {/* Time Period Revenue Reports */}
       <Card>
         <CardHeader>
-          <CardTitle>Revenue by Time Period (Ready Documents Only)</CardTitle>
+          <CardTitle>Revenue by Time Period</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -587,17 +606,19 @@ const Report = () => {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search by reference number, name, email..."
+                    placeholder="Search by reference number, requestor, purpose..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center space-x-2">
                 <Select
                   value={timePeriod}
-                  onValueChange={(value: TimePeriod) => setTimePeriod(value)}
+                  onValueChange={(value: TimePeriod) => {
+                    setTimePeriod(value);
+                  }}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by period" />
@@ -621,57 +642,52 @@ const Report = () => {
               </div>
             </div>
 
-            {/* Custom Date Range Inputs - Always Visible */}
+            {/* Custom Date Range Inputs - Always visible */}
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t">
-              <Label className="text-sm font-semibold">
+              <Label className="text-sm font-medium">
                 Filter by Date Range:
               </Label>
-              <div className="flex flex-col sm:flex-row items-center gap-3 flex-1">
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Label
-                    htmlFor="start-date"
-                    className="text-sm whitespace-nowrap"
-                  >
-                    From:
-                  </Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full sm:w-auto"
-                  />
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Label
-                    htmlFor="end-date"
-                    className="text-sm whitespace-nowrap"
-                  >
-                    To:
-                  </Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full sm:w-auto"
-                    min={startDate}
-                  />
-                </div>
-                {startDate && endDate && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setStartDate("");
-                      setEndDate("");
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    Clear Dates
-                  </Button>
-                )}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Label
+                  htmlFor="start-date"
+                  className="text-sm whitespace-nowrap"
+                >
+                  From:
+                </Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full sm:w-auto"
+                />
               </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Label htmlFor="end-date" className="text-sm whitespace-nowrap">
+                  To:
+                </Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full sm:w-auto"
+                  min={startDate}
+                />
+              </div>
+              {startDate && endDate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setStartDate("");
+                    setEndDate("");
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  Clear Dates
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
@@ -682,7 +698,7 @@ const Report = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Document Requests Details (Ready Documents)
+              Document Report Entries
               {(timePeriod !== "all" || (startDate && endDate)) && (
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   -{" "}
@@ -713,8 +729,8 @@ const Report = () => {
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
                 {searchQuery
-                  ? "No ready documents found matching your search."
-                  : "No ready document requests yet."}
+                  ? "No report entries found matching your search."
+                  : "No report entries yet."}
               </p>
             </div>
           ) : (
@@ -754,7 +770,7 @@ const Report = () => {
                       >
                         <td className="py-3 px-4">
                           <p className="font-medium">
-                            {document.reference_number || "N/A"}
+                            {document.reference_no || "N/A"}
                           </p>
                         </td>
                         <td className="py-3 px-4">
@@ -763,19 +779,14 @@ const Report = () => {
                           </p>
                         </td>
                         <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium">{document.full_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {document.email}
-                            </p>
-                          </div>
+                          <p className="font-medium">{document.requestor}</p>
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-sm">{document.purpose}</p>
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-sm font-semibold text-green-600">
-                            ₱{document.price || 30}.00
+                            ₱{parsePrice(document.price)}.00
                           </p>
                         </td>
                         <td className="py-3 px-4">
@@ -792,9 +803,11 @@ const Report = () => {
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-sm">
-                            {document.created_at
+                            {document.request_date || document.created_at
                               ? new Date(
-                                  document.created_at
+                                  document.request_date ||
+                                    document.created_at ||
+                                    ""
                                 ).toLocaleDateString("en-US", {
                                   year: "numeric",
                                   month: "short",

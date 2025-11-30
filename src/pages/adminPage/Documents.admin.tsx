@@ -44,7 +44,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import documentService from "@/services/api/documentService";
 import type { DocumentRequest } from "@/services/api/documentService";
-import { apiClient } from "@/services/api";
+import { apiClient, reportService } from "@/services/api";
 
 // Helper function to get document price based on type
 const getDocumentPrice = (documentType: string): number => {
@@ -167,11 +167,40 @@ export default function Documents() {
           });
 
           toast.success(
-            "Document marked as ready, amount, and pickup location updated."
+            "Document marked as ready and notification email sent."
           );
+
+          // Save Report entry after successful email update
+          try {
+            const reportResponse = await reportService.createReportEntry({
+              document_type: document.document_type,
+              requestor: document.full_name,
+              purpose: document.purpose,
+              reference_no: document.reference_number || "",
+              price: getDocumentPrice(document.document_type).toString(),
+              status: newStatus,
+            });
+
+            // Check response status
+            if (
+              reportResponse.status === "success" ||
+              reportResponse.response_code === 201
+            ) {
+              toast.success("Report added successfully!");
+            } else {
+              toast.info(
+                "Report entry saved with status: " + reportResponse.status
+              );
+            }
+          } catch (reportError) {
+            console.error("Error creating report entry:", reportError);
+            toast.warning("Document updated but report entry creation failed.");
+          }
         } catch (error) {
           console.error("Error updating document status and details:", error);
-          toast.warning("Failed to update document details.");
+          toast.error(
+            "Failed to update document status and send notification email."
+          );
         }
       }
 
@@ -181,11 +210,55 @@ export default function Documents() {
           await apiClient.put(`/document-rejects-email/${documentId}/status`, {
             status: newStatus,
           });
-
           toast.success("Document marked as Rejected and notification sent.");
-        } catch (error) {
-          console.error("Error sending rejection email:", error);
-          toast.warning("Document rejected but email notification failed.");
+
+          if (document.reference_number) {
+            try {
+              const response = await reportService.deleteByReference(
+                document.reference_number // ✓ Correct - passing string
+              );
+
+              if (response) {
+                toast.success(
+                  `${document.reference_number} remove to report successfully!`
+                );
+              }
+            } catch (reportError) {
+              console.error("Error deleting report added:", reportError);
+              toast.warning(
+                "Document rejected but report added deletion failed."
+              );
+            }
+          }
+        } catch (reportError) {
+          console.error("Error delete report entry:", reportError);
+          toast.warning("Document deleted but report delete ");
+        }
+      }
+
+      //Pendig
+      if (newStatus === "pending" && document) {
+        try {
+          if (document.reference_number) {
+            try {
+              const response = await reportService.deleteByReference(
+                document.reference_number // ✓ Correct - passing string
+              );
+
+              if (response) {
+                toast.success("Report added to pending successfully!");
+              }
+            } catch (reportError) {
+              console.error(
+                "Error deleting report added pending:",
+                reportError
+              );
+              toast.warning("Document pending but report added pending");
+            }
+          }
+        } catch (reportError) {
+          console.error("Error delete report entry:", reportError);
+          toast.warning("Document deleted but report delete failed.");
         }
       }
     } catch (error) {

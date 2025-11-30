@@ -8,6 +8,7 @@ export { default as complaintService } from "./complaintService";
 export { default as eventService } from "./eventService";
 export { default as folderService } from "./folderService";
 export { default as dashboardService } from "./dashboardService";
+export { default as reportService } from "./reportService";
 
 // Export types
 export type * from "./authService";
@@ -18,3 +19,4 @@ export type * from "./complaintService";
 export type * from "./eventService";
 export type * from "./folderService";
 export type * from "./dashboardService";
+export type * from "./reportService";
