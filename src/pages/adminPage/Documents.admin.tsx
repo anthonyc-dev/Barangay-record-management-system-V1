@@ -236,31 +236,31 @@ export default function Documents() {
         }
       }
 
-      //Pendig
-      if (newStatus === "pending" && document) {
-        try {
-          if (document.reference_number) {
-            try {
-              const response = await reportService.deleteByReference(
-                document.reference_number // ✓ Correct - passing string
-              );
+      // //Pendig
+      // if (newStatus === "pending" && document) {
+      //   try {
+      //     if (document.reference_number) {
+      //       try {
+      //         const response = await reportService.deleteByReference(
+      //           document.reference_number
+      //         );
 
-              if (response) {
-                toast.success("Report added to pending successfully!");
-              }
-            } catch (reportError) {
-              console.error(
-                "Error deleting report added pending:",
-                reportError
-              );
-              toast.warning("Document pending but report added pending");
-            }
-          }
-        } catch (reportError) {
-          console.error("Error delete report entry:", reportError);
-          toast.warning("Document deleted but report delete failed.");
-        }
-      }
+      //         if (response) {
+      //           toast.success("Report added to pending successfully!");
+      //         }
+      //       } catch (reportError) {
+      //         console.error(
+      //           "Error deleting report added pending:",
+      //           reportError
+      //         );
+      //         toast.warning("Document pending but report added pending");
+      //       }
+      //     }
+      //   } catch (reportError) {
+      //     console.error("Error delete report entry:", reportError);
+      //     toast.warning("Document deleted but report delete failed.");
+      //   }
+      // }
     } catch (error) {
       console.error("Error updating document status:", error);
       toast.error("Failed to update document status. Please try again.");
