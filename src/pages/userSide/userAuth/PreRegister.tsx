@@ -246,7 +246,7 @@ const PreRegister = () => {
       if (residentResponse.status === 201) {
         // Success
         toast.success(
-          "Thank you for registering! Your account is awaiting admin approval. Once approved, you will be able to log in."
+          "Registration successful! Please check your email to verify your account. Once verified, the admin will review your registration for approval."
         );
 
         setTimeout(() => {
