@@ -898,44 +898,60 @@ export default function Documents() {
                           <p className="text-sm">{document.contact_number}</p>
                         </td>
                         <td className="py-3 px-4">
-                          {document.status === "pending" ? (
-                            <Badge
-                              variant="secondary"
-                              className="bg-warning/10 text-warning"
-                            >
-                              Pending
-                            </Badge>
-                          ) : (
-                            <Select
-                              value={document.status || "pending"}
-                              onValueChange={(
-                                value: "pending" | "ready" | "reject"
-                              ) => handleStatusUpdate(document.id!, value)}
-                              disabled={updatingStatus === document.id}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="ready">
+                          <Select
+                            value={document.status || "pending"}
+                            onValueChange={(
+                              value: "pending" | "ready" | "reject"
+                            ) => handleStatusUpdate(document.id!, value)}
+                            disabled={updatingStatus === document.id}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue>
+                                {document.status === "pending" && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-warning/10 text-warning"
+                                  >
+                                    Pending
+                                  </Badge>
+                                )}
+                                {document.status === "ready" && (
                                   <Badge
                                     variant="secondary"
                                     className="bg-success/10 text-success"
                                   >
                                     Ready
                                   </Badge>
-                                </SelectItem>
-                                <SelectItem value="reject">
+                                )}
+                                {document.status === "reject" && (
                                   <Badge
                                     variant="secondary"
                                     className="bg-destructive/10 text-destructive"
                                   >
                                     Rejected
                                   </Badge>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
+                                )}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ready">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-success/10 text-success"
+                                >
+                                  Ready
+                                </Badge>
+                              </SelectItem>
+                              <SelectItem value="reject">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-destructive/10 text-destructive"
+                                >
+                                  Rejected
+                                </Badge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-2">
@@ -1180,10 +1196,10 @@ export default function Documents() {
                       <SelectValue placeholder="Select document type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Barangay Clearance">
+                      <SelectItem value="Clearance Certification">
                         Clearance Certification
                       </SelectItem>
-                      <SelectItem value="Certificate of Residency">
+                      <SelectItem value="Certification">
                         Certification
                       </SelectItem>
                     </SelectContent>
