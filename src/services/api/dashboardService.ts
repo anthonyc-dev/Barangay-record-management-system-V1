@@ -74,7 +74,13 @@ export const dashboardService = {
       const officials = officialsData.data || [];
 
       // Calculate statistics (now using reports for revenue)
-      const stats = calculateStats(residents, complaints, documents, reports, officials);
+      const stats = calculateStats(
+        residents,
+        complaints,
+        documents,
+        reports,
+        officials
+      );
 
       // Calculate trends
       const populationGrowth = calculatePopulationGrowth(residents);
@@ -102,16 +108,21 @@ export const dashboardService = {
    */
   getDashboardStats: async (): Promise<DashboardStats> => {
     try {
-      const [residentsData, complaintsData, documentsData, reportsData, officialsData] =
-        await Promise.all([
-          residentService.getAll().catch(() => ({ data: [] as Resident[] })),
-          complainantService.getAllComplaints().catch(() => [] as Complaint[]),
-          documentService
-            .getAllDocuments()
-            .catch(() => ({ data: [] as DocumentRequest[] })),
-          reportService.getReportDisplay().catch(() => [] as ReportEntry[]),
-          officialService.getAll().catch(() => ({ data: [] as Official[] })),
-        ]);
+      const [
+        residentsData,
+        complaintsData,
+        documentsData,
+        reportsData,
+        officialsData,
+      ] = await Promise.all([
+        residentService.getAll().catch(() => ({ data: [] as Resident[] })),
+        complainantService.getAllComplaints().catch(() => [] as Complaint[]),
+        documentService
+          .getAllDocuments()
+          .catch(() => ({ data: [] as DocumentRequest[] })),
+        reportService.getReportDisplay().catch(() => [] as ReportEntry[]),
+        officialService.getAll().catch(() => ({ data: [] as Official[] })),
+      ]);
 
       const residents = residentsData.data || [];
       const complaints = normalizeComplaintsResponse(complaintsData);
@@ -119,7 +130,13 @@ export const dashboardService = {
       const reports = reportsData || [];
       const officials = officialsData.data || [];
 
-      return calculateStats(residents, complaints, documents, reports, officials);
+      return calculateStats(
+        residents,
+        complaints,
+        documents,
+        reports,
+        officials
+      );
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       throw error;
@@ -306,7 +323,7 @@ function calculatePopulationGrowth(
     const population = residents.filter((r) => {
       if (!r.created_at || r.status?.toLowerCase() !== "approved") return false;
       const resDate = new Date(r.created_at);
-      return resDate <= new Date(year, monthIndex + 1, 0); // End of month
+      return resDate <= new Date(year, monthIndex + 1, 0);
     }).length;
 
     result.push({

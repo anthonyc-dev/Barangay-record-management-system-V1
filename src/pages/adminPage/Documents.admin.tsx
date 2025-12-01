@@ -898,43 +898,44 @@ export default function Documents() {
                           <p className="text-sm">{document.contact_number}</p>
                         </td>
                         <td className="py-3 px-4">
-                          <Select
-                            value={document.status || "pending"}
-                            onValueChange={(
-                              value: "pending" | "ready" | "reject"
-                            ) => handleStatusUpdate(document.id!, value)}
-                            disabled={updatingStatus === document.id}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-warning/10 text-warning"
-                                >
-                                  Pending
-                                </Badge>
-                              </SelectItem>
-                              <SelectItem value="ready">
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-success/10 text-success"
-                                >
-                                  Ready
-                                </Badge>
-                              </SelectItem>
-                              <SelectItem value="reject">
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-destructive/10 text-destructive"
-                                >
-                                  Rejected
-                                </Badge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
+                          {document.status === "pending" ? (
+                            <Badge
+                              variant="secondary"
+                              className="bg-warning/10 text-warning"
+                            >
+                              Pending
+                            </Badge>
+                          ) : (
+                            <Select
+                              value={document.status || "pending"}
+                              onValueChange={(
+                                value: "pending" | "ready" | "reject"
+                              ) => handleStatusUpdate(document.id!, value)}
+                              disabled={updatingStatus === document.id}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ready">
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-success/10 text-success"
+                                  >
+                                    Ready
+                                  </Badge>
+                                </SelectItem>
+                                <SelectItem value="reject">
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-destructive/10 text-destructive"
+                                  >
+                                    Rejected
+                                  </Badge>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-2">
