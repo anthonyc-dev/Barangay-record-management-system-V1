@@ -38,7 +38,7 @@ This application provides a digital solution for barangay offices to transition 
 
 - **Frontend:** React Vite, TypeScript and TailwindCSS
 - **Backend:** [BRMS Server](https://github.com/anthonyc-dev/brms-server)
-- **Database:** Laravel 12, REST Api, MySQL
+- **Database:** REST Api, MySQL, XAMPP
 - **API:** RESTful, designed for secure, high-integrity data exchange
 
 ### Project Screenshots
