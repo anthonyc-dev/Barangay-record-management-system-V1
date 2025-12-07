@@ -36,9 +36,9 @@ This application provides a digital solution for barangay offices to transition 
 
 ## Tech Stack
 
-- **Frontend:** (Specify framework/language, e.g., React, Vue.js, etc., if available)
+- **Frontend:** React Vite, TypeScript and TailwindCSS
 - **Backend:** [BRMS Server](https://github.com/anthonyc-dev/brms-server)
-- **Database:** (Specify DBMS if known, e.g., MySQL, PostgreSQL, etc.)
+- **Database:** Laravel 12, REST Api, MySQL
 - **API:** RESTful, designed for secure, high-integrity data exchange
 
 ### Project Screenshots
