@@ -1,69 +1,55 @@
-# React + TypeScript + Vite
+# Barangay Record Management System V1
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Barangay Record Management System (BRMS) V1** is a comprehensive platform designed to help barangays—the smallest administrative units in the Philippines—efficiently manage local governance records, resident information, certificates, and official documentation.
 
-Currently, two official plugins are available:
+## About
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This application provides a digital solution for barangay offices to transition from manual, paper-based processes to an easy-to-use, secure, and reliable system. It enables smooth day-to-day operations, accurate record-keeping, and faster service delivery for residents and officials alike.
 
-## Expanding the ESLint configuration
+## Key Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Resident Records Management**
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+  - Register, update, and view resident information
+  - Maintain historical records and status changes
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- **Certificate Issuance**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+  - Generate and manage barangay certificates (e.g., clearance, indigency, residency)
+  - Digital tracking of requests and issuances
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **Barangay Official Management**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+  - List and manage information about current and former barangay officials and staff
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **User Authentication**
+
+  - Secure login and role-based access control for staff and authorized users
+
+- **Reporting & Audit Logs**
+
+  - Detailed reporting for transparency and data-driven decisions
+  - Track user actions for accountability
+
+- **Search and Filter**
+  - Quickly find resident records, certificates, or official listings
+
+## Tech Stack
+
+- **Frontend:** (Specify framework/language, e.g., React, Vue.js, etc., if available)
+- **Backend:** [BRMS Server](https://github.com/anthonyc-dev/brms-server)
+- **Database:** (Specify DBMS if known, e.g., MySQL, PostgreSQL, etc.)
+- **API:** RESTful, designed for secure, high-integrity data exchange
+
+### Project Screenshots
+
+![Login Page Screenshot](./public/1.png)
+![Dashboard Screenshot](./public/2.png)
+
+<!-- ## License
+
+_Include your license information here if applicable._ -->
+
+---
+
+Maintained by [anthonyc-dev](https://github.com/anthonyc-dev)

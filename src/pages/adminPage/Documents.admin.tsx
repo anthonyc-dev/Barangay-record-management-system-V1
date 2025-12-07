@@ -29,6 +29,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 import {
   Search,
@@ -789,27 +797,61 @@ export default function Documents() {
         </CardContent>
       </Card>
 
-      {/* Status Navigation Buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant={activeStatus === "ready" ? "default" : "outline"}
-          onClick={() => setActiveStatus("ready")}
-        >
-          Ready ({stats.ready})
-        </Button>
-        <Button
-          variant={activeStatus === "pending" ? "default" : "outline"}
-          onClick={() => setActiveStatus("pending")}
-        >
-          Pending ({stats.pending})
-        </Button>
-        <Button
-          variant={activeStatus === "reject" ? "default" : "outline"}
-          onClick={() => setActiveStatus("reject")}
-        >
-          Rejected ({documents.filter((doc) => doc.status === "reject").length})
-        </Button>
-      </div>
+      {/* Status Navigation Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            {activeStatus === "ready" ? (
+              <BreadcrumbPage className="flex items-center gap-1 text-blue-600">
+                Ready <Badge variant="secondary">{stats.ready}</Badge>
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveStatus("ready")}
+                className="cursor-pointer flex items-center gap-1 "
+              >
+                Ready <Badge variant="outline">{stats.ready}</Badge>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            {activeStatus === "pending" ? (
+              <BreadcrumbPage className="flex items-center gap-1 text-blue-600">
+                Pending <Badge variant="secondary">{stats.pending}</Badge>
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveStatus("pending")}
+                className="cursor-pointer flex items-center gap-1"
+              >
+                Pending <Badge variant="outline">{stats.pending}</Badge>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            {activeStatus === "reject" ? (
+              <BreadcrumbPage className="flex items-center gap-1 text-blue-600">
+                Rejected{" "}
+                <Badge variant="secondary">
+                  {documents.filter((doc) => doc.status === "reject").length}
+                </Badge>
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                onClick={() => setActiveStatus("reject")}
+                className="cursor-pointer flex items-center gap-1"
+              >
+                Rejected{" "}
+                <Badge variant="outline">
+                  {documents.filter((doc) => doc.status === "reject").length}
+                </Badge>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* Documents Table */}
       <Card>
