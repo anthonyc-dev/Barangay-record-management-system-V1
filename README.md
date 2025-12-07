@@ -1,4 +1,9 @@
-# Barangay Record Management System V1
+# Barangay Record Management System
+
+![Login Page Screenshot](./public/1.png)
+![Dashboard Screenshot](./public/2.png)
+
+---
 
 **Barangay Record Management System (BRMS) V1** is a comprehensive platform designed to help barangays—the smallest administrative units in the Philippines—efficiently manage local governance records, resident information, certificates, and official documentation.
 
@@ -40,11 +45,6 @@ This application provides a digital solution for barangay offices to transition 
 - **Backend:** [BRMS Server](https://github.com/anthonyc-dev/brms-server)
 - **Database:** REST Api, MySQL, XAMPP
 - **API:** RESTful, designed for secure, high-integrity data exchange
-
-### Project Screenshots
-
-![Login Page Screenshot](./public/1.png)
-![Dashboard Screenshot](./public/2.png)
 
 <!-- ## License
 
