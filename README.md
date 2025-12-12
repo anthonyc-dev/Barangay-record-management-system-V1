@@ -5,7 +5,7 @@
 
 ---
 
-**Barangay Record Management System (BRMS)** is a comprehensive platform designed to help barangays—the smallest administrative units in the Philippines—efficiently manage local governance records, resident information, certificates, and official documentation.
+**Barangay Record Management System (BRMS)** is a comprehensive platform designed to help barangays—the smallest administrative units in the Philippines—efficiently manage local governance records, resident information, certificates, and official documentations.
 
 ## About
 
